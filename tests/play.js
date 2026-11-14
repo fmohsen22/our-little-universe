@@ -8,8 +8,9 @@ const watch = (page, errors, tag) => { page.on('console', m => { if (m.type() ==
 const dismiss = async p => { for (let i = 0; i < 6 && await p.locator('#ceremony [data-cer="close"]').isVisible(); i++) await p.locator('#ceremony [data-cer="close"]').click(); };
 const noScroll = async (p, w) => ok(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no sideways scroll: ' + w);
 
+const noBackend = () => { Object.defineProperty(window, 'OLU_CONFIG', { value: {}, writable: false }); };   // these runs must not touch the real server named in config.js
 async function solo(name, opts) {
-  console.log('\n== ' + name + ' =='); const b = await chromium.launch(), ctx = await b.newContext(opts), p = await ctx.newPage(), errors = [];
+  console.log('\n== ' + name + ' =='); const b = await chromium.launch(), ctx = await b.newContext(opts); await ctx.addInitScript(noBackend); const p = await ctx.newPage(), errors = [];
   watch(p, errors, ''); const shot = async n => { if (shots) await p.screenshot({ path: path.join(shots, name + '-' + n + '.png'), fullPage: true }); };
   const go = async h => { await dismiss(p); await p.goto(url + '#' + h); await p.waitForSelector('.ghead, .hero'); };
   const act = a => p.locator('[data-act="' + a + '"]').first().click(), who = () => p.click('#who');
@@ -87,7 +88,7 @@ const fakeDb = () => {
 
 async function duo() {
   console.log('\n== two devices =='); const b = await chromium.launch(), ctx = await b.newContext({ ...devices['Pixel 7'] }), errors = [];
-  await ctx.addInitScript(fakeDb); const a = await ctx.newPage(), s = await ctx.newPage(); watch(a, errors, 'A: '); watch(s, errors, 'B: ');
+  await ctx.addInitScript(fakeDb); await ctx.addInitScript(noBackend); const a = await ctx.newPage(), s = await ctx.newPage(); watch(a, errors, 'A: '); watch(s, errors, 'B: ');
   // the second page keeps its own per-device settings (who am I, which ceremonies I have seen), as a second phone would
   await s.addInitScript(() => { const g = Storage.prototype.getItem, st = Storage.prototype.setItem; Storage.prototype.getItem = function (k) { return g.call(this, k.indexOf('olu:') === 0 ? 'guest:' + k : k); }; Storage.prototype.setItem = function (k, v) { return st.call(this, k.indexOf('olu:') === 0 ? 'guest:' + k : k, v); }; });
   await a.goto(url); await s.goto(url); await s.click('#who'); await a.waitForFunction(() => document.querySelector('#sync').dataset.s === 'live');
