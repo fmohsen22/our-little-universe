@@ -14,35 +14,46 @@ Plain HTML, CSS and JavaScript. No backend and no build step needed to host it.
 
 ## How playing works
 
-Every decided round is saved to a scoreboard: who won, the points, and when.
+**One phone.** With no room server configured, the site runs on one device. Tap "Playing as" at the top to hand over. Everything is kept in that browser.
 
-**One phone.** With no database configured, the site runs on one device. Tap "Playing as" at the top to hand over. Names, scores and the Memory Book are kept in that browser.
+**Two phones, live.** With a room server configured, the home page shows a private invite link. Whoever opens it joins the same room as player two, and every game, crown and memory stays in step on both phones. The status at the top reads "Synced · both online" when you are both there.
 
-**Two phones, live.** With a room server configured, the home page shows a private invite link. Whoever opens it joins the same room as player two, and every game, score, badge and memory stays in step on both phones. The status at the top reads "Synced · both online" when you are both there.
+## The Crowns of Shahnameh
 
-**Badges.** Winning rounds earns badges (first win, streaks, three wins in a game, and more). They are stored with the room and stay even if scores are reset.
+The 👑 at the top opens the Royal Hall: two rival kingdoms (Iran and Turan), eight royal ranks earned by lifetime victories, individual and shared achievements, a head-to-head record with a Crown Holder, royal challenges and rematches, a chronicle, and short stories from the Shahnameh behind each badge.
+
+How it counts:
+
+- **Competitive, with a winner:** Two Truths & One Lie, versus Secret Missions, Esm Famil. Only these give victories, streaks and ranks.
+- **Cooperative, shared glory:** Question Cards, finished Imaginary Life adventures, shared Secret Missions, guessed drawings.
+- **Blessing of the Simurgh** (comeback) is defined only for Esm Famil: win a round that takes you from 20 or more points behind in the series to level or ahead.
+
+How it stays honest:
+
+- Each finished round is stored once as an event under the round's own id. Ranks, streaks, badges and unlock dates are recomputed from that log (`src/royal.js`), never stored as totals, so refreshes, reconnects and replays cannot count twice, and ranks are never revoked.
+- With your own server the log is append-only: the server checks every event with the same rules, ignores ids it already has, and refuses to overwrite or clear the log.
+- The server records what the two of you report; it does not replay the games to re-judge who won.
+
+All ranks, thresholds and achievement rules are configuration at the top of `src/royal.js`. The badge drawings are original SVG. The titles and badges are fiction for this game, not historical titles.
 
 ### Switching on two-phone play with your own server
 
-`server/server.js` is the whole backend: one file, no dependencies, Node 18 or newer. It keeps each room as a JSON file.
+`server/server.js` is the whole backend: no dependencies, Node 18 or newer. It keeps each room as a JSON file.
 
-1. Copy the `server/` folder to your server and start it:
-
-   ```
-   PORT=8787 DATA_DIR=/var/lib/our-little-universe ALLOWED_ORIGINS=https://game.mosi-app.com node server.js
-   ```
-
-   Or with Docker, from inside `server/`:
+1. On your server:
 
    ```
-   docker build -t olu-server .
-   docker run -d --restart unless-stopped -p 8787:8787 -v olu-data:/data -e ALLOWED_ORIGINS=https://game.mosi-app.com olu-server
+   git clone https://github.com/fmohsen22/our-little-universe.git
+   cd our-little-universe
+   bash server/install-service.sh
    ```
 
-2. Give it a public HTTPS address, for example `game-api.mosi-app.com`, pointing at port 8787 (a Cloudflare Tunnel public hostname works). Check it: `https://game-api.mosi-app.com/health` should answer `{"ok":true}`.
+   That installs a systemd service on port 8787 that restarts by itself. To run it by hand instead: `PORT=8787 DATA_DIR=$HOME/our-little-universe-data ALLOWED_ORIGINS=https://game.mosi-app.com node server/server.js`. With Docker: `docker build -f server/Dockerfile -t olu-server .`
+
+2. Give it a public HTTPS address, for example `game-api.mosi-app.com`, pointing at `http://localhost:8787` (a Cloudflare Tunnel public hostname works). `https://game-api.mosi-app.com/health` should answer `{"ok":true}`.
 3. Put that address in `config.js` as `serverUrl` and commit. GitHub Pages redeploys by itself.
 
-Back up `DATA_DIR` to keep scores and badges.
+To update the server later: `git pull && sudo systemctl restart our-little-universe`. Back up the data folder to keep your crowns.
 
 ### Or with Supabase
 
@@ -56,7 +67,8 @@ A room is named by a 20-character random code that exists only in the invite lin
 ## Changing it
 
 - `src/content.js`: every question, mission, drawing word and list. Edit freely.
-- `src/app.js`: the store, router, the six games and the scoreboard.
+- `src/app.js`: the store, router and the six games.
+- `src/royal.js`: the achievement engine and its configuration. `src/hall.js`: badge art, the Royal Hall, ceremony and challenges.
 - `src/backend.js`: the room connection, for your own server or Supabase. `vendor/supabase.js` is the Supabase browser library (v2.118.0).
 - `src/app.css`, `src/body.html`: look and page skeleton.
 
@@ -67,6 +79,8 @@ node build.js
 ```
 
 ## Tests
+
+`node tests/royal.test.js` checks the engine: rank thresholds, streaks, duplicate events, shared unlocks and the comeback rule.
 
 `tests/play.js` plays all six games in Chromium with Playwright, on one device at phone and desktop size, as two devices against stand-ins for the shared store and for Supabase, and as two devices against the real `server/server.js`:
 

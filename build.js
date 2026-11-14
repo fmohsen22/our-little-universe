@@ -12,7 +12,10 @@ ${r('app.css')}</style>
 ${r('body.html')}<script>
 ${r('content.js')}
 ${r('backend.js')}
-${r('app.js')}</script>
+${r('royal.js')}
+${r('app.js')}
+${r('hall.js')}
+window.OLU.start();</script>
 `;
 fs.mkdirSync(path.join(__dirname, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(__dirname, 'dist', 'our-little-universe.html'), page);

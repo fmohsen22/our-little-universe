@@ -5,12 +5,13 @@ const url = 'file://' + path.resolve(__dirname, '..', 'index.html');
 const shots = process.env.SHOTS; if (shots) fs.mkdirSync(shots, { recursive: true });
 const ok = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log('  ok  ' + m); };
 const watch = (page, errors, tag) => { page.on('console', m => { if (m.type() === 'error' && !/fonts\.g|net::ERR/.test(m.text())) errors.push(tag + m.text()); }); page.on('pageerror', e => errors.push(tag + e)); };
+const dismiss = async p => { for (let i = 0; i < 6 && await p.locator('#ceremony [data-cer="close"]').isVisible(); i++) await p.locator('#ceremony [data-cer="close"]').click(); };
 const noScroll = async (p, w) => ok(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no sideways scroll: ' + w);
 
 async function solo(name, opts) {
   console.log('\n== ' + name + ' =='); const b = await chromium.launch(), ctx = await b.newContext(opts), p = await ctx.newPage(), errors = [];
   watch(p, errors, ''); const shot = async n => { if (shots) await p.screenshot({ path: path.join(shots, name + '-' + n + '.png'), fullPage: true }); };
-  const go = async h => { await p.goto(url + '#' + h); await p.waitForSelector('.ghead, .hero'); };
+  const go = async h => { await dismiss(p); await p.goto(url + '#' + h); await p.waitForSelector('.ghead, .hero'); };
   const act = a => p.locator('[data-act="' + a + '"]').first().click(), who = () => p.click('#who');
   await go('home'); ok(await p.locator('.tile').count() === 6, 'home shows six games'); await noScroll(p, 'home'); await shot('home');
   await act('surprise'); ok(await p.locator('.surprise h2').isVisible(), 'Surprise Us picks a game');
@@ -21,11 +22,17 @@ async function solo(name, opts) {
 
   await go('life'); await act('roll'); ok(await p.locator('.scene mark').count() === 6, 'imaginary life rolls a scene');
   await p.fill('#l-text', 'The chickens unionise.'); await p.click('form [type=submit]'); await act('twist');
-  ok(await p.locator('.story li').count() === 2 && await p.locator('.story .twist').count() === 1, 'story line and plot twist are added'); await act('keep'); await noScroll(p, 'life'); await shot('life');
+  ok(await p.locator('.story li').count() === 2 && await p.locator('.story .twist').count() === 1, 'story line and plot twist are added'); await act('keep');
+  ok(await p.locator('[data-act="finish"]').isDisabled(), 'an adventure cannot be finished until both have added two lines');
+  await p.fill('#l-text', 'Mohsey bakes a peace cake.'); await p.click('form [type=submit]'); await who();
+  await p.fill('#l-text', 'Sufi interrogates the cake.'); await p.click('form [type=submit]'); await p.fill('#l-text', 'The cake confesses.'); await p.click('form [type=submit]');
+  await act('finish'); ok(/Adventure finished/.test(await p.textContent('.turn')), 'the adventure is finished once both have written two lines'); await who();
+  await noScroll(p, 'life'); await shot('life');
 
   await go('truths'); await p.fill('#t0', 'I once met a goat.'); await p.fill('#t1', 'I can juggle.'); await p.fill('#t2', 'I hate tea.'); await p.check('#lie1'); await p.click('form [type=submit]');
   ok(await p.locator('.card.feature').isVisible() && await p.locator('.option').count() === 0, 'author cannot see the options while waiting');
   await who(); await p.locator('.option').nth(1).click(); ok(/found the lie/.test(await p.textContent('.turn')), 'guesser finds the lie and scores');
+  await p.waitForSelector('#ceremony .cer-box'); ok(/A new ruler rises/i.test(await p.textContent('#ceremony')) && /Young Hero/.test(await p.textContent('#cer-title')), 'first victory opens the promotion ceremony: Young Hero'); await shot('ceremony'); await dismiss(p);
   ok((await p.locator('.score b').allTextContents()).join() === '0,1', 'two truths score is 0–1'); await shot('truths'); await act('swap'); await who(); await noScroll(p, 'truths');
 
   await go('missions'); await act('deal'); ok(await p.locator('.big-text').isVisible(), 'a mission is dealt'); await act('done');
@@ -46,14 +53,19 @@ async function solo(name, opts) {
   await p.locator('.pts').nth(0).click(); ok(await p.locator('.pts').nth(0).textContent() === '0', 'a score can be changed by hand'); await act('finish');
   const tot = (await p.locator('.score b').allTextContents()).join(); ok(tot === '10,15', 'esm totals add up to 10 and 15 (got ' + tot + ')');
 
-  await go('questions'); await p.locator('[data-act="award"]').nth(1).click(); await go('life'); await p.locator('[data-act="award"]').nth(0).click();
-  await go('scores'); const rows = await p.locator('.board tbody tr').count(), lead = await p.textContent('.big-text');
-  ok(rows === 6 && await p.locator('.rounds li').count() === 6, 'scoreboard lists six games and the six decided rounds');
-  ok(/Sophie leads 5 to 1/.test(lead), 'scoreboard names the leader (' + lead + ')'); await p.waitForFunction(() => document.querySelectorAll('.badge.earned').length >= 4);
-  const earned = (await p.locator('.badge.earned b').allTextContents()).join(', '); ok(/First win/.test(earned) && /High five/.test(earned) && /Hat-trick/.test(earned) && /On fire/.test(earned), 'badges are earned from wins: ' + earned);
-  await p.locator('[data-act="reset"]').click(); await p.locator('[data-act="reset"]').click(); await p.reload(); await p.waitForSelector('.badge');
-  ok(/No rounds/.test(await p.textContent('#lead')) && await p.locator('.badge.earned').count() >= 4, 'badges stay saved after a reload and after scores are reset');
-  await noScroll(p, 'scores'); await shot('scores');
+  await go('hall'); await p.waitForSelector('.profile');
+  const sufi = await p.locator('.profile').nth(1).textContent(), moh = await p.locator('.profile').nth(0).textContent();
+  ok(/Princess Sufi/.test(sufi) && /Guardian of Zabol/.test(sufi) && /Victories3/.test(sufi) && /Kingdom of Turan/.test(sufi), 'Royal Hall: Princess Sufi of Turan is Guardian of Zabol with 3 victories');
+  ok(/Prince Mohsey/.test(moh) && /Not yet crowned/.test(moh) && /Losses3/.test(moh), 'Royal Hall: Prince Mohsey has 3 losses and no crown yet');
+  ok(/Princess Sufi holds the crown/.test(await p.textContent('.board').catch(() => '') + await p.textContent('#app')), 'the head-to-head leader is the Crown Holder');
+  await noScroll(p, 'hall'); await shot('hall');
+  await p.locator('[data-t="shared"]').click(); const cup = await p.textContent('.medals');
+  ok(/The Cup of Kay Khosrow/.test(cup) && await p.locator('.medal-card.earned').count() === 1, 'shared glory: the hidden cup unlocks after a completed activity in all six games'); await shot('shared');
+  await p.locator('[data-t="glory"]').click(); ok(await p.locator('.medal-card.earned').count() === 2 && await p.locator('.medal-card').count() === 26, 'achievements tab lists every rank and badge for both, two ranks earned');
+  await p.locator('.lore summary').first().click(); ok(/in the Shahnameh/.test(await p.locator('.lore').first().textContent()), 'each badge opens its Shahnameh story'); await noScroll(p, 'achievements');
+  await p.locator('[data-t="history"]').click(); ok(await p.locator('.chron li').count() === 10, 'royal history lists the 7 activities and 3 unlocks');
+  await p.locator('[data-t="hall"]').click(); await p.locator('[data-act="kingdom"][data-k="iran"]').click(); ok(/Kingdom of Iran/.test(await p.locator('.profile').nth(0).textContent()), 'a kingdom can be changed');
+  await p.reload(); await p.waitForSelector('.profile'); ok(/Victories3/.test(await p.locator('.profile').nth(1).textContent()) && !(await p.locator('#ceremony').isVisible()), 'ranks survive a reload and the ceremony does not replay');
   await go('book'); ok(await p.locator('.memories li').count() >= 4, 'memory book holds the kept items'); await noScroll(p, 'book'); await shot('book');
   await p.reload(); ok(await p.locator('.memories li').count() >= 4, 'memories survive a reload');
   ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : '')); await b.close();
@@ -76,12 +88,15 @@ const fakeDb = () => {
 async function duo() {
   console.log('\n== two devices =='); const b = await chromium.launch(), ctx = await b.newContext({ ...devices['Pixel 7'] }), errors = [];
   await ctx.addInitScript(fakeDb); const a = await ctx.newPage(), s = await ctx.newPage(); watch(a, errors, 'A: '); watch(s, errors, 'B: ');
+  // the second page keeps its own per-device settings (who am I, which ceremonies I have seen), as a second phone would
+  await s.addInitScript(() => { const g = Storage.prototype.getItem, st = Storage.prototype.setItem; Storage.prototype.getItem = function (k) { return g.call(this, k.indexOf('olu:') === 0 ? 'guest:' + k : k); }; Storage.prototype.setItem = function (k, v) { return st.call(this, k.indexOf('olu:') === 0 ? 'guest:' + k : k, v); }; });
   await a.goto(url); await s.goto(url); await s.click('#who'); await a.waitForFunction(() => document.querySelector('#sync').dataset.s === 'live');
-  ok(await a.textContent('#sync') === 'Synced' && /Sophie/.test(await s.textContent('#who')), 'both devices report Synced, second one plays as Sophie');
+  ok(await a.textContent('#sync') === 'Synced' && /Sufi/.test(await s.textContent('#who')), 'both devices report Synced, second one plays as Sufi');
   await a.goto(url + '#truths'); await s.goto(url + '#truths');
   await a.fill('#t0', 'One'); await a.fill('#t1', 'Two'); await a.fill('#t2', 'Three'); await a.check('#lie2'); await a.click('form [type=submit]');
   await s.waitForSelector('.option'); await s.locator('.option').nth(0).click(); await a.waitForSelector('.option.lie');
   ok(/fooled/.test(await a.textContent('.turn')), 'two truths: statements and the reveal travel between devices');
+  await s.waitForSelector('#ceremony .cer-box'); ok(/rival kingdom/i.test(await s.textContent('#ceremony')) && /A new ruler rises/i.test(await a.textContent('#ceremony')), 'the promotion ceremony shows on the winner’s phone and as news on the other'); await dismiss(a); await dismiss(s);
   await a.goto(url + '#draw'); await s.goto(url + '#draw'); await a.locator('[data-act="word"]').click(); await a.locator('[data-act="start"]').click(); await s.waitForSelector('#d-guess');
   const box = await a.locator('#d-canvas').boundingBox(), cdp = await ctx.newCDPSession(a), pt = (x, y) => [{ x: box.x + x, y: box.y + y }];
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: pt(50, 50) });
@@ -131,20 +146,30 @@ async function online(mode) {
     // the guest is a separate browser profile for identity (own "me"), sharing the stand-in server's storage
     const s = await ctx.newPage(); watch(s, errors, 'B: '); await s.addInitScript(() => { const g = Storage.prototype.getItem, st = Storage.prototype.setItem; Storage.prototype.getItem = function (k) { return g.call(this, k.indexOf('olu:') === 0 ? 'guest:' + k : k); }; Storage.prototype.setItem = function (k, v) { return st.call(this, k.indexOf('olu:') === 0 ? 'guest:' + k : k, v); }; });
     await s.goto(link); await s.waitForFunction(() => /both online/.test(document.querySelector('#sync').textContent));
-    ok(/Sophie/.test(await s.textContent('#who')) && /Mosi/.test(await a.textContent('#who')), 'opening the link joins the room as player two, and both show online');
+    ok(/Sufi/.test(await s.textContent('#who')) && /Mohsey/.test(await a.textContent('#who')), 'opening the link joins the room as player two, and both show online');
     await a.goto(link + '#esm'); await s.goto(link + '#esm'); await a.waitForSelector('[data-act="start"]'); await a.locator('[data-act="start"]').click(); await s.waitForSelector('#e-name');
     ok(await s.textContent('.letter') === await a.textContent('.letter') && Math.abs(+(await s.textContent('#e-time')) - +(await a.textContent('#e-time'))) <= 1, 'esm famil: same letter and the same 90-second clock on both phones');
     await a.fill('#e-name', 'Anna'); await a.fill('#e-city', 'Athens'); await s.fill('#e-name', 'Ali'); await s.waitForTimeout(900);
     await s.locator('[data-act="stop"]').click(); await a.waitForSelector('.review'); await s.waitForFunction(() => /Athens/.test(document.querySelector('.review').textContent));
     await a.locator('[data-act="finish"]').click(); await s.waitForFunction(() => /Round 1/.test((document.querySelector('.turn') || {}).textContent || ''));
     ok((await s.locator('.score b').allTextContents()).join() === '20,10', 'esm famil: the round is scored 20 to 10 on both phones');
-    await s.goto(link + '#scores'); await s.waitForSelector('.rounds li'); ok(/Mosi leads 1 to 0/.test(await s.textContent('.big-text')), 'the scoreboard on the other phone shows the winner');
-    await a.reload(); await a.waitForFunction(() => document.querySelector('#sync').dataset.s === 'live'); await a.goto(link + '#scores'); await a.waitForSelector('.rounds li');
-    ok(await a.locator('.rounds li').count() === 1, 'scores come back from the database after a reload');
-    ok(await a.locator('.badge.earned').count() === 1 && /Mosi/.test(await a.textContent('.badge.earned .holders')), 'the First win badge is stored in the database for the winner');
+    await a.waitForSelector('#ceremony .cer-box'); await s.waitForSelector('#ceremony .cer-box'); await dismiss(a); await dismiss(s);
+    await s.goto(link + '#hall'); await s.waitForSelector('.profile'); ok(/Young Hero/.test(await s.locator('.profile').nth(0).textContent()), 'the Royal Hall on the other phone shows the new rank');
+    await a.reload(); await a.waitForFunction(() => document.querySelector('#sync').dataset.s === 'live'); await a.goto(link + '#hall'); await a.waitForSelector('.profile');
+    ok(/Victories1/.test(await a.locator('.profile').nth(0).textContent()), 'ranks come back from the database after a reload');
+    await a.locator('[data-act="challenge"][data-g="esm"]').click(); await s.waitForSelector('#banner [data-act="accept"]');
+    ok(/Prince Mohsey challenges Princess Sufi to a battle for the crown/.test(await s.textContent('#banner')), 'a royal challenge appears on the other phone');
+    await s.locator('#banner [data-act="accept"]').click(); await a.waitForFunction(() => /accepts your challenge/.test((document.querySelector('#banner') || {}).textContent || ''));
+    ok(/#esm$/.test(s.url()), 'accepting the challenge opens the game and tells the challenger');
     ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
     if (mode === 'server') { await new Promise(r => setTimeout(r, 400)); const files = fs.readdirSync(data).filter(f => f.endsWith('.json')); const saved = JSON.parse(fs.readFileSync(path.join(data, files[0]), 'utf8'));
-      ok(files.length === 1 && saved.scores.log.length === 1 && saved.badges.p0.first > 0, 'the server wrote the room to disk: scores, badges and game state'); }
+      const ids = Object.keys(saved.events.byId); ok(files.length === 1 && ids.length === 1 && saved.events.byId[ids[0]].w === 0, 'the server wrote the room to disk with one match event');
+      const post = body => fetch('http://127.0.0.1:8788/rooms/' + files[0].replace('.json', '') + '/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(async r => ({ status: r.status, json: await r.json() }));
+      const replay = await post({ kind: 'patch', body: { byId: { [ids[0]]: { t: 'match', g: 'esm', w: 1, sums: [0, 999], at: Date.now() } } } });
+      const forged = await post({ kind: 'patch', body: { byId: { 'fake:1': { t: 'match', g: 'questions', w: 1, at: Date.now() }, 'fake:2': { t: 'match', g: 'esm', w: 1, sums: [50, 10], at: Date.now() }, 'fake:3': { wins: 99 } } } });
+      const wipe = await post({ kind: 'set', body: { byId: {} } });
+      const after = JSON.parse(JSON.stringify((await (await fetch('http://127.0.0.1:8788/rooms/' + files[0].replace('.json', ''))).json()).docs.events.byId));
+      ok(replay.json.added === 0 && forged.json.added === 0 && wipe.status === 400 && Object.keys(after).length === 1 && after[ids[0]].w === 0, 'the server refuses replayed, forged and overwritten results'); }
   } finally { await b.close(); srv.kill(); if (api) api.kill(); fs.rmSync(data, { recursive: true, force: true }); }
 }
 

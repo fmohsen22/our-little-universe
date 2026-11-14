@@ -100,15 +100,72 @@ details.setup[open] summary { margin-bottom: 12px; }
 .rounds li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .rounds li span:last-child { text-align: right; font-weight: 600; }
 
-.badges { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-@media (max-width: 420px) { .badges { grid-template-columns: 1fr; } }
-.badge { display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 14px; border: 1px dashed var(--line); min-width: 0; }
-.badge .badge-icon { font-size: 1.6rem; width: 44px; height: 44px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); filter: grayscale(1); opacity: .45; }
-.badge small { display: block; font-size: .78rem; color: var(--soft); }
-.badge.earned { border: 1px solid var(--gold); background: var(--surface-2); }
-.badge.earned .badge-icon { filter: none; opacity: 1; background: var(--gold); }
-.holders { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
-.holders i { font-style: normal; font-size: .72rem; font-weight: 700; background: var(--gold); color: var(--on-accent); border-radius: 999px; padding: 1px 8px; }
+/* ---------- The Crowns of Shahnameh ---------- */
+.crown-link { text-decoration: none; font-size: 1.25rem; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--gold); background: var(--surface); }
+.hall-link { border-color: var(--gold); }
+.medal { flex: none; display: block; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .35)); }
+.medal.locked { filter: grayscale(1); opacity: .38; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.tab { flex: none; font: 600 .9rem var(--body); min-height: 40px; padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--gold); color: var(--on-accent); border-color: transparent; }
+.profiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 620px) { .profiles { grid-template-columns: 1fr; } }
+/* Profile panels are illuminated-manuscript plates: deliberately dark in both themes, tinted by kingdom. */
+.profile { --k1: #EDB93C; --k2: #2FB57C; --k3: #6E1B38; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 26px 16px 18px; border-radius: var(--r); color: #FBF3DC; border: 1.5px solid var(--k1); background: radial-gradient(120% 80% at 50% 0%, var(--k3), #1B1430 75%); }
+.profile.k-turan { --k1: #C9D3E6; --k2: #4C7BEA; --k3: #3B2470; }
+.profile::before { content: ""; position: absolute; inset: 0 0 auto; height: 12px; background-image: repeating-linear-gradient(45deg, var(--k1) 0 2px, transparent 2px 9px), repeating-linear-gradient(-45deg, var(--k2) 0 2px, transparent 2px 9px); opacity: .85; }
+.p-head { display: flex; gap: 10px; align-items: center; }
+.p-head h2 { font-size: 1.35rem; overflow-wrap: anywhere; }
+.p-kingdom { font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; color: var(--k1); }
+.p-rank { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.p-title { font-family: var(--display); font-size: 1.3rem; color: var(--k1); }
+.p-sub { font-size: .82rem; color: #CFC3E6; text-align: center; }
+.profile .bar { background: rgba(255, 255, 255, .14); }
+.profile .bar i { background: var(--k1); }
+.profile .chip { color: #FBF3DC; border-color: rgba(255, 255, 255, .3); }
+.profile .chip[aria-pressed="true"] { background: var(--k1); color: #1B1430; }
+.p-edit { display: flex; flex-direction: column; gap: 8px; align-items: center; border-top: 1px solid rgba(255, 255, 255, .16); padding-top: 12px; }
+.thumbs { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; min-height: 34px; }
+.holder { font-size: 1rem; }
+.stats4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0; text-align: center; }
+@media (max-width: 420px) { .stats4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stats4 dt { font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+.stats4 dd { margin: 0; font: 700 1.5rem var(--display); font-variant-numeric: tabular-nums; }
+.bar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 999px; background: var(--gold); }
+.medals { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 620px) { .medals { grid-template-columns: 1fr; } }
+.medal-card { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 16px; border: 1px dashed var(--line); min-width: 0; }
+.medal-card > div { min-width: 0; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.medal-card small { font-size: .8rem; color: var(--soft); }
+.medal-card.earned { border: 1px solid var(--gold); background: var(--surface-2); }
+.medal-card .got { color: var(--gold); font-weight: 700; }
+.medal-card.legendary { box-shadow: 0 0 0 1px var(--gold), 0 0 22px -6px var(--gold); }
+.medal-card.legendary .medal { animation: shimmer 3.2s ease-in-out infinite; }
+@keyframes shimmer { 0%, 100% { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .35)) brightness(1); } 50% { filter: drop-shadow(0 0 9px #EDB93C) brightness(1.18); } }
+.lore summary { cursor: pointer; font-size: .82rem; font-weight: 600; color: var(--gold); padding: 4px 0; }
+.lore p { font-size: .88rem; margin-top: 6px; }
+.legend h2 { font-size: 1.3rem; color: var(--gold); }
+.chron, .trophies { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.chron li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.chron li span { min-width: 0; overflow-wrap: anywhere; }
+.chron li.unlock span { color: var(--gold); font-weight: 700; }
+.chron small, .trophies small { flex: none; font-size: .78rem; color: var(--soft); }
+.trophies li { display: flex; gap: 12px; align-items: center; padding: 6px 0; font-weight: 600; }
+.trophies small { display: block; font-weight: 400; }
+.board .total th, .board .total td { border-bottom: 0; font-weight: 700; }
+.banner { border: 1.5px solid var(--gold); background: var(--surface); border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; animation: rise .3s ease; }
+.revenge { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; font-style: italic; }
+.ceremony { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(12, 8, 26, .82); overflow-y: auto; }
+.cer-box { width: min(100%, 420px); text-align: center; display: flex; flex-direction: column; gap: 8px; align-items: center; padding: 26px 20px 22px; border-radius: 24px; color: #FBF3DC; border: 1.5px solid #EDB93C; background: radial-gradient(120% 70% at 50% 0%, #6E1B38, #1B1430 78%); animation: rise .35s ease; }
+.cer-box .eyebrow { color: #EDB93C; }
+.cer-box .soft { color: #CFC3E6; }
+.cer-box h2 { font-size: 1.9rem; color: #FFE08A; }
+.cer-name { font-weight: 600; letter-spacing: .04em; }
+.cer-art { animation: reveal .9s cubic-bezier(.2, 1.3, .4, 1); }
+.cer-box.legendary .cer-art { filter: drop-shadow(0 0 18px #EDB93C); }
+.cer-box .btn.ghost { color: #FBF3DC; border-color: rgba(255, 255, 255, .35); }
+@keyframes reveal { from { transform: scale(.2) rotate(-40deg); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* game shell */
 .back { text-decoration: none; font-weight: 600; font-size: .9rem; color: var(--soft); align-self: flex-start; padding: 6px 0; }
@@ -177,5 +234,5 @@ div.option { cursor: default; }
 .linkbtn { background: none; border: 0; color: var(--soft); font: 600 .8rem var(--body); cursor: pointer; text-decoration: underline; padding: 6px 0; }
 
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); max-width: calc(100% - 32px); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-weight: 600; font-size: .92rem; z-index: 20; text-align: center; }
-#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 30; }
+#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

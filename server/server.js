@@ -11,9 +11,12 @@
 //   GET  /health                      -> ok
 //   GET  /rooms/:room                 -> { docs: { name: data } }
 //   POST /rooms/:room/:name           <- { kind: "set" | "patch", body: {...}, from: "client id" }
+//        (name "events" is append-only and validated: it is the log ranks and badges are computed from)
 //   GET  /rooms/:room/events          -> Server-Sent Events: "op" for every move, "peers" with how many are connected
 'use strict';
 const http = require('http'), fs = require('fs'), path = require('path');
+// The achievement engine is shared with the website, so the server checks events with the same rules.
+let royal; try { royal = require(path.join(__dirname, '..', 'src', 'royal.js')); } catch (e) { royal = require('./royal.js'); }
 const PORT = +(process.env.PORT || 8787);
 const DATA = process.env.DATA_DIR || path.join(__dirname, 'data');
 const ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://game.mosi-app.com').split(',').map(s => s.trim()).filter(Boolean);
@@ -72,6 +75,22 @@ const server = http.createServer((req, res) => {
       let m; try { m = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch (e) { return send(res, 400, { error: 'bad json' }); }
       if (!m || !isObj(m.body) || (m.kind !== 'set' && m.kind !== 'patch')) return send(res, 400, { error: 'bad request' });
       const name = parts[2];
+      if (name === 'events') {
+        // The event log is append-only. The server never accepts totals: it accepts single, well-formed
+        // game events, ignores any id it already holds, and stamps a time it trusts.
+        if (m.kind !== 'patch' || !isObj(m.body.byId)) return send(res, 400, { error: 'events can only be added' });
+        const have = isObj(r.docs.events) && isObj(r.docs.events.byId) ? r.docs.events.byId : {}, fresh = {}, now = Date.now();
+        for (const [id, e] of Object.entries(m.body.byId).slice(0, 20)) {
+          if (have[id] || !isObj(e)) continue;
+          const ev = { t: e.t, g: e.g, at: typeof e.at === 'number' && Math.abs(e.at - now) < 600000 ? e.at : now };
+          for (const k of ['w', 'author', 'drawer', 'sums', 'country']) if (e[k] !== undefined) ev[k] = e[k];
+          if (royal.validEvent(id, ev)) fresh[id] = ev;
+        }
+        if (!Object.keys(fresh).length) return send(res, 200, { ok: true, added: 0 });
+        r.docs.events = { byId: Object.assign({}, have, fresh) };
+        persist(room, r); tell(r, 'op', { name, kind: 'patch', body: { byId: fresh }, from: 'server' });
+        return send(res, 200, { ok: true, added: Object.keys(fresh).length });
+      }
       r.docs[name] = m.kind === 'set' ? m.body : merge(isObj(r.docs[name]) ? r.docs[name] : {}, m.body);
       persist(room, r); tell(r, 'op', { name, kind: m.kind, body: m.body, from: String(m.from || '').slice(0, 16) });
       send(res, 200, { ok: true });
