@@ -1,12 +1,14 @@
-/* Two-phone play through Supabase. Active only when config.js holds a project URL and anon key.
+/* Two-phone play. Active only when config.js names your own room server (serverUrl) or a Supabase project.
    Each couple plays in a room named by a long random code carried in the invite link (?room=...).
-   Moves travel instantly over a Realtime broadcast channel and are saved through three database
-   functions (see supabase/schema.sql). The object returned looks like the store app.js expects:
+   With your own server (server/server.js) moves are posted to it and pushed to the other phone over
+   Server-Sent Events. With Supabase they travel over a Realtime broadcast channel and are saved
+   through three database functions (supabase/schema.sql). The object returned looks like the store app.js expects:
    doc(path) with set, update and onSnapshot. */
 (function () {
   'use strict';
   var cfg = window.OLU_CONFIG || {};
-  if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) return;
+  var useServer = !!cfg.serverUrl, useSupabase = !!(cfg.supabaseUrl && cfg.supabaseAnonKey);
+  if (!useServer && !useSupabase) return;
   function lsGet(k) { try { var v = window.localStorage.getItem('olu:' + k); return v == null ? null : JSON.parse(v); } catch (e) { return null; } }
   function lsSet(k, v) { try { window.localStorage.setItem('olu:' + k, JSON.stringify(v)); } catch (e) { /* fine */ } }
   function code(n) { var a = new Uint8Array(n), s = '', abc = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; window.crypto.getRandomValues(a); for (var i = 0; i < n; i++) s += abc[a[i] % abc.length]; return s; }
@@ -22,7 +24,44 @@
 
   function loadScript(src) { return new Promise(function (res, rej) { if (window.supabase && window.supabase.createClient) return res(); var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 
+  // Your own server: plain fetch plus an EventSource that reconnects by itself.
+  function serverBackend(opts) {
+    var base = String(cfg.serverUrl).replace(/\/+$/, '') + '/rooms/' + room, me = code(8);
+    var cache = {}, subs = {}, fails = [], loaded = false;
+    var snap = function (name) { var d = cache[name]; return { exists: d !== undefined, data: function () { return d; }, metadata: {} }; };
+    var emit = function (name) { (subs[name] || []).forEach(function (f) { f(snap(name)); }); };
+    var fail = function (e) { fails.forEach(function (f) { if (f) f(e); }); };
+    function load() {
+      return fetch(base, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('server ' + r.status); return r.json(); })
+        .then(function (j) { cache = j.docs || {}; loaded = true; Object.keys(subs).forEach(emit); });
+    }
+    function post(name, kind, body) {
+      return fetch(base + '/' + name, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: kind, body: body, from: me }) })
+        .then(function (r) { if (!r.ok) throw new Error('server ' + r.status); });
+    }
+    var es = new EventSource(base + '/events');
+    es.onopen = function () { load().catch(fail); };          // also runs after every reconnect, so nothing is missed
+    es.onerror = function () { if (!loaded) fail(new Error('unreachable')); };
+    es.addEventListener('op', function (e) {
+      var p; try { p = JSON.parse(e.data); } catch (x) { return; }
+      if (!p || !p.name || p.from === me) return;
+      cache[p.name] = p.kind === 'set' ? p.body : merge(cache[p.name] || {}, p.body); emit(p.name);
+    });
+    es.addEventListener('peers', function (e) { if (opts && opts.onPeers) opts.onPeers(+e.data || 0); });
+    return Promise.resolve({
+      doc: function (path) {
+        var name = path.split('/').pop();
+        return {
+          set: function (body) { cache[name] = body; return post(name, 'set', body); },
+          update: function (body) { cache[name] = merge(cache[name] || {}, JSON.parse(JSON.stringify(body))); return post(name, 'patch', body); },
+          onSnapshot: function (next, err) { (subs[name] = subs[name] || []).push(next); fails.push(err); if (loaded) next(snap(name)); return function () {}; }
+        };
+      }
+    });
+  }
+
   window.OLU_BACKEND = function (opts) {
+    if (useServer) return serverBackend(opts);
     return loadScript('vendor/supabase.js').then(function () {
       var sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, { auth: { persistSession: false, autoRefreshToken: false } });
       var cache = {}, subs = {}, fails = [], loaded = false, me = code(8);

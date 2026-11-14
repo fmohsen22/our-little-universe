@@ -104,6 +104,16 @@ details.setup[open] summary { margin-bottom: 12px; }
 .rounds li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .rounds li span:last-child { text-align: right; font-weight: 600; }
 
+.badges { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 420px) { .badges { grid-template-columns: 1fr; } }
+.badge { display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 14px; border: 1px dashed var(--line); min-width: 0; }
+.badge .badge-icon { font-size: 1.6rem; width: 44px; height: 44px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); filter: grayscale(1); opacity: .45; }
+.badge small { display: block; font-size: .78rem; color: var(--soft); }
+.badge.earned { border: 1px solid var(--gold); background: var(--surface-2); }
+.badge.earned .badge-icon { filter: none; opacity: 1; background: var(--gold); }
+.holders { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.holders i { font-style: normal; font-size: .72rem; font-weight: 700; background: var(--gold); color: var(--on-accent); border-radius: 999px; padding: 1px 8px; }
+
 /* game shell */
 .back { text-decoration: none; font-weight: 600; font-size: .9rem; color: var(--soft); align-self: flex-start; padding: 6px 0; }
 .ghead { display: flex; gap: 12px; align-items: center; }
@@ -357,15 +367,17 @@ window.OLU_CONTENT = {
   letters: { en: 'ABCDEFGHIJKLMNOPRSTUVW'.split(''), fa: 'ا ب پ ت ج چ خ د ر ز س ش ع ف ق ک گ ل م ن و ه ی'.split(' ') }
 };
 
-/* Two-phone play through Supabase. Active only when config.js holds a project URL and anon key.
+/* Two-phone play. Active only when config.js names your own room server (serverUrl) or a Supabase project.
    Each couple plays in a room named by a long random code carried in the invite link (?room=...).
-   Moves travel instantly over a Realtime broadcast channel and are saved through three database
-   functions (see supabase/schema.sql). The object returned looks like the store app.js expects:
+   With your own server (server/server.js) moves are posted to it and pushed to the other phone over
+   Server-Sent Events. With Supabase they travel over a Realtime broadcast channel and are saved
+   through three database functions (supabase/schema.sql). The object returned looks like the store app.js expects:
    doc(path) with set, update and onSnapshot. */
 (function () {
   'use strict';
   var cfg = window.OLU_CONFIG || {};
-  if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) return;
+  var useServer = !!cfg.serverUrl, useSupabase = !!(cfg.supabaseUrl && cfg.supabaseAnonKey);
+  if (!useServer && !useSupabase) return;
   function lsGet(k) { try { var v = window.localStorage.getItem('olu:' + k); return v == null ? null : JSON.parse(v); } catch (e) { return null; } }
   function lsSet(k, v) { try { window.localStorage.setItem('olu:' + k, JSON.stringify(v)); } catch (e) { /* fine */ } }
   function code(n) { var a = new Uint8Array(n), s = '', abc = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; window.crypto.getRandomValues(a); for (var i = 0; i < n; i++) s += abc[a[i] % abc.length]; return s; }
@@ -381,7 +393,44 @@ window.OLU_CONTENT = {
 
   function loadScript(src) { return new Promise(function (res, rej) { if (window.supabase && window.supabase.createClient) return res(); var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
 
+  // Your own server: plain fetch plus an EventSource that reconnects by itself.
+  function serverBackend(opts) {
+    var base = String(cfg.serverUrl).replace(/\/+$/, '') + '/rooms/' + room, me = code(8);
+    var cache = {}, subs = {}, fails = [], loaded = false;
+    var snap = function (name) { var d = cache[name]; return { exists: d !== undefined, data: function () { return d; }, metadata: {} }; };
+    var emit = function (name) { (subs[name] || []).forEach(function (f) { f(snap(name)); }); };
+    var fail = function (e) { fails.forEach(function (f) { if (f) f(e); }); };
+    function load() {
+      return fetch(base, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('server ' + r.status); return r.json(); })
+        .then(function (j) { cache = j.docs || {}; loaded = true; Object.keys(subs).forEach(emit); });
+    }
+    function post(name, kind, body) {
+      return fetch(base + '/' + name, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: kind, body: body, from: me }) })
+        .then(function (r) { if (!r.ok) throw new Error('server ' + r.status); });
+    }
+    var es = new EventSource(base + '/events');
+    es.onopen = function () { load().catch(fail); };          // also runs after every reconnect, so nothing is missed
+    es.onerror = function () { if (!loaded) fail(new Error('unreachable')); };
+    es.addEventListener('op', function (e) {
+      var p; try { p = JSON.parse(e.data); } catch (x) { return; }
+      if (!p || !p.name || p.from === me) return;
+      cache[p.name] = p.kind === 'set' ? p.body : merge(cache[p.name] || {}, p.body); emit(p.name);
+    });
+    es.addEventListener('peers', function (e) { if (opts && opts.onPeers) opts.onPeers(+e.data || 0); });
+    return Promise.resolve({
+      doc: function (path) {
+        var name = path.split('/').pop();
+        return {
+          set: function (body) { cache[name] = body; return post(name, 'set', body); },
+          update: function (body) { cache[name] = merge(cache[name] || {}, JSON.parse(JSON.stringify(body))); return post(name, 'patch', body); },
+          onSnapshot: function (next, err) { (subs[name] = subs[name] || []).push(next); fails.push(err); if (loaded) next(snap(name)); return function () {}; }
+        };
+      }
+    });
+  }
+
   window.OLU_BACKEND = function (opts) {
+    if (useServer) return serverBackend(opts);
     return loadScript('vendor/supabase.js').then(function () {
       var sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, { auth: { persistSession: false, autoRefreshToken: false } });
       var cache = {}, subs = {}, fails = [], loaded = false, me = code(8);
@@ -452,7 +501,8 @@ window.OLU_CONTENT = {
     draw: { phase: 'idle', drawer: 0, word: '', endsAt: 0, strokes: [], guesses: [], solved: false, score: [0, 0] },
     esm: { phase: 'setup', lang: 'en', cats: ['name', 'surname', 'city', 'country', 'animal', 'food'], secs: 90, letter: '', endsAt: 0, answers: { p0: {}, p1: {} }, marks: { p0: {}, p1: {} }, total: [0, 0], round: 0, last: null },
     book: { items: [] },
-    scores: { log: [] }
+    scores: { log: [] },
+    badges: { p0: {}, p1: {} }
   };
   var S = {}, db = null, chains = {}, syncState = 'local', peers = 0;
   Object.keys(DEFAULTS).forEach(function (k) { S[k] = merge(clone(DEFAULTS[k]), lsGet('doc:' + k, {})); });
@@ -513,7 +563,44 @@ window.OLU_CONTENT = {
     save('book', { items: items }); toast('Saved to the Memory Book');
   }
   // Every decided round is written to the shared scoreboard: who won, the points, and when.
-  function logRound(game, winner, pts) { save('scores', { log: S.scores.log.concat([{ at: Date.now(), g: game, w: winner, p: pts }]).slice(-300) }); }
+  function logRound(game, winner, pts) {
+    save('scores', { log: S.scores.log.concat([{ at: Date.now(), g: game, w: winner, p: pts }]).slice(-300) });
+    if (winner >= 0) checkBadges(winner);
+  }
+  /* Badges: earned from the round log, then stored in their own document so they stay even if scores are reset. */
+  var BADGES = [
+    { id: 'first', icon: '🌟', name: 'First win', how: 'Win a round', test: function (c) { return c.wins >= 1; } },
+    { id: 'five', icon: '🖐️', name: 'High five', how: 'Win 5 rounds', test: function (c) { return c.wins >= 5; } },
+    { id: 'ten', icon: '🔟', name: 'Double digits', how: 'Win 10 rounds', test: function (c) { return c.wins >= 10; } },
+    { id: 'twentyfive', icon: '👑', name: 'Royalty', how: 'Win 25 rounds', test: function (c) { return c.wins >= 25; } },
+    { id: 'hattrick', icon: '🎩', name: 'Hat-trick', how: 'Win 3 rounds in a row', test: function (c) { return c.streak >= 3; } },
+    { id: 'fire', icon: '🔥', name: 'On fire', how: 'Win 5 rounds in a row', test: function (c) { return c.streak >= 5; } },
+    { id: 'allround', icon: '🪐', name: 'All-rounder', how: 'Win at least once in all six games', test: function (c) { return GAMES.every(function (g) { return c.by[g] >= 1; }); } },
+    { id: 'questions', icon: '💬', name: 'Silver tongue', how: 'Give the better answer 3 times', test: function (c) { return c.by.questions >= 3; } },
+    { id: 'life', icon: '📚', name: 'Storyteller', how: 'Have the best idea 3 times', test: function (c) { return c.by.life >= 3; } },
+    { id: 'truths', icon: '🧐', name: 'Poker face', how: 'Win Two Truths 3 times', test: function (c) { return c.by.truths >= 3; } },
+    { id: 'missions', icon: '🕶️', name: 'Secret agent', how: 'Win 3 missions', test: function (c) { return c.by.missions >= 3; } },
+    { id: 'draw', icon: '🔮', name: 'Mind reader', how: 'Guess 3 drawings', test: function (c) { return c.by.draw >= 3; } },
+    { id: 'esm', icon: '🧙', name: 'Word wizard', how: 'Win Esm Famil 3 times', test: function (c) { return c.by.esm >= 3; } },
+    { id: 'fullhouse', icon: '💯', name: 'Full house', how: 'Score 50 or more in one Esm Famil round', test: function (c) { return c.bestEsm >= 50; } }
+  ];
+  function badgeStats(p) {
+    var c = { wins: 0, streak: 0, by: {}, bestEsm: 0 }; GAMES.forEach(function (g) { c.by[g] = 0; });
+    S.scores.log.forEach(function (r) {
+      if (r.g === 'esm' && r.p[p] > c.bestEsm) c.bestEsm = r.p[p];
+      if (r.w < 0) return;
+      if (r.w === p) { c.wins += 1; c.streak += 1; c.by[r.g] = (c.by[r.g] || 0) + 1; } else c.streak = 0;
+    });
+    return c;
+  }
+  function checkBadges(p) {
+    var c = badgeStats(p), have = S.badges['p' + p] || {}, got = BADGES.filter(function (b) { return !have[b.id] && b.test(c); });
+    if (!got.length) return;
+    var mine = {}, part = {}; got.forEach(function (b) { mine[b.id] = Date.now(); }); part['p' + p] = mine;
+    patch('badges', part); celebrate();
+    var msg = N(p) + ' earned ' + got.map(function (b) { return b.icon + ' ' + b.name; }).join(', ');
+    setTimeout(function () { toast(msg); }, 600);   // after the game's own message
+  }
   function awardRow(label) { return '<div class="row mid"><span class="soft">' + label + '</span><button class="chip" data-act="award" data-i="0">' + esc(N(0)) + ' +1</button><button class="chip" data-act="award" data-i="1">' + esc(N(1)) + ' +1</button></div>'; }
   function award(name, i) { var st = clone(S[name]); st.score[i] += 1; save(name, st); logRound(name, i, i ? [0, 1] : [1, 0]); toast('Point for ' + N(i)); }
   function celebrate() {
@@ -869,15 +956,18 @@ window.OLU_CONTENT = {
   function roundsWon(p, g) { return S.scores.log.filter(function (r) { return r.w === p && (!g || r.g === g); }).length; }
   var resetArmed = false;
   views.scores = {
-    emoji: '🏆', title: 'Scoreboard', sub: '', accent: 'gold', deps: ['scores', 'questions', 'life', 'truths', 'missions', 'draw', 'esm'],
+    emoji: '🏆', title: 'Scoreboard', sub: '', accent: 'gold', deps: ['scores', 'badges', 'questions', 'life', 'truths', 'missions', 'draw', 'esm'],
     how: 'Points in every game and every round you have decided, saved for both of you.',
     render: function (root) {
       var a = roundsWon(0), b = roundsWon(1), log = S.scores.log.slice(-12).reverse();
       var head = !S.scores.log.length ? 'No rounds played yet.' : a === b ? 'All square at ' + a + ' rounds each.' : N(a > b ? 0 : 1) + ' leads ' + Math.max(a, b) + ' to ' + Math.min(a, b) + '.';
-      root.innerHTML = shell(this, '<div class="card feature"><p class="big-text">' + esc(head) + '</p><div class="score"><span>' + esc(N(0)) + ' <b>' + a + '</b></span><span>' + esc(N(1)) + ' <b>' + b + '</b></span></div><p class="note">Rounds won across all games</p></div>' +
+      root.innerHTML = shell(this, '<div class="card feature"><p class="big-text" id="lead">' + esc(head) + '</p><div class="score"><span>' + esc(N(0)) + ' <b>' + a + '</b></span><span>' + esc(N(1)) + ' <b>' + b + '</b></span></div><p class="note">Rounds won across all games</p></div>' +
         '<div class="card"><table class="board"><thead><tr><th scope="col">Game</th><th scope="col">' + esc(N(0)) + '</th><th scope="col">' + esc(N(1)) + '</th></tr></thead><tbody>' +
         GAMES.map(function (id) { var v = views[id], sc = v.scoreOf(); return '<tr><th scope="row"><a href="#' + id + '">' + v.emoji + ' ' + v.title + '</a><small>rounds won ' + roundsWon(0, id) + ' : ' + roundsWon(1, id) + '</small></th><td>' + sc[0] + '</td><td>' + sc[1] + '</td></tr>'; }).join('') +
         '</tbody></table><p class="note">The numbers are each game’s own points.</p></div>' +
+        '<div class="card"><p><b>Badges</b> <span class="note">' + esc(N(0)) + ' ' + Object.keys(S.badges.p0).length + ' · ' + esc(N(1)) + ' ' + Object.keys(S.badges.p1).length + ' of ' + BADGES.length + '</span></p><ul class="badges">' +
+        BADGES.map(function (bd) { var who = [0, 1].filter(function (i) { return S.badges['p' + i][bd.id]; });
+          return '<li class="badge' + (who.length ? ' earned' : '') + '"><span class="badge-icon" aria-hidden="true">' + bd.icon + '</span><span><b>' + bd.name + '</b><small>' + bd.how + '</small>' + (who.length ? '<span class="holders">' + who.map(function (i) { return '<i>' + esc(N(i)) + '</i>'; }).join('') + '</span>' : '') + '</span></li>'; }).join('') + '</ul></div>' +
         (log.length ? '<div class="card"><p><b>Latest rounds</b></p><ul class="rounds">' + log.map(function (r) { var v = views[r.g] || { emoji: '', title: r.g };
           return '<li><span>' + v.emoji + ' ' + esc(v.title) + '<small>' + new Date(r.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</small></span><span>' + (r.w < 0 ? 'Tie' : esc(N(r.w)) + ' won') + '<small>' + r.p[0] + ' : ' + r.p[1] + '</small></span></li>'; }).join('') + '</ul></div>' : '') +
         '<div class="row mid"><button class="linkbtn" data-act="reset">' + (resetArmed ? 'Tap again to erase every score' : 'Reset all scores') + '</button></div>');

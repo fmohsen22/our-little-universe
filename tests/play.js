@@ -49,7 +49,11 @@ async function solo(name, opts) {
   await go('questions'); await p.locator('[data-act="award"]').nth(1).click(); await go('life'); await p.locator('[data-act="award"]').nth(0).click();
   await go('scores'); const rows = await p.locator('.board tbody tr').count(), lead = await p.textContent('.big-text');
   ok(rows === 6 && await p.locator('.rounds li').count() === 6, 'scoreboard lists six games and the six decided rounds');
-  ok(/Sophie leads 5 to 1/.test(lead), 'scoreboard names the leader (' + lead + ')'); await noScroll(p, 'scores'); await shot('scores');
+  ok(/Sophie leads 5 to 1/.test(lead), 'scoreboard names the leader (' + lead + ')'); await p.waitForFunction(() => document.querySelectorAll('.badge.earned').length >= 4);
+  const earned = (await p.locator('.badge.earned b').allTextContents()).join(', '); ok(/First win/.test(earned) && /High five/.test(earned) && /Hat-trick/.test(earned) && /On fire/.test(earned), 'badges are earned from wins: ' + earned);
+  await p.locator('[data-act="reset"]').click(); await p.locator('[data-act="reset"]').click(); await p.reload(); await p.waitForSelector('.badge');
+  ok(/No rounds/.test(await p.textContent('#lead')) && await p.locator('.badge.earned').count() >= 4, 'badges stay saved after a reload and after scores are reset');
+  await noScroll(p, 'scores'); await shot('scores');
   await go('book'); ok(await p.locator('.memories li').count() >= 4, 'memory book holds the kept items'); await noScroll(p, 'book'); await shot('book');
   await p.reload(); ok(await p.locator('.memories li').count() >= 4, 'memories survive a reload');
   ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : '')); await b.close();
@@ -112,13 +116,15 @@ const fakeSupabase = `window.supabase = { createClient: function () {
       return ch; } };
 } };`;
 
-async function online() {
-  console.log('\n== two phones through the Supabase adapter (stand-in server) ==');
+async function online(mode) {
+  console.log(mode === 'server' ? '\n== two phones through the real room server (server/server.js) ==' : '\n== two phones through the Supabase adapter (stand-in server) ==');
   const { spawn } = require('child_process'), srv = spawn('python3', ['-m', 'http.server', '4174', '--bind', '127.0.0.1'], { cwd: path.resolve(__dirname, '..'), stdio: 'ignore' });
+  const data = fs.mkdtempSync(path.join(require('os').tmpdir(), 'olu-'));
+  const api = mode === 'server' ? spawn('node', [path.resolve(__dirname, '..', 'server', 'server.js')], { env: { ...process.env, PORT: '8788', DATA_DIR: data, ALLOWED_ORIGINS: 'http://127.0.0.1:4174' }, stdio: 'ignore' }) : null;
   await new Promise(r => setTimeout(r, 900)); const base = 'http://127.0.0.1:4174/';
   const b = await chromium.launch(), ctx = await b.newContext({ ...devices['Pixel 7'] }), errors = [];
   try {
-    await ctx.route('**/config.js', r => r.fulfill({ contentType: 'text/javascript', body: "window.OLU_CONFIG={supabaseUrl:'https://example.invalid',supabaseAnonKey:'test'};" }));
+    await ctx.route('**/config.js', r => r.fulfill({ contentType: 'text/javascript', body: mode === 'server' ? "window.OLU_CONFIG={serverUrl:'http://127.0.0.1:8788/'};" : "window.OLU_CONFIG={supabaseUrl:'https://example.invalid',supabaseAnonKey:'test'};" }));
     await ctx.route('**/vendor/supabase.js', r => r.fulfill({ contentType: 'text/javascript', body: fakeSupabase }));
     const a = await ctx.newPage(); watch(a, errors, 'A: '); await a.goto(base); await a.waitForFunction(() => document.querySelector('#sync').dataset.s === 'live');
     const link = await a.inputValue('#invite'); ok(/\?room=[A-Za-z0-9]{20}$/.test(link), 'the host gets a private invite link');
@@ -135,12 +141,15 @@ async function online() {
     await s.goto(link + '#scores'); await s.waitForSelector('.rounds li'); ok(/Mosi leads 1 to 0/.test(await s.textContent('.big-text')), 'the scoreboard on the other phone shows the winner');
     await a.reload(); await a.waitForFunction(() => document.querySelector('#sync').dataset.s === 'live'); await a.goto(link + '#scores'); await a.waitForSelector('.rounds li');
     ok(await a.locator('.rounds li').count() === 1, 'scores come back from the database after a reload');
+    ok(await a.locator('.badge.earned').count() === 1 && /Mosi/.test(await a.textContent('.badge.earned .holders')), 'the First win badge is stored in the database for the winner');
     ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
-  } finally { await b.close(); srv.kill(); }
+    if (mode === 'server') { await new Promise(r => setTimeout(r, 400)); const files = fs.readdirSync(data).filter(f => f.endsWith('.json')); const saved = JSON.parse(fs.readFileSync(path.join(data, files[0]), 'utf8'));
+      ok(files.length === 1 && saved.scores.log.length === 1 && saved.badges.p0.first > 0, 'the server wrote the room to disk: scores, badges and game state'); }
+  } finally { await b.close(); srv.kill(); if (api) api.kill(); fs.rmSync(data, { recursive: true, force: true }); }
 }
 
 (async () => {
   await solo('phone', { ...devices['Pixel 7'] });
   await solo('desktop', { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, colorScheme: 'light' });
-  await duo(); await online(); console.log('\nALL PASSED');
+  await duo(); await online('supabase'); await online('server'); console.log('\nALL PASSED');
 })().catch(e => { console.error('\nFAILED:', e.message); process.exit(1); });

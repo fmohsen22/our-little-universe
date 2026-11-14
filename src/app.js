@@ -32,7 +32,8 @@
     draw: { phase: 'idle', drawer: 0, word: '', endsAt: 0, strokes: [], guesses: [], solved: false, score: [0, 0] },
     esm: { phase: 'setup', lang: 'en', cats: ['name', 'surname', 'city', 'country', 'animal', 'food'], secs: 90, letter: '', endsAt: 0, answers: { p0: {}, p1: {} }, marks: { p0: {}, p1: {} }, total: [0, 0], round: 0, last: null },
     book: { items: [] },
-    scores: { log: [] }
+    scores: { log: [] },
+    badges: { p0: {}, p1: {} }
   };
   var S = {}, db = null, chains = {}, syncState = 'local', peers = 0;
   Object.keys(DEFAULTS).forEach(function (k) { S[k] = merge(clone(DEFAULTS[k]), lsGet('doc:' + k, {})); });
@@ -93,7 +94,44 @@
     save('book', { items: items }); toast('Saved to the Memory Book');
   }
   // Every decided round is written to the shared scoreboard: who won, the points, and when.
-  function logRound(game, winner, pts) { save('scores', { log: S.scores.log.concat([{ at: Date.now(), g: game, w: winner, p: pts }]).slice(-300) }); }
+  function logRound(game, winner, pts) {
+    save('scores', { log: S.scores.log.concat([{ at: Date.now(), g: game, w: winner, p: pts }]).slice(-300) });
+    if (winner >= 0) checkBadges(winner);
+  }
+  /* Badges: earned from the round log, then stored in their own document so they stay even if scores are reset. */
+  var BADGES = [
+    { id: 'first', icon: '🌟', name: 'First win', how: 'Win a round', test: function (c) { return c.wins >= 1; } },
+    { id: 'five', icon: '🖐️', name: 'High five', how: 'Win 5 rounds', test: function (c) { return c.wins >= 5; } },
+    { id: 'ten', icon: '🔟', name: 'Double digits', how: 'Win 10 rounds', test: function (c) { return c.wins >= 10; } },
+    { id: 'twentyfive', icon: '👑', name: 'Royalty', how: 'Win 25 rounds', test: function (c) { return c.wins >= 25; } },
+    { id: 'hattrick', icon: '🎩', name: 'Hat-trick', how: 'Win 3 rounds in a row', test: function (c) { return c.streak >= 3; } },
+    { id: 'fire', icon: '🔥', name: 'On fire', how: 'Win 5 rounds in a row', test: function (c) { return c.streak >= 5; } },
+    { id: 'allround', icon: '🪐', name: 'All-rounder', how: 'Win at least once in all six games', test: function (c) { return GAMES.every(function (g) { return c.by[g] >= 1; }); } },
+    { id: 'questions', icon: '💬', name: 'Silver tongue', how: 'Give the better answer 3 times', test: function (c) { return c.by.questions >= 3; } },
+    { id: 'life', icon: '📚', name: 'Storyteller', how: 'Have the best idea 3 times', test: function (c) { return c.by.life >= 3; } },
+    { id: 'truths', icon: '🧐', name: 'Poker face', how: 'Win Two Truths 3 times', test: function (c) { return c.by.truths >= 3; } },
+    { id: 'missions', icon: '🕶️', name: 'Secret agent', how: 'Win 3 missions', test: function (c) { return c.by.missions >= 3; } },
+    { id: 'draw', icon: '🔮', name: 'Mind reader', how: 'Guess 3 drawings', test: function (c) { return c.by.draw >= 3; } },
+    { id: 'esm', icon: '🧙', name: 'Word wizard', how: 'Win Esm Famil 3 times', test: function (c) { return c.by.esm >= 3; } },
+    { id: 'fullhouse', icon: '💯', name: 'Full house', how: 'Score 50 or more in one Esm Famil round', test: function (c) { return c.bestEsm >= 50; } }
+  ];
+  function badgeStats(p) {
+    var c = { wins: 0, streak: 0, by: {}, bestEsm: 0 }; GAMES.forEach(function (g) { c.by[g] = 0; });
+    S.scores.log.forEach(function (r) {
+      if (r.g === 'esm' && r.p[p] > c.bestEsm) c.bestEsm = r.p[p];
+      if (r.w < 0) return;
+      if (r.w === p) { c.wins += 1; c.streak += 1; c.by[r.g] = (c.by[r.g] || 0) + 1; } else c.streak = 0;
+    });
+    return c;
+  }
+  function checkBadges(p) {
+    var c = badgeStats(p), have = S.badges['p' + p] || {}, got = BADGES.filter(function (b) { return !have[b.id] && b.test(c); });
+    if (!got.length) return;
+    var mine = {}, part = {}; got.forEach(function (b) { mine[b.id] = Date.now(); }); part['p' + p] = mine;
+    patch('badges', part); celebrate();
+    var msg = N(p) + ' earned ' + got.map(function (b) { return b.icon + ' ' + b.name; }).join(', ');
+    setTimeout(function () { toast(msg); }, 600);   // after the game's own message
+  }
   function awardRow(label) { return '<div class="row mid"><span class="soft">' + label + '</span><button class="chip" data-act="award" data-i="0">' + esc(N(0)) + ' +1</button><button class="chip" data-act="award" data-i="1">' + esc(N(1)) + ' +1</button></div>'; }
   function award(name, i) { var st = clone(S[name]); st.score[i] += 1; save(name, st); logRound(name, i, i ? [0, 1] : [1, 0]); toast('Point for ' + N(i)); }
   function celebrate() {
@@ -449,15 +487,18 @@
   function roundsWon(p, g) { return S.scores.log.filter(function (r) { return r.w === p && (!g || r.g === g); }).length; }
   var resetArmed = false;
   views.scores = {
-    emoji: '🏆', title: 'Scoreboard', sub: '', accent: 'gold', deps: ['scores', 'questions', 'life', 'truths', 'missions', 'draw', 'esm'],
+    emoji: '🏆', title: 'Scoreboard', sub: '', accent: 'gold', deps: ['scores', 'badges', 'questions', 'life', 'truths', 'missions', 'draw', 'esm'],
     how: 'Points in every game and every round you have decided, saved for both of you.',
     render: function (root) {
       var a = roundsWon(0), b = roundsWon(1), log = S.scores.log.slice(-12).reverse();
       var head = !S.scores.log.length ? 'No rounds played yet.' : a === b ? 'All square at ' + a + ' rounds each.' : N(a > b ? 0 : 1) + ' leads ' + Math.max(a, b) + ' to ' + Math.min(a, b) + '.';
-      root.innerHTML = shell(this, '<div class="card feature"><p class="big-text">' + esc(head) + '</p><div class="score"><span>' + esc(N(0)) + ' <b>' + a + '</b></span><span>' + esc(N(1)) + ' <b>' + b + '</b></span></div><p class="note">Rounds won across all games</p></div>' +
+      root.innerHTML = shell(this, '<div class="card feature"><p class="big-text" id="lead">' + esc(head) + '</p><div class="score"><span>' + esc(N(0)) + ' <b>' + a + '</b></span><span>' + esc(N(1)) + ' <b>' + b + '</b></span></div><p class="note">Rounds won across all games</p></div>' +
         '<div class="card"><table class="board"><thead><tr><th scope="col">Game</th><th scope="col">' + esc(N(0)) + '</th><th scope="col">' + esc(N(1)) + '</th></tr></thead><tbody>' +
         GAMES.map(function (id) { var v = views[id], sc = v.scoreOf(); return '<tr><th scope="row"><a href="#' + id + '">' + v.emoji + ' ' + v.title + '</a><small>rounds won ' + roundsWon(0, id) + ' : ' + roundsWon(1, id) + '</small></th><td>' + sc[0] + '</td><td>' + sc[1] + '</td></tr>'; }).join('') +
         '</tbody></table><p class="note">The numbers are each game’s own points.</p></div>' +
+        '<div class="card"><p><b>Badges</b> <span class="note">' + esc(N(0)) + ' ' + Object.keys(S.badges.p0).length + ' · ' + esc(N(1)) + ' ' + Object.keys(S.badges.p1).length + ' of ' + BADGES.length + '</span></p><ul class="badges">' +
+        BADGES.map(function (bd) { var who = [0, 1].filter(function (i) { return S.badges['p' + i][bd.id]; });
+          return '<li class="badge' + (who.length ? ' earned' : '') + '"><span class="badge-icon" aria-hidden="true">' + bd.icon + '</span><span><b>' + bd.name + '</b><small>' + bd.how + '</small>' + (who.length ? '<span class="holders">' + who.map(function (i) { return '<i>' + esc(N(i)) + '</i>'; }).join('') + '</span>' : '') + '</span></li>'; }).join('') + '</ul></div>' +
         (log.length ? '<div class="card"><p><b>Latest rounds</b></p><ul class="rounds">' + log.map(function (r) { var v = views[r.g] || { emoji: '', title: r.g };
           return '<li><span>' + v.emoji + ' ' + esc(v.title) + '<small>' + new Date(r.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</small></span><span>' + (r.w < 0 ? 'Tie' : esc(N(r.w)) + ' won') + '<small>' + r.p[0] + ' : ' + r.p[1] + '</small></span></li>'; }).join('') + '</ul></div>' : '') +
         '<div class="row mid"><button class="linkbtn" data-act="reset">' + (resetArmed ? 'Tap again to erase every score' : 'Reset all scores') + '</button></div>');
