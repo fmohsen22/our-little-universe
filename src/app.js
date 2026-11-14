@@ -25,15 +25,16 @@
   /* ---------- store ---------- */
   var DEFAULTS = {
     players: { names: ['Mosi', 'Sophie'] },
-    questions: { cat: 'all', order: [], pos: 0, turn: 0 },
-    life: { scene: null, lines: [] },
+    questions: { cat: 'all', order: [], pos: 0, turn: 0, score: [0, 0] },
+    life: { scene: null, lines: [], score: [0, 0] },
     truths: { phase: 'write', author: 0, items: [], lie: 0, guess: -1, score: [0, 0] },
     missions: { mode: 'coop', current: '', done: 0, wins: [0, 0] },
     draw: { phase: 'idle', drawer: 0, word: '', endsAt: 0, strokes: [], guesses: [], solved: false, score: [0, 0] },
     esm: { phase: 'setup', lang: 'en', cats: ['name', 'surname', 'city', 'country', 'animal', 'food'], secs: 90, letter: '', endsAt: 0, answers: { p0: {}, p1: {} }, marks: { p0: {}, p1: {} }, total: [0, 0], round: 0, last: null },
-    book: { items: [] }
+    book: { items: [] },
+    scores: { log: [] }
   };
-  var S = {}, db = null, chains = {}, syncState = 'local';
+  var S = {}, db = null, chains = {}, syncState = 'local', peers = 0;
   Object.keys(DEFAULTS).forEach(function (k) { S[k] = merge(clone(DEFAULTS[k]), lsGet('doc:' + k, {})); });
 
   function push(name, op) {
@@ -55,12 +56,13 @@
   function setSync(s) {
     syncState = s; var el = $('#sync'); if (!el) return;
     el.dataset.s = s;
-    el.textContent = s === 'live' ? 'Synced' : s === 'error' ? 'Not syncing' : 'This device';
+    el.textContent = s === 'live' ? (peers >= 2 ? 'Synced · both online' : 'Synced') : s === 'error' ? 'Not syncing' : 'This device';
     el.title = s === 'live' ? 'Both of you see the same game.' : s === 'error' ? 'This device could not save to the shared room, so changes stay here.' : 'Games are saved on this device only.';
   }
   function connect() {
-    if (!window.claude || !window.claude.use) return;
-    window.claude.use('db').then(function (d) {
+    // Supabase room first (your own site), otherwise the Artifact's shared store, otherwise this device only.
+    var first = window.OLU_BACKEND ? window.OLU_BACKEND({ onPeers: function (n) { peers = n; setSync(syncState); } }) : Promise.resolve(null);
+    first.then(function (d) { return d || (window.claude && window.claude.use ? window.claude.use('db') : null); }).then(function (d) {
       if (!d) return;
       db = d; var answered = false;
       var slow = setTimeout(function () { if (!answered) setSync('error'); }, 10000);
@@ -90,6 +92,10 @@
     var items = S.book.items.concat([{ id: Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36), kind: kind, text: String(text).slice(0, 4000), at: Date.now() }]).slice(-200);
     save('book', { items: items }); toast('Saved to the Memory Book');
   }
+  // Every decided round is written to the shared scoreboard: who won, the points, and when.
+  function logRound(game, winner, pts) { save('scores', { log: S.scores.log.concat([{ at: Date.now(), g: game, w: winner, p: pts }]).slice(-300) }); }
+  function awardRow(label) { return '<div class="row mid"><span class="soft">' + label + '</span><button class="chip" data-act="award" data-i="0">' + esc(N(0)) + ' +1</button><button class="chip" data-act="award" data-i="1">' + esc(N(1)) + ' +1</button></div>'; }
+  function award(name, i) { var st = clone(S[name]); st.score[i] += 1; save(name, st); logRound(name, i, i ? [0, 1] : [1, 0]); toast('Point for ' + N(i)); }
   function celebrate() {
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var c = $('#fx'), g = c.getContext('2d'), w = c.width = window.innerWidth, h = c.height = window.innerHeight;
@@ -140,7 +146,7 @@
   var GAMES = ['questions', 'life', 'truths', 'missions', 'draw', 'esm'];
 
   views.home = {
-    deps: ['book'],
+    deps: ['book', 'scores'],
     render: function (root) {
       var tiles = GAMES.map(function (id) {
         var v = views[id];
@@ -154,6 +160,8 @@
       root.innerHTML = '<section class="hero"><p class="eyebrow">Our Little Universe</p><h1>What shall we play <em>tonight?</em></h1><p class="soft">A little adventure for two ✨</p></section>' +
         '<ul class="tiles">' + tiles + '</ul>' + sp +
         '<button type="button" class="btn big" data-act="surprise">🎲 Surprise Us!</button>' +
+        '<a class="book-link" href="#scores"><span><b>🏆 Scoreboard</b><br><span class="note">' + (S.scores.log.length ? esc(N(0)) + ' ' + roundsWon(0) + ' · ' + esc(N(1)) + ' ' + roundsWon(1) + ' rounds won' : 'Every round you finish is counted here') + '</span></span><span aria-hidden="true">→</span></a>' +
+        (window.OLU_ROOM ? '<div class="card"><p><b>Play from two phones</b></p><p class="note">Send this private link to ' + esc(N(1)) + '. Whoever opens it joins your room, and every game stays in step.</p><div class="inline"><label class="sr" for="invite">Invite link</label><input id="invite" data-fresh="1" type="text" readonly value="' + esc(window.OLU_ROOM.link) + '"><button type="button" class="btn small" data-act="copy">Copy</button></div></div>' : '') +
         '<a class="book-link" href="#book"><span><b>📖 Memory Book</b><br><span class="note">' + (S.book.items.length ? S.book.items.length + ' saved so far' : 'Favourite questions, stories and missions land here') + '</span></span><span aria-hidden="true">→</span></a>' +
         '<details class="setup"><summary>Names and how playing together works</summary><form class="stack" data-form="names">' +
         '<div class="inline"><div class="field"><label for="n0">Player one</label><input id="n0" type="text" maxlength="20" value="' + esc(S.players.names[0]) + '"></div>' +
@@ -161,7 +169,13 @@
         '<button class="btn small ghost" type="submit">Save names</button>' +
         '<p class="note">On one phone: tap “Playing as” at the top to hand over to the other person. On two devices: each of you picks who you are once, and the games stay in step while the status at the top says Synced.</p></form></details>';
     },
-    acts: { surprise: function () { surprise = { game: rand(GAMES), dare: rand(C.dares) }; render(); } },
+    acts: {
+      surprise: function () { surprise = { game: rand(GAMES), dare: rand(C.dares) }; render(); },
+      copy: function () {
+        var i = $('#invite'), done = function () { toast('Link copied. Send it to ' + N(1) + '.'); }, manual = function () { i.focus(); i.select(); toast('Select the link and copy it'); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(i.value).then(done, manual); else manual();
+      }
+    },
     forms: { names: function () { save('players', { names: [$('#n0').value.trim() || 'Player one', $('#n1').value.trim() || 'Player two'] }); toast('Names saved'); } }
   };
 
@@ -169,7 +183,7 @@
   function qIds(cat) { var out = []; Object.keys(C.questions).forEach(function (c) { if (cat === 'all' || cat === c) C.questions[c].forEach(function (q, i) { out.push(c + ':' + i); }); }); return out; }
   function qText(id) { var p = id.split(':'); return { cat: p[0], text: (C.questions[p[0]] || [])[+p[1]] || '' }; }
   views.questions = {
-    emoji: '💌', title: 'Question Cards', sub: 'Surprise me', accent: 'rose', deps: ['questions'],
+    emoji: '💌', title: 'Question Cards', sub: 'Surprise me', accent: 'rose', deps: ['questions'], scoreOf: function () { return S.questions.score; },
     how: 'Flip a card, answer honestly, then pass the turn.',
     render: function (root) {
       var st = S.questions, chips = '<button class="chip" data-act="cat" data-cat="all" aria-pressed="' + (st.cat === 'all') + '">All</button>' +
@@ -181,13 +195,14 @@
         card = '<div class="card feature' + (flip ? ' flip' : '') + '"><span class="tag">' + C.cats[q.cat] + '</span><p class="big-text" id="q-text">' + esc(q.text) + '</p>' +
           '<p class="turn">' + esc(N(st.turn)) + ' answers first</p><p class="note">Card ' + (st.pos + 1) + ' of ' + st.order.length + '</p></div>' +
           '<div class="row mid"><button class="btn ghost" data-act="prev"' + (st.pos ? '' : ' disabled') + '>Previous</button><button class="btn ghost" data-act="skip">Skip</button><button class="btn" data-act="next">Next card</button></div>' +
-          '<div class="row mid"><button class="btn small ghost" data-act="keep">♡ Keep this question</button></div>';
+          awardRow('Better answer?') + '<div class="row mid"><button class="btn small ghost" data-act="keep">♡ Keep this question</button></div>';
       }
-      root.innerHTML = shell(this, '<div class="row mid" role="group" aria-label="Category">' + chips + '</div>' + card);
+      root.innerHTML = shell(this, scoreRow(st.score) + '<div class="row mid" role="group" aria-label="Category">' + chips + '</div>' + card);
     },
     acts: {
-      cat: function (el) { save('questions', { cat: el.dataset.cat, order: shuffle(qIds(el.dataset.cat)), pos: 0, turn: S.questions.turn }); },
-      deal: function () { save('questions', { cat: S.questions.cat, order: shuffle(qIds(S.questions.cat)), pos: 0, turn: S.questions.turn }); },
+      cat: function (el) { save('questions', merge(clone(S.questions), { cat: el.dataset.cat, order: shuffle(qIds(el.dataset.cat)), pos: 0 })); },
+      deal: function () { save('questions', merge(clone(S.questions), { order: shuffle(qIds(S.questions.cat)), pos: 0 })); },
+      award: function (el) { award('questions', +el.dataset.i); },
       next: function () { move(1, true); }, skip: function () { move(1, false); }, prev: function () { move(-1, true); },
       keep: function () { addMemory('Question', qText(S.questions.order[S.questions.pos]).text); }
     }
@@ -204,32 +219,33 @@
   function newScene() { var j = shuffle(C.life.jobs); return { country: rand(C.life.countries), jobs: [j[0], j[1]], home: rand(C.life.homes), pet: rand(C.life.pets), event: rand(C.life.events) }; }
   function sceneText(s) { return 'You live in ' + s.country + ', in ' + s.home + '. ' + N(0) + ' is ' + s.jobs[0] + ' and ' + N(1) + ' is ' + s.jobs[1] + '. You have ' + s.pet + '. And then ' + s.event + '.'; }
   views.life = {
-    emoji: '🌍', title: 'Imaginary Life', sub: 'Build our story', accent: 'mint', deps: ['life'],
+    emoji: '🌍', title: 'Imaginary Life', sub: 'Build our story', accent: 'mint', deps: ['life'], scoreOf: function () { return S.life.score; },
     how: 'Roll a life, then take turns adding what happens next.',
     render: function (root) {
       var st = S.life, s = st.scene, m = function (t) { return '<mark>' + esc(t) + '</mark>'; };
       if (!s) { root.innerHTML = shell(this, '<div class="card feature"><p class="big-text">Somewhere, another version of you two is living a very different life.</p><div class="row mid"><button class="btn" data-act="roll">Roll our life</button></div></div>'); return; }
       var lines = st.lines.map(function (l) { return l.twist ? '<li class="twist"><b>Plot twist</b>' + esc(l.text) + '</li>' : '<li><b>' + esc(N(l.by)) + '</b>' + esc(l.text) + '</li>'; }).join('');
-      root.innerHTML = shell(this, '<div class="card"><p class="scene">You live in ' + m(s.country) + ', in ' + m(s.home) + '. ' + esc(N(0)) + ' is ' + m(s.jobs[0]) + ' and ' + esc(N(1)) + ' is ' + m(s.jobs[1]) + '. You have ' + m(s.pet) + '. And then ' + m(s.event) + '.</p></div>' +
+      root.innerHTML = shell(this, scoreRow(st.score) + '<div class="card"><p class="scene">You live in ' + m(s.country) + ', in ' + m(s.home) + '. ' + esc(N(0)) + ' is ' + m(s.jobs[0]) + ' and ' + esc(N(1)) + ' is ' + m(s.jobs[1]) + '. You have ' + m(s.pet) + '. And then ' + m(s.event) + '.</p></div>' +
         (lines ? '<ol class="story">' + lines + '</ol>' : '<p class="note center">No story yet. Someone has to say what happens first.</p>') +
         '<form class="stack" data-form="line"><div class="field"><label for="l-text">' + esc(N(me)) + ', what happens next?</label><textarea id="l-text" maxlength="400" placeholder="One or two sentences"></textarea></div>' +
         '<div class="row"><button class="btn" type="submit">Add to the story</button><button class="btn ghost" type="button" data-act="twist">⚡ Plot twist</button></div></form>' +
-        '<div class="row split"><button class="btn small ghost" data-act="keep">♡ Save this story</button><button class="btn small ghost" data-act="roll">Roll a new life</button></div>');
+        awardRow('Best idea so far?') + '<div class="row split"><button class="btn small ghost" data-act="keep">♡ Save this story</button><button class="btn small ghost" data-act="roll">Roll a new life</button></div>');
     },
     acts: {
-      roll: function () { save('life', { scene: newScene(), lines: [] }); },
-      twist: function () { save('life', { scene: S.life.scene, lines: S.life.lines.concat([{ twist: true, text: rand(C.life.twists) }]).slice(-60) }); },
+      roll: function () { save('life', merge(clone(S.life), { scene: newScene(), lines: [] })); },
+      award: function (el) { award('life', +el.dataset.i); },
+      twist: function () { save('life', merge(clone(S.life), { lines: S.life.lines.concat([{ twist: true, text: rand(C.life.twists) }]).slice(-60) })); },
       keep: function () { addMemory('Imaginary life', sceneText(S.life.scene) + S.life.lines.map(function (l) { return '\n' + (l.twist ? 'Plot twist: ' : N(l.by) + ': ') + l.text; }).join('')); }
     },
     forms: { line: function () {
       var t = $('#l-text'), v = t.value.trim(); if (!v) { toast('Write a sentence first'); return; }
-      t.value = ''; save('life', { scene: S.life.scene, lines: S.life.lines.concat([{ by: me, text: v }]).slice(-60) });
+      t.value = ''; save('life', merge(clone(S.life), { lines: S.life.lines.concat([{ by: me, text: v }]).slice(-60) }));
     } }
   };
 
   /* 3. Two Truths & One Lie */
   views.truths = {
-    emoji: '🎭', title: 'Two Truths & One Lie', sub: 'Guess the lie', accent: 'lilac', deps: ['truths'],
+    emoji: '🎭', title: 'Two Truths & One Lie', sub: 'Guess the lie', accent: 'lilac', deps: ['truths'], scoreOf: function () { return S.truths.score; },
     how: 'One of you writes three statements. The other finds the false one.',
     render: function (root) {
       var st = S.truths, a = st.author, mine = me === a, body;
@@ -251,7 +267,7 @@
       root.innerHTML = shell(this, scoreRow(st.score) + body);
     },
     acts: {
-      guess: function (el) { var st = clone(S.truths), g = +el.dataset.i; st.guess = g; st.phase = 'reveal'; st.score[g === st.lie ? 1 - st.author : st.author] += 1; save('truths', st); },
+      guess: function (el) { var st = clone(S.truths), g = +el.dataset.i; st.guess = g; st.phase = 'reveal'; var w = g === st.lie ? 1 - st.author : st.author; st.score[w] += 1; save('truths', st); logRound('truths', w, w ? [0, 1] : [1, 0]); },
       swap: function () { save('truths', { phase: 'write', author: 1 - S.truths.author, items: [], lie: 0, guess: -1, score: S.truths.score }); }
     },
     forms: { send: function () {
@@ -265,7 +281,7 @@
 
   /* 4. Secret Missions */
   views.missions = {
-    emoji: '🕵️', title: 'Secret Missions', sub: 'Go exploring', accent: 'gold', deps: ['missions'],
+    emoji: '🕵️', title: 'Secret Missions', sub: 'Go exploring', accent: 'gold', deps: ['missions'], scoreOf: function () { return S.missions.wins; },
     how: 'A small challenge for a walk or a date. No tracking, just the two of you.',
     render: function (root) {
       var st = S.missions, coop = st.mode === 'coop';
@@ -280,7 +296,7 @@
       mode: function (el) { var st = clone(S.missions); st.mode = el.dataset.m; st.current = ''; save('missions', st); },
       deal: function () { var st = clone(S.missions), pool = C.missions[st.mode].filter(function (m) { return m !== st.current; }); st.current = rand(pool); save('missions', st); },
       done: function () { var st = clone(S.missions), text = st.current; st.done += 1; st.current = ''; save('missions', st); celebrate(); addMemory('Mission completed', text); },
-      win: function (el) { var st = clone(S.missions), i = +el.dataset.i, text = st.current; st.wins[i] += 1; st.current = ''; save('missions', st); celebrate(); addMemory('Mission won by ' + N(i), text); }
+      win: function (el) { var st = clone(S.missions), i = +el.dataset.i, text = st.current; st.wins[i] += 1; st.current = ''; save('missions', st); logRound('missions', i, i ? [0, 1] : [1, 0]); celebrate(); addMemory('Mission won by ' + N(i), text); }
     }
   };
 
@@ -314,7 +330,7 @@
     c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
   }
   views.draw = {
-    emoji: '🎨', title: 'Draw & Guess', sub: 'Creative chaos', accent: 'peach', deps: ['draw'],
+    emoji: '🎨', title: 'Draw & Guess', sub: 'Creative chaos', accent: 'peach', deps: ['draw'], scoreOf: function () { return S.draw.score; },
     how: 'Sixty seconds. One of you draws, the other guesses.',
     render: function (root) {
       var st = S.draw, d = st.drawer, iDraw = me === d, live = st.phase === 'draw' && Date.now() < st.endsAt, over = st.phase === 'done' || (st.phase === 'draw' && !live);
@@ -361,6 +377,7 @@
       var ok = norm(v) === norm(st.word), p = { guesses: st.guesses.concat([{ by: me, text: v }]).slice(-12) };
       if (ok) { var sc = st.score.slice(); sc[me] += 2; sc[st.drawer] += 1; p.solved = true; p.phase = 'done'; p.score = sc; }
       patch('draw', p);
+      if (ok) { var pts = [0, 0]; pts[me] = 2; pts[st.drawer] = 1; logRound('draw', me, pts); }
     } }
   };
 
@@ -375,7 +392,7 @@
   function esmCollect() { var out = {}; $$('input[data-cat]').forEach(function (el) { out[el.dataset.cat] = el.value.slice(0, 60); }); return out; }
   var esmTimer = 0;
   views.esm = {
-    emoji: '🔤', title: 'Esm Famil', sub: 'Word battle', accent: 'sky', deps: ['esm'],
+    emoji: '🔤', title: 'Esm Famil', sub: 'Word battle', accent: 'sky', deps: ['esm'], scoreOf: function () { return S.esm.total; },
     how: 'اسم فامیل. One letter, a handful of categories, and a clock.',
     render: function (root) {
       var st = S.esm, live = st.phase === 'play' && Date.now() < st.endsAt, review = st.phase === 'review' || (st.phase === 'play' && !live), body;
@@ -420,12 +437,39 @@
       mark: function (el) { var m = {}, p = {}; p[el.dataset.cat] = { 10: 5, 5: 0, 0: 10 }[el.dataset.v]; m['p' + el.dataset.p] = p; patch('esm', { marks: m }); },
       finish: function () {
         var st = clone(S.esm), sums = [0, 1].map(function (p) { return st.cats.reduce(function (n, id) { return n + esmMark(p, id); }, 0); });
-        st.total = [st.total[0] + sums[0], st.total[1] + sums[1]]; st.round += 1; st.phase = 'setup'; st.last = { letter: st.letter, sums: sums }; save('esm', st);
+        st.total = [st.total[0] + sums[0], st.total[1] + sums[1]]; st.round += 1; st.phase = 'setup'; st.last = { letter: st.letter, sums: sums }; save('esm', st); logRound('esm', sums[0] === sums[1] ? -1 : (sums[0] > sums[1] ? 0 : 1), sums);
         if (sums[0] !== sums[1]) celebrate();
         toast(sums[0] === sums[1] ? 'A tie!' : N(sums[0] > sums[1] ? 0 : 1) + ' wins the round');
       },
       reset: function () { var st = clone(S.esm); st.total = [0, 0]; st.round = 0; st.last = null; save('esm', st); }
     }
+  };
+
+  /* Scoreboard */
+  function roundsWon(p, g) { return S.scores.log.filter(function (r) { return r.w === p && (!g || r.g === g); }).length; }
+  var resetArmed = false;
+  views.scores = {
+    emoji: '🏆', title: 'Scoreboard', sub: '', accent: 'gold', deps: ['scores', 'questions', 'life', 'truths', 'missions', 'draw', 'esm'],
+    how: 'Points in every game and every round you have decided, saved for both of you.',
+    render: function (root) {
+      var a = roundsWon(0), b = roundsWon(1), log = S.scores.log.slice(-12).reverse();
+      var head = !S.scores.log.length ? 'No rounds played yet.' : a === b ? 'All square at ' + a + ' rounds each.' : N(a > b ? 0 : 1) + ' leads ' + Math.max(a, b) + ' to ' + Math.min(a, b) + '.';
+      root.innerHTML = shell(this, '<div class="card feature"><p class="big-text">' + esc(head) + '</p><div class="score"><span>' + esc(N(0)) + ' <b>' + a + '</b></span><span>' + esc(N(1)) + ' <b>' + b + '</b></span></div><p class="note">Rounds won across all games</p></div>' +
+        '<div class="card"><table class="board"><thead><tr><th scope="col">Game</th><th scope="col">' + esc(N(0)) + '</th><th scope="col">' + esc(N(1)) + '</th></tr></thead><tbody>' +
+        GAMES.map(function (id) { var v = views[id], sc = v.scoreOf(); return '<tr><th scope="row"><a href="#' + id + '">' + v.emoji + ' ' + v.title + '</a><small>rounds won ' + roundsWon(0, id) + ' : ' + roundsWon(1, id) + '</small></th><td>' + sc[0] + '</td><td>' + sc[1] + '</td></tr>'; }).join('') +
+        '</tbody></table><p class="note">The numbers are each game’s own points.</p></div>' +
+        (log.length ? '<div class="card"><p><b>Latest rounds</b></p><ul class="rounds">' + log.map(function (r) { var v = views[r.g] || { emoji: '', title: r.g };
+          return '<li><span>' + v.emoji + ' ' + esc(v.title) + '<small>' + new Date(r.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</small></span><span>' + (r.w < 0 ? 'Tie' : esc(N(r.w)) + ' won') + '<small>' + r.p[0] + ' : ' + r.p[1] + '</small></span></li>'; }).join('') + '</ul></div>' : '') +
+        '<div class="row mid"><button class="linkbtn" data-act="reset">' + (resetArmed ? 'Tap again to erase every score' : 'Reset all scores') + '</button></div>');
+    },
+    acts: { reset: function () {
+      if (!resetArmed) { resetArmed = true; render(); setTimeout(function () { resetArmed = false; if (current === views.scores) render(); }, 4000); return; }
+      resetArmed = false;
+      ['questions', 'life', 'truths', 'draw'].forEach(function (n) { save(n, merge(clone(S[n]), { score: [0, 0] }), true); });
+      save('missions', merge(clone(S.missions), { wins: [0, 0], done: 0 }), true);
+      save('esm', merge(clone(S.esm), { total: [0, 0], round: 0, last: null }), true);
+      save('scores', { log: [] }); toast('Scores reset');
+    } }
   };
 
   /* Memory Book */

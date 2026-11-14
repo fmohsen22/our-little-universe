@@ -46,6 +46,10 @@ async function solo(name, opts) {
   await p.locator('.pts').nth(0).click(); ok(await p.locator('.pts').nth(0).textContent() === '0', 'a score can be changed by hand'); await act('finish');
   const tot = (await p.locator('.score b').allTextContents()).join(); ok(tot === '10,15', 'esm totals add up to 10 and 15 (got ' + tot + ')');
 
+  await go('questions'); await p.locator('[data-act="award"]').nth(1).click(); await go('life'); await p.locator('[data-act="award"]').nth(0).click();
+  await go('scores'); const rows = await p.locator('.board tbody tr').count(), lead = await p.textContent('.big-text');
+  ok(rows === 6 && await p.locator('.rounds li').count() === 6, 'scoreboard lists six games and the six decided rounds');
+  ok(/Sophie leads 5 to 1/.test(lead), 'scoreboard names the leader (' + lead + ')'); await noScroll(p, 'scores'); await shot('scores');
   await go('book'); ok(await p.locator('.memories li').count() >= 4, 'memory book holds the kept items'); await noScroll(p, 'book'); await shot('book');
   await p.reload(); ok(await p.locator('.memories li').count() >= 4, 'memories survive a reload');
   ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : '')); await b.close();
@@ -93,8 +97,50 @@ async function duo() {
   ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : '')); await b.close();
 }
 
+// A stand-in for the Supabase client: rows in localStorage, broadcasts and presence as storage events between the two pages.
+const fakeSupabase = `window.supabase = { createClient: function () {
+  var rows = function () { return JSON.parse(localStorage.getItem('sb:rows') || '{}'); }, put = function (r) { localStorage.setItem('sb:rows', JSON.stringify(r)); };
+  var merge = function (t, p) { for (var k in p) { if (p[k] && typeof p[k] === 'object' && !Array.isArray(p[k])) t[k] = merge(t[k] && typeof t[k] === 'object' && !Array.isArray(t[k]) ? t[k] : {}, p[k]); else t[k] = p[k]; } return t; };
+  return {
+    rpc: function (fn, a) { return new Promise(function (res) { setTimeout(function () { var r = rows(), k = a.p_room + '/' + a.p_name;
+      if (fn === 'olu_load') return res({ data: Object.keys(r).filter(function (x) { return x.indexOf(a.p_room + '/') === 0; }).map(function (x) { return { name: x.split('/')[1], data: r[x] }; }), error: null });
+      if (fn === 'olu_save') r[k] = a.p_data; else r[k] = merge(r[k] || {}, a.p_part); put(r); res({ data: null, error: null }); }, 40); }); },
+    channel: function (name, o) { var on = {}, key = o.config.presence.key, people = function () { var out = {}; for (var i = 0; i < localStorage.length; i++) { var x = localStorage.key(i); if (x.indexOf('sb:here:' + name + ':') === 0) out[x] = 1; } return out; };
+      window.addEventListener('storage', function (e) { if (e.key === 'sb:bc:' + name && e.newValue && on.op) on.op({ payload: JSON.parse(e.newValue).payload }); if (e.key && e.key.indexOf('sb:here:') === 0 && on.sync) on.sync(); });
+      var ch = { on: function (type, f, cb) { on[type === 'broadcast' ? 'op' : 'sync'] = cb; return ch; }, subscribe: function (cb) { setTimeout(function () { cb('SUBSCRIBED'); }, 20); return ch; },
+        send: function (m) { localStorage.setItem('sb:bc:' + name, JSON.stringify({ payload: m.payload, n: Math.random() })); }, track: function () { localStorage.setItem('sb:here:' + name + ':' + key, '1'); if (on.sync) on.sync(); }, presenceState: people };
+      return ch; } };
+} };`;
+
+async function online() {
+  console.log('\n== two phones through the Supabase adapter (stand-in server) ==');
+  const { spawn } = require('child_process'), srv = spawn('python3', ['-m', 'http.server', '4174', '--bind', '127.0.0.1'], { cwd: path.resolve(__dirname, '..'), stdio: 'ignore' });
+  await new Promise(r => setTimeout(r, 900)); const base = 'http://127.0.0.1:4174/';
+  const b = await chromium.launch(), ctx = await b.newContext({ ...devices['Pixel 7'] }), errors = [];
+  try {
+    await ctx.route('**/config.js', r => r.fulfill({ contentType: 'text/javascript', body: "window.OLU_CONFIG={supabaseUrl:'https://example.invalid',supabaseAnonKey:'test'};" }));
+    await ctx.route('**/vendor/supabase.js', r => r.fulfill({ contentType: 'text/javascript', body: fakeSupabase }));
+    const a = await ctx.newPage(); watch(a, errors, 'A: '); await a.goto(base); await a.waitForFunction(() => document.querySelector('#sync').dataset.s === 'live');
+    const link = await a.inputValue('#invite'); ok(/\?room=[A-Za-z0-9]{20}$/.test(link), 'the host gets a private invite link');
+    // the guest is a separate browser profile for identity (own "me"), sharing the stand-in server's storage
+    const s = await ctx.newPage(); watch(s, errors, 'B: '); await s.addInitScript(() => { const g = Storage.prototype.getItem, st = Storage.prototype.setItem; Storage.prototype.getItem = function (k) { return g.call(this, k.indexOf('olu:') === 0 ? 'guest:' + k : k); }; Storage.prototype.setItem = function (k, v) { return st.call(this, k.indexOf('olu:') === 0 ? 'guest:' + k : k, v); }; });
+    await s.goto(link); await s.waitForFunction(() => /both online/.test(document.querySelector('#sync').textContent));
+    ok(/Sophie/.test(await s.textContent('#who')) && /Mosi/.test(await a.textContent('#who')), 'opening the link joins the room as player two, and both show online');
+    await a.goto(link + '#esm'); await s.goto(link + '#esm'); await a.waitForSelector('[data-act="start"]'); await a.locator('[data-act="start"]').click(); await s.waitForSelector('#e-name');
+    ok(await s.textContent('.letter') === await a.textContent('.letter') && Math.abs(+(await s.textContent('#e-time')) - +(await a.textContent('#e-time'))) <= 1, 'esm famil: same letter and the same 90-second clock on both phones');
+    await a.fill('#e-name', 'Anna'); await a.fill('#e-city', 'Athens'); await s.fill('#e-name', 'Ali'); await s.waitForTimeout(900);
+    await s.locator('[data-act="stop"]').click(); await a.waitForSelector('.review'); await s.waitForFunction(() => /Athens/.test(document.querySelector('.review').textContent));
+    await a.locator('[data-act="finish"]').click(); await s.waitForFunction(() => /Round 1/.test((document.querySelector('.turn') || {}).textContent || ''));
+    ok((await s.locator('.score b').allTextContents()).join() === '20,10', 'esm famil: the round is scored 20 to 10 on both phones');
+    await s.goto(link + '#scores'); await s.waitForSelector('.rounds li'); ok(/Mosi leads 1 to 0/.test(await s.textContent('.big-text')), 'the scoreboard on the other phone shows the winner');
+    await a.reload(); await a.waitForFunction(() => document.querySelector('#sync').dataset.s === 'live'); await a.goto(link + '#scores'); await a.waitForSelector('.rounds li');
+    ok(await a.locator('.rounds li').count() === 1, 'scores come back from the database after a reload');
+    ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
+  } finally { await b.close(); srv.kill(); }
+}
+
 (async () => {
   await solo('phone', { ...devices['Pixel 7'] });
   await solo('desktop', { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, colorScheme: 'light' });
-  await duo(); console.log('\nALL PASSED');
+  await duo(); await online(); console.log('\nALL PASSED');
 })().catch(e => { console.error('\nFAILED:', e.message); process.exit(1); });
