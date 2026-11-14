@@ -6,7 +6,7 @@
    Or a Supabase project (see supabase/schema.sql). Both values are meant to be public
    (Project Settings -> API). Never put the service_role key here. */
 window.OLU_CONFIG = {
-  serverUrl: '',
+  serverUrl: 'https://game-api.mosi-app.com',
   supabaseUrl: '',
   supabaseAnonKey: ''
 };
