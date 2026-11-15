@@ -9,8 +9,8 @@ const ok = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log('  o
   const api = spawn('node', [path.join(root, 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT: '8792', DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '300', REVIEW_MS: '20000', MIN_PLAY_MS: '0', MIN_REVIEW_MS: '0', ALLOWED_ORIGINS: 'http://127.0.0.1:4174' }), stdio: 'ignore' });
   await new Promise(r => setTimeout(r, 900));
   const browser = await chromium.launch(), errors = [];
-  const person = async (name, opts) => { const ctx = await browser.newContext(opts); await ctx.route('**/config.js', r => r.fulfill({ contentType: 'text/javascript', body: "window.WPM_CONFIG={serverUrl:'" + apiUrl + "',princeImage:'assets/prince-mohsey.png'};" }));
-    await ctx.route('**/assets/prince-mohsey.png', r => r.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(root, 'icon-192.png')) })); /* a stand-in for the uploaded picture */ const p = await ctx.newPage();
+  const person = async (name, opts) => { const ctx = await browser.newContext(opts); await ctx.route('**/config.js', r => r.fulfill({ contentType: 'text/javascript', body: "window.WPM_CONFIG={serverUrl:'" + apiUrl + "',princeImage:'assets/prince-mohsey.jpg'};" }));
+    await ctx.route('**/assets/prince-mohsey.jpg', r => r.fulfill({ contentType: 'image/jpeg', body: fs.readFileSync(path.join(root, 'assets', 'prince-mohsey.jpg')) })); /* a stand-in for the uploaded picture */ const p = await ctx.newPage();
     p.on('console', m => { if (m.type() === 'error' && !/fonts\.g|net::ERR|409|403|401/.test(m.text())) errors.push(name + ': ' + m.text()); }); p.on('pageerror', e => errors.push(name + ': ' + e)); return p; };
   const shot = async (p, n) => { if (shots) await p.screenshot({ path: path.join(shots, n + '.png'), fullPage: true }); };
   const fits = async (p, w) => ok(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no sideways scroll: ' + w);

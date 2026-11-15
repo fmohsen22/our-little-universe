@@ -203,7 +203,8 @@
       var final = st.phase === 'results', sc = st.scores, mineSc = sc.players[me.id];
       body = (final ? '<div class="card feature"><p class="big-text">' + (sc.winner ? esc(st.players.filter(function (p) { return p.id === sc.winner; }).map(royalName)[0] || 'Someone') + ' wins the round' : 'No winner this round') + '</p>' +
           (mineSc ? '<p class="turn">You scored ' + mineSc.total + (!sc.scored ? '. Practice round: nothing was added to your record' : mineSc.capped ? '. You have played more rounds this hour than count: take a break' : '') + '</p>' + (sc.scored ? levelLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') : '') : '') + '</div>'
-        : '<p class="letter" lang="' + s.lang + '">' + esc(st.letter) + '</p><p class="timer" id="t-time">' + left(st.reviewEndsAt) + '</p><p class="center soft">Check the answers. Reject one that does not count; it falls if more than half of the other players agree.</p>') +
+        : '<p class="letter" lang="' + s.lang + '">' + esc(st.letter) + '</p><p class="center soft">Check the answers. Reject one that does not count; it falls if more than half of the other players agree.</p>' +
+          '<p class="check-time">Checking closes in <b id="t-time">' + left(st.reviewEndsAt) + '</b> seconds, or as soon as everyone presses Done checking.</p>') +
         '<div class="review">' + (sc.cats || s.cats).map(function (id) { var c = catOf(id);
           return '<div class="review-row"><h3>' + c.en + ' · <span lang="fa">' + c.fa + '</span></h3>' + sc.order.map(function (pid) {
             var p = st.players.filter(function (x) { return x.id === pid; })[0] || { name: '?' }, a = sc.players[pid].cats[id], votes = ((st.rejects[pid] || {})[id] || []), mineVote = votes.indexOf(me.id) >= 0;

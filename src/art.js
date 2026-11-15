@@ -34,10 +34,10 @@
       '<circle cx="60" cy="60" r="38" fill="none" stroke="' + F + '" stroke-width="1.6" stroke-dasharray="0.100 6.530" stroke-linecap="round"/>' +
       '<g fill="' + F + '" stroke="' + D + '" stroke-width="1.6" stroke-linejoin="round" transform="translate(60 60) scale(.86) translate(-60 -60)">' + (typeof g === 'function' ? g() : g) + '</g></svg>';
   }
-  /* Prince Mohsey. The picture at assets/prince-mohsey.png (or princeImage in config.js) is shown when it exists;
+  /* Prince Mohsey. The picture named by princeImage in config.js is shown when it exists;
      until then, or if it fails to load, this drawn stand-in is shown instead. */
   window.WPM_PRINCE = function (size) {
-    var src = (window.WPM_CONFIG || {}).princeImage || 'assets/prince-mohsey.png';
+    var src = (window.WPM_CONFIG || {}).princeImage || 'assets/prince-mohsey.jpg';
     return '<span class="prince-wrap" style="width:' + size + 'px;height:' + size + 'px"><img class="prince" src="' + esc(src) + '" width="' + size + '" height="' + size + '" alt="Prince Mohsey" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' +
       '<span hidden>' + drawn(size) + '</span></span>';
   };
