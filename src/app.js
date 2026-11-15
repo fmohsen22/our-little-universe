@@ -41,7 +41,10 @@
   var royalName = function (p) { return (p.royal && p.royal !== 'Champion' ? p.royal + ' ' : '') + p.name; };
   var rankDef = function (id) { return meta.ranks.filter(function (r) { return r.id === id; })[0]; };
   var achDef = function (id) { return meta.achievements.filter(function (a) { return a.id === id; })[0]; };
-  var rankTitle = function (r, p) { return r.title.replace('{royal}', p.royal && p.royal !== 'Champion' ? p.royal : 'Champion').replace('{kingdom}', p.kingdom === 'turan' ? 'Turan' : 'Iran'); };
+  var KINGDOMS = [{ id: 'iran', name: 'Iran', heir: 'Iraj', art: 'lion', metal: 'gold' }, { id: 'turan', name: 'Turan', heir: 'Tur', art: 'crown', metal: 'silver' }, { id: 'rum', name: 'Rum', heir: 'Salm', art: 'shield', metal: 'ruby' }];
+  var kingdom = function (id) { return KINGDOMS.filter(function (k) { return k.id === id; })[0] || KINGDOMS[0]; };
+  var kingdomChips = function (act, cur) { return '<div class="row" role="group" aria-label="Kingdom">' + KINGDOMS.map(function (k) { return '<button type="button" class="chip" data-act="' + act + '" data-f="kingdom" data-v="' + k.id + '" aria-pressed="' + (cur === k.id) + '">' + (act === 'pick' ? 'Kingdom of ' : '') + k.name + '</button>'; }).join('') + '</div>'; };
+  var rankTitle = function (r, p) { return r.title.replace('{royal}', p.royal && p.royal !== 'Champion' ? p.royal : 'Champion').replace('{kingdom}', kingdom(p.kingdom).name); };
   var medal = function (p, size) { var r = p.rank && rankDef(p.rank); return r ? art(r.art, r.metal, size, r.badge) : art('lock', 'bronze', size, 'No crown yet', true); };
   var bar = function (v, goal) { return '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + goal + '" aria-valuenow="' + Math.min(v, goal) + '"><i style="width:' + (goal ? Math.min(100, Math.round(v / goal * 100)) : 100) + '%"></i></div>'; };
   var levelOf = function (n) { return meta.levels[n - 1]; };
@@ -76,7 +79,7 @@
       '<form class="card" data-form="' + (isNew ? 'register' : 'login') + '"><div class="field"><label for="w-name">' + (isNew ? 'Your name in the kingdom' : 'Your name') + '</label><input id="w-name" type="text" maxlength="20" autocomplete="username" placeholder="For example: Sufi"></div>' +
       '<div class="field"><label for="w-pass">Password</label><input id="w-pass" type="password" maxlength="100" autocomplete="' + (isNew ? 'new-password' : 'current-password') + '" placeholder="' + (isNew ? 'At least 6 characters' : '') + '"></div>' +
       (isNew ? '<p><b>Choose your kingdom</b></p>' + window.WPM_MAP() +
-        '<div class="row" role="group" aria-label="Kingdom"><button type="button" class="chip" data-act="pick" data-f="kingdom" data-v="iran" aria-pressed="true">Kingdom of Iran</button><button type="button" class="chip" data-act="pick" data-f="kingdom" data-v="turan" aria-pressed="false">Kingdom of Turan</button></div>' +
+        kingdomChips('pick', 'iran') +
         '<div class="row" role="group" aria-label="Title">' + ['Champion', 'Prince', 'Princess'].map(function (t, i) { return '<button type="button" class="chip" data-act="pick" data-f="royal" data-v="' + t + '" aria-pressed="' + (i === 0) + '">' + t + '</button>'; }).join('') + '</div>' +
         '<button class="btn big" type="submit">Enter the kingdom</button><p class="note">Your name and password sign you in on any phone or computer, with all your points, crowns and chapters.</p>'
         : '<button class="btn big" type="submit">Sign in</button><p class="note">Your points, crowns and chapters are waiting.</p>') + '</form>';
@@ -102,7 +105,7 @@
   function board(list) {
     if (!list.length) return '<p class="note">Nobody yet. Be the first name in the book.</p>';
     return '<div class="scroll"><table class="board leaders"><thead><tr><th scope="col">#</th><th scope="col">Player</th><th scope="col">Chapter</th><th scope="col">Points</th><th scope="col">Wins</th></tr></thead><tbody>' +
-      list.map(function (p, i) { return '<tr' + (me && p.id === me.id ? ' class="you"' : '') + '><td>' + (i + 1) + '</td><th scope="row"><span class="who-cell">' + medal(p, 30) + '<span>' + esc(royalName(p)) + '<small>' + esc(p.title || 'Not yet crowned') + ' · ' + (p.kingdom === 'turan' ? 'Turan' : 'Iran') + '</small></span></span></th><td>' + p.level + '</td><td>' + num(p.total) + '</td><td>' + p.wins + '</td></tr>'; }).join('') + '</tbody></table></div>';
+      list.map(function (p, i) { return '<tr' + (me && p.id === me.id ? ' class="you"' : '') + '><td>' + (i + 1) + '</td><th scope="row"><span class="who-cell">' + medal(p, 30) + '<span>' + esc(royalName(p)) + '<small>' + esc(p.title || 'Not yet crowned') + ' · ' + kingdom(p.kingdom).name + '</small></span></span></th><td>' + p.level + '</td><td>' + num(p.total) + '</td><td>' + p.wins + '</td></tr>'; }).join('') + '</tbody></table></div>';
   }
   views.leaders = function () {
     app.innerHTML = back + '<h1>Leaderboard</h1><p class="soft">Ranked by chapter reached, then lifetime points, then victories.</p><div class="card" id="l-box"><p class="note">Loading…</p></div>';
@@ -139,15 +142,15 @@
 
   views.me = function () {
     var earnedR = meta.ranks.filter(function (r) { return me.ranks[r.id]; }).length;
-    app.innerHTML = back + '<section class="profile k-' + me.kingdom + '"><div class="p-head">' + art(me.kingdom === 'turan' ? 'crown' : 'lion', me.kingdom === 'turan' ? 'silver' : 'gold', 46, 'Kingdom') + '<div><p class="p-kingdom">Kingdom of ' + (me.kingdom === 'turan' ? 'Turan' : 'Iran') + '</p><h2>' + esc(royalName(me)) + '</h2></div></div>' +
+    app.innerHTML = back + '<section class="profile k-' + me.kingdom + '"><div class="p-head">' + art(kingdom(me.kingdom).art, kingdom(me.kingdom).metal, 46, 'Kingdom of ' + kingdom(me.kingdom).name) + '<div><p class="p-kingdom">Kingdom of ' + kingdom(me.kingdom).name + ', the realm of ' + kingdom(me.kingdom).heir + '</p><h2>' + esc(royalName(me)) + '</h2></div></div>' +
       '<div class="p-rank">' + medal(me, 104) + '<p class="p-title">' + esc(me.title || 'Not yet crowned') + '</p></div>' +
       '<dl class="stats4"><div><dt>Victories</dt><dd>' + me.wins + '</dd></div><div><dt>Rounds</dt><dd>' + me.rounds + '</dd></div><div><dt>Win streak</dt><dd>' + me.streak + '</dd></div><div><dt>Best streak</dt><dd>' + me.best + '</dd></div></dl>' +
-      '<div class="p-edit"><div class="row" role="group" aria-label="Kingdom"><button class="chip" data-act="profile" data-f="kingdom" data-v="iran" aria-pressed="' + (me.kingdom === 'iran') + '">Iran</button><button class="chip" data-act="profile" data-f="kingdom" data-v="turan" aria-pressed="' + (me.kingdom === 'turan') + '">Turan</button></div>' +
+      '<div class="p-edit">' + kingdomChips('profile', me.kingdom) +
       '<div class="row" role="group" aria-label="Title">' + ['Champion', 'Prince', 'Princess'].map(function (t) { return '<button class="chip" data-act="profile" data-f="royal" data-v="' + t + '" aria-pressed="' + (me.royal === t) + '">' + t + '</button>'; }).join('') + '</div></div></section>' +
       '<div class="card"><p><b>Royal ranks</b> <span class="note">' + earnedR + ' of ' + meta.ranks.length + ', earned by victories</span></p><ul class="medals">' + meta.ranks.map(function (r) { var at = me.ranks[r.id]; return '<li class="medal-card' + (at ? ' earned' : '') + (at && r.legendary ? ' legendary' : '') + '">' + art(r.art, r.metal, 64, r.badge, !at) + '<div><b>' + esc(rankTitle(r, me)) + '</b><small>' + r.badge + ' · ' + r.wins + (r.wins === 1 ? ' victory' : ' victories') + '</small>' + (at ? '<small class="got">Unlocked ' + new Date(at).toLocaleDateString() + '</small>' : bar(me.wins, r.wins)) + '</div></li>'; }).join('') + '</ul>' +
       '<p><b>Achievements</b></p><ul class="medals">' + meta.achievements.map(function (a) { var at = me.ach[a.id], hid = a.hidden && !at; return '<li class="medal-card' + (at ? ' earned' : '') + (at && a.legendary ? ' legendary' : '') + '">' + (hid ? art('lock', 'bronze', 64, 'Hidden', true) : art(a.art, a.metal, 64, a.name, !at)) + '<div><b>' + (hid ? 'A hidden achievement' : esc(a.name)) + '</b><small>' + (hid ? 'Keep playing. It is earned at the table, not by luck.' : esc(a.desc)) + '</small>' + (at ? '<small class="got">Unlocked ' + new Date(at).toLocaleDateString() + '</small>' : bar(me.progress[a.id], a.goal) + '<small>' + me.progress[a.id] + ' of ' + a.goal + '</small>') + '</div></li>'; }).join('') + '</ul></div>' +
       '<form class="card" data-form="rename"><div class="field"><label for="p-name">Name</label><div class="inline"><input id="p-name" type="text" maxlength="20" value="' + esc(me.name) + '"><button class="btn small ghost" type="submit">Save</button></div></div></form>' +
-      '<div class="card"><p><b>The two kingdoms</b></p>' + window.WPM_MAP() + '</div>' +
+      '<div class="card"><p><b>The three kingdoms</b></p>' + window.WPM_MAP() + '</div>' +
       '<form class="card" data-form="password"><p><b>' + (me.hasPassword ? 'Change your password' : 'Set a password') + '</b></p><p class="note">' + (me.hasPassword ? 'Changing it signs you out on your other devices.' : 'With a password you can sign in on any phone or computer.') + '</p>' +
       (me.hasPassword ? '<div class="field"><label for="p-cur">Current password</label><input id="p-cur" type="password" maxlength="100" autocomplete="current-password"></div>' : '') +
       '<div class="field"><label for="p-new">New password</label><input id="p-new" type="password" maxlength="100" autocomplete="new-password" placeholder="At least 6 characters"></div><button class="btn small ghost" type="submit">Save password</button></form>' +

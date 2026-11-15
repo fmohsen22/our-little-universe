@@ -224,7 +224,7 @@ function handle(req, res) {
       if (err) return oops(res, err);
       if (nameTaken(name)) return send(res, 409, { error: 'That name is taken. If it is yours, sign in instead.' });
       const id = 'p' + rid(6), p = G.newPlayer(id, name, Date.now());
-      p.pw = pw; p.sessions = []; if (b.kingdom === 'turan') p.kingdom = 'turan'; if (['Prince', 'Princess', 'Champion'].includes(b.royal)) p.royal = b.royal;
+      p.pw = pw; p.sessions = []; if (typeof b.kingdom === 'string' && Object.prototype.hasOwnProperty.call(G.KINGDOMS, b.kingdom)) p.kingdom = b.kingdom; if (['Prince', 'Princess', 'Champion'].includes(b.royal)) p.royal = b.royal;
       players[id] = p; send(res, 200, { key: signIn(p), me: priv(p) });
     } catch (e) { oops(res, e); } });
   });
@@ -250,7 +250,7 @@ function handle(req, res) {
   });
   if (POST && what === 'profile') return readBody(req, res, b => {
     if (b.name !== undefined) { const name = cleanName(b.name); if (G.key(name).length < 2) return send(res, 400, { error: 'Choose a name with at least two letters.' }); if (nameTaken(name, me.id)) return send(res, 409, { error: 'That name is taken. Choose another.' }); me.name = name; }
-    if (b.kingdom === 'iran' || b.kingdom === 'turan') me.kingdom = b.kingdom;
+    if (typeof b.kingdom === 'string' && Object.prototype.hasOwnProperty.call(G.KINGDOMS, b.kingdom)) me.kingdom = b.kingdom;
     if (['Prince', 'Princess', 'Champion'].includes(b.royal)) me.royal = b.royal;
     savePlayers(); rooms.forEach(r => { if (r.members.has(me.id)) tell(r); }); send(res, 200, { me: priv(me) });
   });

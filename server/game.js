@@ -84,7 +84,8 @@ function newPlayer(id, name, now) {
     quizFails: 0, quiz: null, ranks: {}, ach: {} };
 }
 function rankOf(p) { let cur = null; RANKS.forEach(r => { if (p.ranks[r.id]) cur = r; }); return cur; }
-function rankTitle(r, p) { return r.title.replace('{royal}', p.royal && p.royal !== 'Champion' ? p.royal : 'Champion').replace('{kingdom}', p.kingdom === 'turan' ? 'Turan' : 'Iran'); }
+const KINGDOMS = { iran: 'Iran', turan: 'Turan', rum: 'Rum' };   // Fereydun's division: Iraj, Tur and Salm
+function rankTitle(r, p) { return r.title.replace('{royal}', p.royal && p.royal !== 'Champion' ? p.royal : 'Champion').replace('{kingdom}', KINGDOMS[p.kingdom] || 'Iran'); }
 function checkUnlocks(p, now) {
   const got = [];
   RANKS.forEach(r => { if (!p.ranks[r.id] && p.wins >= r.wins) { p.ranks[r.id] = now; got.push({ kind: 'rank', id: r.id }); } });
@@ -117,5 +118,5 @@ function applyQuiz(p, correct, now) {
 // Leaderboard order: highest level, then lifetime points, then wins, then who got there first.
 function compareBoard(a, b) { return b.level - a.level || b.total - a.total || b.wins - a.wins || a.createdAt - b.createdAt; }
 
-module.exports = { CATEGORIES, LETTERS, DEFAULT_SETTINGS, POINTS, MAX_PLAYERS, MIN_SCORED, LEVELS, RANKS, ACHIEVEMENTS,
+module.exports = { KINGDOMS, CATEGORIES, LETTERS, DEFAULT_SETTINGS, POINTS, MAX_PLAYERS, MIN_SCORED, LEVELS, RANKS, ACHIEVEMENTS,
   levelPoints, fold, key, clean, startsWith, scoreRound, newPlayer, rankOf, rankTitle, checkUnlocks, nextLevelNeed, quizReady, applyRound, applyQuiz, compareBoard };
