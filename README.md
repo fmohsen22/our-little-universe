@@ -20,20 +20,16 @@ A round counts only with at least two players. Alone it is practice.
 Every round's points wait for the referee. At 22:00 each night it checks every answer that got past the table, strikes the ones that are not real examples of their category, and only then adds points, wins, crowns and chapter progress to each player's record. Players see what is waiting, and the next day a short verdict listing any answers that were struck.
 
 - **Instant checks:** a single letter or one letter repeated ("jjjj") never scores. A Country answer must be a real country (the list is `server/countries.js`); "jajaja" scores nothing on the spot.
-- **The referee itself** asks an OpenAI model (OpenAI makes Codex) whether each remaining answer is a real name, surname, city, animal, food, object or colour. Without a key it uses only the instant checks.
-- **If the service fails,** nothing is scored and the rounds wait for the next night.
-- **Privacy:** the answers (not player names) are sent to OpenAI for judging.
+- **The referee is Claude** (model `claude-opus-5-5`, through the official Anthropic SDK). It decides whether each remaining answer is a real name, surname, city, animal, food, object or colour. If the model declines a batch, the API retries it on a fallback model.
+- **Without a key** only the instant checks apply. **If the referee cannot run** (Node older than 20, SDK not installed, or the API failing), nothing is scored and the rounds wait for the next night.
+- **Privacy:** the answers (not player names) are sent to Anthropic for judging.
 
-To switch it on, put your key in `/etc/our-little-universe.env` on the server (created by `install-service.sh`, readable only by root):
+To switch it on:
 
-```
-OPENAI_API_KEY=sk-...
-REFEREE_MODEL=a model your OpenAI account can use
-REFEREE_AT=22:00
-TZ=Europe/Vienna
-```
-
-then `sudo systemctl restart our-little-universe`. The server log says `referee ai at 22:00` when it is on: `journalctl -u our-little-universe -n 5`.
+1. Node 20 or newer: `node -v`. To upgrade on Ubuntu: `curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt-get install -y nodejs`.
+2. `bash server/install-service.sh` (installs the SDK and creates `/etc/our-little-universe.env`, readable only by root).
+3. In `/etc/our-little-universe.env`, set `ANTHROPIC_API_KEY=sk-ant-...` (an API key from console.anthropic.com) and `TZ=` your time zone.
+4. `sudo systemctl restart our-little-universe`. The log line `journalctl -u our-little-universe -n 5` says `referee ai at 22:00` when it is on.
 
 Pending rounds are kept in `rounds.json` beside `players.json`.
 

@@ -441,9 +441,11 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
   /* ---------- server ---------- */
   function api(method, path, body) {
     var h = {}; if (key) h.Authorization = 'Bearer ' + key; if (body) h['Content-Type'] = 'application/json';
-    return fetch(API + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' }).then(function (r) {
+    var ctl = window.AbortController ? new AbortController() : null, timer = ctl ? setTimeout(function () { ctl.abort(); }, 15000) : 0;   // never wait forever
+    return fetch(API + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: 'no-store', signal: ctl ? ctl.signal : undefined }).then(function (r) {
+      clearTimeout(timer);
       return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) { var e = new Error(j.error || 'The server said no (' + r.status + ').'); e.status = r.status; throw e; } return j; });
-    }, function () { throw new Error('The game server cannot be reached. Check your connection and try again.'); });
+    }, function (e) { clearTimeout(timer); throw new Error(e && e.name === 'AbortError' ? 'The game server is not answering. Try again in a moment.' : 'The game server cannot be reached. Check your connection and try again.'); });
   }
   function fail(e) { toast(e.message || 'Something went wrong.'); }
   function setMe(m) { me = m; var w = $('#who'); w.hidden = !me; if (me) { w.textContent = ''; w.appendChild(document.createTextNode(me.name)); } }

@@ -10,20 +10,24 @@ async function listen(code, key) { const ctl = new AbortController(), box = { st
   (async () => { const dec = new TextDecoder(); let buf = ''; try { for await (const chunk of r.body) { buf += dec.decode(chunk, { stream: true }); let i; while ((i = buf.indexOf('\n\n')) >= 0) { const m = /data: (.*)/.exec(buf.slice(0, i)); buf = buf.slice(i + 2); if (m) box.state = JSON.parse(m[1]); } } } catch (e) { /* closed */ } })(); return box; }
 const until = async (f, what) => { for (let i = 0; i < 100; i++) { if (f()) return; await sleep(50); } throw new Error('timed out: ' + what); };
 
-// A stand-in for the OpenAI service: it strikes any answer containing "bad", and fails outright while aiDown is set.
+// A stand-in for the Claude API: it strikes any answer containing "bad", and fails outright while aiDown is set.
+// It also checks the request is what the referee should send: the key, the model, the fallback setting and the JSON schema.
 const http = require('http'), AI_PORT = PORT + 5; let aiCalls = 0, aiDown = false;
+const reply = (items, judgeFn) => ({ id: 'msg_test', type: 'message', role: 'assistant', model: 'claude-opus-5-5', stop_reason: 'end_turn', stop_sequence: null, usage: { input_tokens: 10, output_tokens: 10 },
+  content: [{ type: 'text', text: JSON.stringify({ verdicts: items.map(x => judgeFn(x)) }) }] });
 const ai = http.createServer((req, res) => { let body = ''; req.on('data', c => { body += c; }); req.on('end', () => {
-  aiCalls += 1; const msg = JSON.parse(body), items = JSON.parse(msg.messages[1].content).items;
-  if (req.headers.authorization !== 'Bearer test-key' || msg.model !== 'test-model') { res.writeHead(401); return res.end('{}'); }
-  if (aiDown) { res.writeHead(500); return res.end('{"error":"down"}'); }
+  aiCalls += 1; const msg = JSON.parse(body), items = JSON.parse(msg.messages[0].content).items;
+  const right = req.url.startsWith('/v1/messages') && (req.headers['authorization'] === 'Bearer test-key' || req.headers['x-api-key'] === 'test-key') && msg.model === 'claude-opus-5-5' && msg.fallbacks === 'default' && /server-side-fallback/.test(req.headers['anthropic-beta'] || '') && msg.output_config.format.type === 'json_schema';
+  if (!right) { res.writeHead(400, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ type: 'error', error: { type: 'invalid_request_error', message: 'unexpected request' } })); }
+  if (aiDown) { res.writeHead(500, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ type: 'error', error: { type: 'api_error', message: 'down' } })); }
   res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ verdicts: items.map(x => /bad/i.test(x.answer) ? { i: x.i, valid: false, why: 'not a real ' + x.category.toLowerCase() } : { i: x.i, valid: true }) }) } }] }));
+  res.end(JSON.stringify(reply(items, x => /bad/i.test(x.answer) ? { i: x.i, valid: false, why: 'not a real ' + x.category.toLowerCase() } : { i: x.i, valid: true, why: '' })));
 }); }).listen(AI_PORT, '127.0.0.1');
 const judge = async key => (await call('POST', '/api/referee', key)).json;
 const meOf = async key => (await call('GET', '/api/me', key)).json.me;
 
 (async () => {
-  const srv = spawn('node', [path.join(__dirname, '..', 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT, DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '150', REVIEW_MS: '2500', MIN_PLAY_MS: '0', MIN_REVIEW_MS: '0', REFEREE_TEST: '1', OPENAI_API_KEY: 'test-key', REFEREE_MODEL: 'test-model', REFEREE_BASE_URL: 'http://127.0.0.1:' + (PORT + 5), ALLOWED_ORIGINS: 'https://game.mosi-app.com' }), stdio: 'inherit' });
+  const srv = spawn('node', [path.join(__dirname, '..', 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT, DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '150', REVIEW_MS: '2500', MIN_PLAY_MS: '0', MIN_REVIEW_MS: '0', REFEREE_TEST: '1', ANTHROPIC_API_KEY: 'test-key', ANTHROPIC_BASE_URL: 'http://127.0.0.1:' + (PORT + 5), ALLOWED_ORIGINS: 'https://game.mosi-app.com' }), stdio: 'inherit' });
   try {
     await sleep(700);
     const meta = (await call('GET', '/api/meta')).json;

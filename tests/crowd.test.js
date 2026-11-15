@@ -1,5 +1,5 @@
 // Thirty players on one evening: four tables of 12, 8, 6 and 4 playing at the same time, several rounds each,
-// with empty, shared and made-up answers. The referee (a stand-in for the OpenAI service) strikes the made-up ones.
+// with empty, shared and made-up answers. The referee (a stand-in for the Claude API) strikes the made-up ones.
 // Every score is worked out here independently and compared with the server, player by player.
 // Run: node tests/crowd.test.js
 process.env.LEVEL_SCALE = '0.02';
@@ -13,17 +13,18 @@ async function listen(code, key) { const ctl = new AbortController(), box = { st
 const until = async (f, what) => { for (let i = 0; i < 400; i++) { if (f()) return; await sleep(40); } throw new Error('timed out: ' + what); };
 let seed = 7; const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
 
-// the stand-in referee service: anything containing "bad" is not a real example
+// the stand-in Claude API: anything containing "bad" is not a real example
 const AI_PORT = PORT + 1; let aiItems = 0;
 const ai = http.createServer((req, res) => { let body = ''; req.on('data', c => { body += c; }); req.on('end', () => {
-  const items = JSON.parse(JSON.parse(body).messages[1].content).items; aiItems += items.length;
+  const items = JSON.parse(JSON.parse(body).messages[0].content).items; aiItems += items.length;
   res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ verdicts: items.map(x => ({ i: x.i, valid: !/bad/i.test(x.answer), why: /bad/i.test(x.answer) ? 'made up' : '' })) }) } }] }));
+  res.end(JSON.stringify({ id: 'msg_test', type: 'message', role: 'assistant', model: 'claude-opus-5-5', stop_reason: 'end_turn', stop_sequence: null, usage: { input_tokens: 1, output_tokens: 1 },
+    content: [{ type: 'text', text: JSON.stringify({ verdicts: items.map(x => ({ i: x.i, valid: !/bad/i.test(x.answer), why: /bad/i.test(x.answer) ? 'made up' : '' })) }) }] }));
 }); }).listen(AI_PORT, '127.0.0.1');
 
 const CATS = ['name', 'surname', 'city', 'animal', 'food', 'thing', 'color'];
 (async () => {
-  const srv = spawn('node', [path.join(__dirname, '..', 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT, DATA_DIR: fx.dir, LEVELS_FILE: fx.file, COLLECT_MS: '100', REVIEW_MS: '5000', MIN_PLAY_MS: '0', MIN_REVIEW_MS: '0', ROUNDS_PER_HOUR: '1000', REFEREE_TEST: '1', OPENAI_API_KEY: 'k', REFEREE_MODEL: 'm', REFEREE_BASE_URL: 'http://127.0.0.1:' + AI_PORT }), stdio: 'ignore' });
+  const srv = spawn('node', [path.join(__dirname, '..', 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT, DATA_DIR: fx.dir, LEVELS_FILE: fx.file, COLLECT_MS: '100', REVIEW_MS: '5000', MIN_PLAY_MS: '0', MIN_REVIEW_MS: '0', ROUNDS_PER_HOUR: '1000', REFEREE_TEST: '1', ANTHROPIC_API_KEY: 'test-key', ANTHROPIC_BASE_URL: 'http://127.0.0.1:' + AI_PORT }), stdio: 'ignore' });
   const t0 = Date.now();
   try {
     await sleep(700);
