@@ -1,39 +1,21 @@
-/* The map of the game's two kingdoms, drawn from simplified coastlines (longitude, latitude pairs).
-   It is a game map, not an atlas: Turan is the north, from Ireland and Britain across to the steppe;
-   Iran is the band from Egypt to China. window.WPM_MAP() returns the SVG markup. */
+/* The map of the game's two kingdoms, drawn from real coastlines (src/map-data.js).
+   It is a game map, not a history map: Turan is the north, from the United Kingdom across Russia to the steppe;
+   Iran is the band from Egypt to China. The Oxus, the border in the Shahnameh, is drawn between them.
+   window.WPM_MAP() returns the SVG markup. */
 (function () {
   'use strict';
-  var W = 767, H = 378;
-  function pt(p) { return ((p[0] + 12) * 5.6).toFixed(1) + ',' + ((62 - p[1]) * 7).toFixed(1); }
-  function poly(list) { return list.map(pt).join(' '); }
-  var LAND = [
-    // Europe and Asia
-    [[-9,37],[-9.3,39],[-8.8,43],[-1.8,43.4],[-1.2,46],[-4.5,48.4],[-1.6,48.7],[1.6,50.9],[4,51.9],[8.6,53.6],[8.2,56.8],[10.5,57.6],[10.8,54],[14,54.2],[19,54.6],[21,57],[24,59.4],[28,59.6],[30,60],[30,62],[125,62],[125,40],[122,40],[118,39],[122,37],[119,35],[121.8,31],[120,27],[116,23],[110,21],[108,21.6],[106,19],[108.8,15],[109.2,11.6],[105,9],[102,12],[100,13.5],[99,9],[98.3,8],[97.5,16.5],[94.3,16],[92,21],[89,22],[87,21.4],[80.2,15.5],[80,12],[77.5,8],[76,10],[73,17],[72.6,21],[70,21],[67,24.6],[61.5,25.2],[57,25.6],[56.3,27],[51.5,27.8],[50,30],[48.8,30.2],[48,29.5],[50,26.6],[51.6,25],[51.5,24.3],[54,24.2],[56.4,26.3],[56.6,24.5],[59.8,22.5],[57.7,19],[55,17],[52,16],[45,12.7],[43.3,13],[42.7,16],[39,21],[37,25],[35,28],[34.9,29.5],[34.3,31.3],[35,33],[36,35.8],[36.2,36.6],[32.5,36.1],[30.5,36.6],[27.3,37],[26.3,39.3],[26.7,40.4],[24,40.8],[22.8,40.2],[23.5,38],[22.5,36.5],[21.2,37.8],[19.4,40.8],[19.5,42],[16,43.5],[13.7,45.6],[12.4,45.3],[12.3,44.2],[14,42.3],[16,41.8],[18.5,40.2],[17,40.4],[16.5,39.5],[16,38],[15.6,38],[16.2,39.9],[14.5,40.6],[12.2,41.8],[10.3,42.9],[8.8,44.4],[6.2,43.1],[3.2,43],[3.2,41.8],[0.8,41],[-0.4,39.5],[-0.2,38.5],[-2,36.8],[-5.3,36],[-6.5,36.9]],
-    // Great Britain, Ireland, Scandinavia, Finland
-    [[-5.7,50.1],[-3,50.6],[1.4,51.2],[1.7,52.7],[0.2,53.5],[-1.5,55],[-2,56],[-1.8,57.6],[-3.5,58.6],[-5,58.5],[-6.2,56.6],[-5,55],[-3.2,54.8],[-3,53.4],[-4.6,53.2],[-4.2,52.3],[-5.2,51.8],[-3.2,51.4]],
-    [[-10,51.6],[-6.2,52.2],[-6,53.5],[-5.5,54.6],[-7.3,55.3],[-8.3,54.6],[-10,54.2],[-9.5,53.2],[-10.3,52.2]],
-    [[5,58.5],[7,58],[11,59],[12.5,56],[14.5,56],[16.5,57],[18.5,59.5],[17.5,62],[5,62]],
-    [[21,60],[30,60],[30,62],[21,62]],
-    // North Africa
-    [[-6,35.8],[-5.3,35.9],[-2,35.1],[3,36.9],[9.8,37.3],[11,36.9],[10,34.2],[11.2,33.2],[15.3,32.3],[19.8,30.4],[20,32.5],[23,32.6],[25,31.6],[29,30.9],[31,31.5],[32.3,31.2],[34.2,31.3],[34.9,29.5],[34.3,27.8],[33.3,28.5],[32.6,29.9],[33.6,27.5],[35.5,24],[37.2,21],[38.5,18],[43.2,12.5],[43,11.5],[51,12],[51,8],[-12,8],[-12,28],[-9.8,31.5],[-6.8,34]]
-  ];
-  var SEAS = [
-    [[28,41.7],[29,41.2],[31.5,41.2],[35,42],[38.5,41],[41.5,41.6],[41,43],[38.5,44.4],[37.3,45.3],[39,47],[37.5,47],[35,45.6],[33.6,44.5],[32.5,45.5],[30.8,46.5],[29.6,45.3],[28.6,43.8],[27.9,42.6]],
-    [[49,37.5],[51,36.8],[54,37],[53.8,39.5],[52.8,41],[54.5,42],[52.5,45],[53,46.8],[49.5,46.5],[47,44.5],[48.5,42],[49.8,40.3],[49,39]]
-  ];
-  var IRAN = [[24.5,31.8],[24.5,21.5],[37.5,21.5],[35.5,29],[48,29],[57,25],[62,24.8],[68,23.5],[75,30],[80,29],[88,27],[98,24],[102,21],[110,19.5],[124,21],[124,42.5],[110,43.5],[96,43.5],[87,49.5],[80,45.5],[72,40.5],[62,38.5],[53,39],[48,41],[44,39.5],[40,37.5],[36,37],[34,33],[30,32.5]];
-  var TURAN = [[-12,62],[-12,49.6],[1,49.8],[8,51],[20,50],[35,48],[47,47],[48,41],[53,39],[62,38.5],[72,40.5],[80,45.5],[87,49.5],[96,43.5],[110,43.5],[124,42.5],[125,42.5],[125,62]];
   window.WPM_MAP = function () {
-    var land = LAND.map(function (p) { return '<polygon points="' + poly(p) + '"/>'; }).join('');
-    var label = function (lon, lat, text, cls) { var p = pt([lon, lat]).split(','); return '<text x="' + p[0] + '" y="' + p[1] + '" class="' + cls + '" text-anchor="middle">' + text + '</text>'; };
-    var dot = function (lon, lat, text, dx, dy, anchor) { var p = pt([lon, lat]).split(','), x = +p[0], y = +p[1]; return '<circle cx="' + x + '" cy="' + y + '" r="3.2" class="map-dot"/><text x="' + (x + dx) + '" y="' + (y + dy) + '" class="map-place" text-anchor="' + anchor + '">' + text + '</text>'; };
-    return '<figure class="map"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Map of the game: Turan covers the north from Ireland and Britain to the steppe, Iran runs from Egypt to China">' +
-      '<defs><clipPath id="map-land">' + land + '</clipPath></defs>' +
-      '<rect width="' + W + '" height="' + H + '" class="map-sea" rx="14"/><g class="map-land">' + land + '</g>' +
-      '<g clip-path="url(#map-land)"><polygon points="' + poly(TURAN) + '" class="map-turan"/><polygon points="' + poly(IRAN) + '" class="map-iran"/></g>' +
-      SEAS.map(function (p) { return '<polygon points="' + poly(p) + '" class="map-sea"/>'; }).join('') +
-      label(52, 57, 'TURAN', 'map-name map-name-t') + label(74, 35.5, 'IRAN', 'map-name map-name-i') +
-      dot(-1.5, 53, 'Britain', 8, -2, 'start') + dot(-8, 53.2, 'Ireland', -6, 26, 'start') + dot(31, 27, 'Egypt', 8, 5, 'start') + dot(52, 33, 'Persia', 8, 5, 'start') + dot(110, 33, 'China', -8, 5, 'end') + dot(64, 41.5, 'Oxus', 8, 5, 'start') +
-      '</svg><figcaption>The map of our game. <b class="t">Turan</b> is the north, from Ireland and Britain to the steppe. <b class="i">Iran</b> runs from Egypt to China. In the Shahnameh the two are divided by the river Oxus; the rest is our own invention.</figcaption></figure>';
+    var M = window.WPM_MAP_DATA, at = M.at;
+    var label = function (p, text, cls) { return '<text x="' + p[0] + '" y="' + p[1] + '" class="' + cls + '" text-anchor="middle">' + text + '</text>'; };
+    // a faint golden road from Persia to Britain: the two kingdoms are not as far apart as they look
+    var a = at.persia, b = at.uk, mx = (a[0] + b[0]) / 2, my = Math.min(a[1], b[1]) - 70;
+    var road = '<path d="M' + a[0] + ' ' + a[1] + 'Q' + mx + ' ' + my + ' ' + b[0] + ' ' + b[1] + '" class="map-road"/>' +
+      '<path transform="translate(' + (b[0] + 2) + ' ' + (b[1] - 16) + ') scale(.55)" d="M0 10c-9-7-14-12-14-18 0-5 4-8 8-8 3 0 5 2 6 4 1-2 3-4 6-4 4 0 8 3 8 8 0 6-5 11-14 18z" class="map-heart"/>';
+    return '<figure class="map"><svg viewBox="0 0 ' + M.w + ' ' + M.h + '" role="img" aria-label="Map of the game: Turan covers the north, from the United Kingdom across Russia to the steppe; Iran runs from Egypt to China; the river Oxus lies between them">' +
+      '<rect width="' + M.w + '" height="' + M.h + '" class="map-sea"/>' +
+      '<path d="' + M.land + '" class="map-land"/><path d="' + M.turan + '" class="map-turan"/><path d="' + M.iran + '" class="map-iran"/>' +
+      '<path d="' + M.oxus + '" class="map-river"/>' + road +
+      label(at.turan, 'TURAN', 'map-name map-name-t') + label(at.iran, 'IRAN', 'map-name map-name-i') + label(at.oxus, 'Oxus', 'map-oxus') +
+      '</svg><figcaption><b class="t">Turan</b> is the north, from the United Kingdom across to the steppe. <b class="i">Iran</b> runs from Egypt to China. Between them flows the Oxus, the river that divides the two kingdoms in the Shahnameh. The rest of this map is our own invention.</figcaption></figure>';
   };
 })();

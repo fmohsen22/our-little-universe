@@ -283,15 +283,17 @@ h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
 
 /* the map of the two kingdoms: fixed colours, a painted plate like the profile panels */
 .map { margin: 0; display: flex; flex-direction: column; gap: 8px; }
-.map svg { width: 100%; height: auto; display: block; border-radius: 14px; border: 1.5px solid var(--gold); }
-.map-sea { fill: #16233F; }
-.map-land polygon { fill: #4A4468; stroke: #1B1430; stroke-width: 1; stroke-linejoin: round; }
-.map-iran { fill: #D9A93A; opacity: .9; }
-.map-turan { fill: #5C86E8; opacity: .9; }
-.map-name { font: 700 30px var(--display); letter-spacing: .2em; paint-order: stroke; stroke: #1B1430; stroke-width: 5px; }
-.map-name-i { fill: #FFE7A6; } .map-name-t { fill: #DCE8FF; }
-.map-dot { fill: #FFFDF6; stroke: #1B1430; stroke-width: 1.5; }
-.map-place { font: 600 15px var(--body); fill: #FFFDF6; paint-order: stroke; stroke: #1B1430; stroke-width: 4px; }
+.map svg { width: 100%; height: auto; display: block; border-radius: 14px; border: 1.5px solid var(--gold); background: #12203A; }
+.map-sea { fill: #12203A; }
+.map-land { fill: #3A3556; stroke: #1B1430; stroke-width: .8; stroke-linejoin: round; }
+.map-iran { fill: #D7A53A; stroke: #8A6118; stroke-width: .8; stroke-linejoin: round; }
+.map-turan { fill: #5B82E0; stroke: #2B4597; stroke-width: .8; stroke-linejoin: round; }
+.map-river { fill: none; stroke: #9FE3FF; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 2px #12203A); }
+.map-road { fill: none; stroke: #FFE7A6; stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; opacity: .85; }
+.map-heart { fill: #F58FA9; stroke: #1B1430; stroke-width: 2; }
+.map-name { font: 700 36px var(--display); letter-spacing: .22em; paint-order: stroke; stroke: #1B1430; stroke-width: 6px; }
+.map-name-i { fill: #FFF0C2; } .map-name-t { fill: #E3ECFF; }
+.map-oxus { font: italic 600 17px var(--display); fill: #CFF2FF; paint-order: stroke; stroke: #12203A; stroke-width: 5px; }
 .map figcaption { font-size: .85rem; color: var(--soft); }
 .map figcaption .i { color: var(--gold); } .map figcaption .t { color: var(--sky); }
 .seg { display: flex; gap: 6px; }
