@@ -84,6 +84,9 @@ const CATS = ['name', 'surname', 'city', 'animal', 'food', 'thing', 'color'];
     ok(struck && struck.struck.every(x => /bad/.test(x.text)) && struck.claimed >= struck.points, 'each verdict lists only the made-up answers, and points only ever go down from what the table showed');
     const board = (await call('GET', '/api/leaderboard')).json.players, sorted = board.slice().sort((a, b) => b.level - a.level || b.total - a.total || b.wins - a.wins);
     ok(board.length === 30 && board.every((p, i) => p.id === sorted[i].id && p.total === E[p.id].total), 'the leaderboard lists all thirty, in the right order, with the right points');
+    const found = (await call('GET', '/api/leaderboard?q=player2')).json, one = (await call('GET', '/api/leaderboard?q=' + encodeURIComponent('PLAYER07'))).json;
+    const real = board.findIndex(p => p.name === 'Player07') + 1;
+    ok(found.total === 30 && found.players.length === 10 && found.players.every(p => /^Player2/.test(p.name)) && one.players.length === 1 && one.players[0].place === real, 'searching the leaderboard finds players from any table, with their real place (Player07 is number ' + real + ')');
     console.log('\n  top five: ' + board.slice(0, 5).map(p => p.name + ' ' + p.total).join(', '));
     console.log('\ncrowd: ' + n + ' checks passed in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s');
   } finally { srv.kill(); ai.close(); fs.rmSync(fx.dir, { recursive: true, force: true }); }

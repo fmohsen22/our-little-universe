@@ -127,11 +127,22 @@
   function board(list) {
     if (!list.length) return '<p class="note">Nobody yet. Be the first name in the book.</p>';
     return '<div class="scroll"><table class="board leaders"><thead><tr><th scope="col">#</th><th scope="col">Player</th><th scope="col">Chapter</th><th scope="col">Points</th><th scope="col">Wins</th></tr></thead><tbody>' +
-      list.map(function (p, i) { return '<tr' + (me && p.id === me.id ? ' class="you"' : '') + '><td>' + (i + 1) + '</td><th scope="row"><span class="who-cell">' + medal(p, 30) + '<span>' + esc(royalName(p)) + '<small>' + esc(p.title || 'Not yet crowned') + ' · ' + kingdom(p.kingdom).name + '</small></span></span></th><td>' + p.level + '</td><td>' + num(p.total) + '</td><td>' + p.wins + '</td></tr>'; }).join('') + '</tbody></table></div>';
+      list.map(function (p, i) { return '<tr' + (me && p.id === me.id ? ' class="you"' : '') + '><td>' + (p.place || i + 1) + '</td><th scope="row"><span class="who-cell">' + medal(p, 30) + '<span>' + esc(royalName(p)) + '<small>' + esc(p.title || 'Not yet crowned') + ' · ' + kingdom(p.kingdom).name + '</small></span></span></th><td>' + p.level + '</td><td>' + num(p.total) + '</td><td>' + p.wins + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  var findTimer = 0;
+  function findPlayers() {
+    var q = ($('#l-find') || {}).value || '';
+    api('GET', '/api/leaderboard' + (q.trim() ? '?q=' + encodeURIComponent(q.trim()) : '')).then(function (j) {
+      var b = $('#l-box'); if (!b) return;
+      b.innerHTML = '<p class="note">' + (j.query ? (j.players.length ? j.players.length + (j.players.length === 1 ? ' player matches' : ' players match') + ' “' + esc(j.query) + '”' : 'Nobody called “' + esc(j.query) + '” yet.') : j.total + (j.total === 1 ? ' player' : ' players') + ' from every table' + (j.total > j.players.length ? ', top ' + j.players.length + ' shown' : '')) + '</p>' + (j.players.length ? board(j.players) : '');
+    }).catch(fail);
   }
   views.leaders = function () {
-    app.innerHTML = back + '<h1>Leaderboard</h1><p class="soft">Ranked by chapter reached, then lifetime points, then victories.</p><div class="card" id="l-box"><p class="note">Loading…</p></div>';
-    api('GET', '/api/leaderboard').then(function (j) { var b = $('#l-box'); if (b) b.innerHTML = board(j.players); }).catch(fail);
+    app.innerHTML = back + '<h1>Leaderboard</h1><p class="soft">Everyone from every table, ranked by chapter reached, then lifetime points, then victories.</p>' +
+      '<div class="field"><label for="l-find">Find a player</label><input id="l-find" type="search" maxlength="20" autocomplete="off" placeholder="Type a name"></div>' +
+      '<div class="card" id="l-box"><p class="note">Loading…</p></div>';
+    $('#l-find').addEventListener('input', function () { clearTimeout(findTimer); findTimer = setTimeout(findPlayers, 250); });
+    findPlayers();
   };
 
   views.journey = function () {

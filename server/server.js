@@ -245,7 +245,13 @@ function limited(ip) {
   list.push(now); regs.set(ip, list); newPlayers.push(now); return false;
 }
 let boardAt = 0;
-function leaderboard() { const now = Date.now(); if (!boardCache || now - boardAt > 5000) { boardCache = { players: Object.values(players).sort(G.compareBoard).slice(0, 200).map(pub) }; boardAt = now; } return boardCache; }
+// Everyone, from every table, in one ranking. The full order is cached for a few seconds; any change to a player clears it.
+let rankedAll = null;
+function ranked() { const now = Date.now(); if (!rankedAll || !boardCache || now - boardAt > 5000) { rankedAll = Object.values(players).sort(G.compareBoard).map((p, i) => Object.assign(pub(p), { place: i + 1 })); boardCache = true; boardAt = now; } return rankedAll; }
+function leaderboard(q) {
+  const all = ranked(), k = G.key(typeof q === 'string' ? q.slice(0, 40) : '');
+  return k ? { total: all.length, query: q, players: all.filter(p => G.key(p.name).includes(k)).slice(0, 50) } : { total: all.length, players: all.slice(0, 200) };
+}
 function send(res, code, body) { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); }
 function readBody(req, res, cb) {
   let size = 0; const chunks = [];
@@ -273,7 +279,7 @@ function handle(req, res) {
   const what = parts[1], me = auth(req, url, parts[1] === 'rooms' && parts[3] === 'events');   // the key may ride in the address only for the event stream, which cannot send headers
 
   if (GET && what === 'meta') return send(res, 200, meta());
-  if (GET && what === 'leaderboard') return send(res, 200, leaderboard());
+  if (GET && what === 'leaderboard') return send(res, 200, leaderboard(url.searchParams.get('q')));
   if (POST && what === 'register') return readBody(req, res, b => {
     const ip = String(req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '').slice(0, 64);
     if (limited(ip)) return send(res, 429, { error: 'Too many new players from here. Try again later.' });
