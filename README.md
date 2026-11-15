@@ -17,10 +17,10 @@ A round counts only with at least two players. Alone it is practice.
 
 ## The nightly referee
 
-Every round's points wait for the referee. Each night at 22:00 it checks every answer that got past the table, strikes the ones that are not real examples of their category, and only then adds points, wins, crowns and chapter progress to each player's record. Players see what is waiting, and the next day a short verdict listing any answers that were struck.
+Every round's points wait for the referee. Each night at about 21:30 it checks every answer that got past the table, strikes the ones that are not real examples of their category, and only then adds points, wins, crowns and chapter progress to each player's record. Players see what is waiting, and the next day a short verdict listing any answers that were struck.
 
 - **Instant checks:** a single letter or one letter repeated ("jjjj") never scores. A Country answer must be a real country (the list is `server/countries.js`); "jajaja" scores nothing on the spot.
-- **The referee is a scheduled Claude session.** At 22:00 it fetches the waiting answers from `GET /api/referee/pending`, judges them, and sends verdicts to `POST /api/referee/verdicts`. Both need the `X-Referee-Token` header, matching `REFEREE_TOKEN` in `/etc/our-little-universe.env` (the installer creates it and prints it once). No API key is needed.
+- **The referee is a scheduled Claude session.** At 21:33 (Vienna time) it fetches the waiting answers from `GET /api/referee/pending`, judges them, and sends verdicts to `POST /api/referee/verdicts`. Both need the `X-Referee-Token` header, matching `REFEREE_TOKEN` in `/etc/our-little-universe.env` (the installer creates it and prints it once). No API key is needed.
 - **Rounds played after the referee looked** wait for the next night. If the referee does not come, rounds simply wait.
 - **Privacy:** only the answers, letters and categories are sent, never player names.
 

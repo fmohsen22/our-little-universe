@@ -21,7 +21,7 @@ const HOST = process.env.HOST || '127.0.0.1';   // local only: the tunnel on thi
 const COLLECT_MS = +(process.env.COLLECT_MS || 1500), REVIEW_MS = +(process.env.REVIEW_MS || 45000), MAX_BODY = 32 * 1024, MAX_ROOMS = 300;
 // Pace limits, so points cannot be manufactured faster than a real table plays.
 const MIN_PLAY_MS = +(process.env.MIN_PLAY_MS || 20000), MIN_REVIEW_MS = +(process.env.MIN_REVIEW_MS || 8000), ROUNDS_PER_HOUR = +(process.env.ROUNDS_PER_HOUR || 40);
-const REFEREE_AT = /^\d{1,2}:\d{2}$/.test(process.env.REFEREE_AT || '') ? process.env.REFEREE_AT : '22:00';   // local time of the nightly check
+const REFEREE_AT = /^\d{1,2}:\d{2}$/.test(process.env.REFEREE_AT || '') ? process.env.REFEREE_AT : '21:30';   // local time of the nightly check (the scheduled referee runs at 21:33)
 // With REFEREE_TOKEN set, the referee is an outside agent (a scheduled Claude session) that fetches the waiting answers
 // and sends back verdicts over two token-protected endpoints. The server then never judges on its own.
 const REFEREE_TOKEN = process.env.REFEREE_TOKEN || '';
