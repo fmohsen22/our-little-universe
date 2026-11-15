@@ -291,8 +291,6 @@ h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
 .map-turan { fill: #5B82E0; stroke: #2B4597; stroke-width: .8; stroke-linejoin: round; }
 .map-rum { fill: #B0507A; stroke: #6E2346; stroke-width: .8; stroke-linejoin: round; }
 .map-river { fill: none; stroke: #9FE3FF; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 2px #12203A); }
-.map-road { fill: none; stroke: #FFE7A6; stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; opacity: .85; }
-.map-heart { fill: #F58FA9; stroke: #1B1430; stroke-width: 2; }
 .map-name { font: 700 36px var(--display); letter-spacing: .22em; paint-order: stroke; stroke: #1B1430; stroke-width: 6px; }
 .map-name-i { fill: #FFF0C2; } .map-name-t { fill: #E3ECFF; } .map-name-r { fill: #FFE1EC; }
 .map-oxus { font: italic 600 17px var(--display); fill: #CFF2FF; paint-order: stroke; stroke: #12203A; stroke-width: 5px; }
