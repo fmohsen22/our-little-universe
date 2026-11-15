@@ -35,8 +35,8 @@ catch (e) {
   // Only a missing file means a first run. Anything else must not be papered over, or the next save would wipe every player.
   if (e.code !== 'ENOENT') { console.error('players.json exists but cannot be read (' + e.message + '). Fix or move it; a copy of the last good save is players.json.bak.'); process.exit(1); }
 }
-let saveTimer = null, saving = false, dirty = false;
-function savePlayers() { clearTimeout(saveTimer); saveTimer = setTimeout(writePlayers, 200); }
+let saveTimer = null, saving = false, dirty = false, boardCache = null;
+function savePlayers() { boardCache = null; clearTimeout(saveTimer); saveTimer = setTimeout(writePlayers, 200); }   // any change also refreshes the leaderboard
 function writePlayers() {
   if (saving) { dirty = true; return; }                     // never two writes to the same temp file
   saving = true; dirty = false; const tmp = FILE + '.tmp';
@@ -171,7 +171,7 @@ function limited(ip) {
   if (list.length >= 30 || newPlayers.length >= NEW_PLAYERS_PER_HOUR || Object.keys(players).length >= MAX_PLAYERS_TOTAL) { regs.set(ip, list); return true; }
   list.push(now); regs.set(ip, list); newPlayers.push(now); return false;
 }
-let boardCache = null, boardAt = 0;
+let boardAt = 0;
 function leaderboard() { const now = Date.now(); if (!boardCache || now - boardAt > 5000) { boardCache = { players: Object.values(players).sort(G.compareBoard).slice(0, 200).map(pub) }; boardAt = now; } return boardCache; }
 function send(res, code, body) { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); }
 function readBody(req, res, cb) {
