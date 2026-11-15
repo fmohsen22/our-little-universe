@@ -94,6 +94,11 @@
       '<div id="h-tables"><p class="note">Looking for open tables…</p></div></section>' +
       '<section class="card"><div class="row split"><h2>Leaderboard</h2><a class="btn small ghost" href="#leaders">See everyone</a></div><div id="h-leaders"><p class="note">Loading…</p></div></section>' +
       '<section class="card"><h2>Bring your friends</h2><p class="soft">The more players at the table, the better the game.</p>' + shareRow('Come and play Esm Famil with me in “Where is Prince Mohsey?”', SITE) + '</section>' +
+      '<section class="card legend-intro"><p class="eyebrow">How the three kingdoms began</p><h2>Fereydun divides the world</h2>' +
+      '<p>In the Shahnameh, the old king Fereydun splits the world among his three sons. Salm, the eldest, receives Rum, the West. Tur receives Turan and China, to the north-east and east. Iraj, the youngest, receives Iran, the heart of it all.</p>' +
+      '<p>Jealous of their brother’s share, Salm and Tur murder Iraj, and from that crime grows the long war between Iran and Turan that fills the age of heroes, and the life of Rostam.</p>' +
+      '<p class="note">You belong to the Kingdom of ' + kingdom(me.kingdom).name + ', the realm of ' + kingdom(me.kingdom).heir + '.</p>' +
+      '<details class="map-more"><summary>Show the map</summary>' + window.WPM_MAP() + '</details></section>' +
       '<a class="book-link hall-link" href="#journey"><span><b>📜 The life of Rostam</b><br><span class="note">Seven chapters to unlock, and one still to come</span></span><span aria-hidden="true">→</span></a>';
     api('GET', '/api/rooms').then(function (j) {
       var box = $('#h-tables'); if (!box) return;
