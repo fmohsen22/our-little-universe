@@ -16,9 +16,14 @@ const until = async (f, what) => { for (let i = 0; i < 100; i++) { if (f()) retu
     await sleep(700);
     const meta = (await call('GET', '/api/meta')).json;
     ok(meta.levels.length === 7 && meta.levels[0].points === 40 && meta.levels[1].points === 50 && meta.ranks.length === 8, 'meta lists seven levels (scaled down for the test) and eight ranks');
-    const reg = async name => (await call('POST', '/api/register', null, { name, kingdom: name === 'Sufi' ? 'turan' : 'iran', royal: name === 'Sufi' ? 'Princess' : 'Prince' })).json;
+    const reg = async name => (await call('POST', '/api/register', null, { name, password: 'secret-' + name, kingdom: name === 'Sufi' ? 'turan' : 'iran', royal: name === 'Sufi' ? 'Princess' : 'Prince' })).json;
     const A = await reg('Mohsey'), B = await reg('Sufi'), C = await reg('Rudabeh');
-    ok(A.key && B.me.kingdom === 'turan' && (await call('POST', '/api/register', null, { name: 'mohsey ' })).status === 409, 'players register; a taken name is refused');
+    ok(A.key && B.me.kingdom === 'turan' && (await call('POST', '/api/register', null, { name: 'mohsey ', password: 'whatever1' })).status === 409, 'players register; a taken name is refused');
+    ok((await call('POST', '/api/register', null, { name: 'Shorty', password: '123' })).status === 400 && (await call('POST', '/api/register', null, { name: 'Nopass' })).status === 400, 'a new account needs a password of at least 6 characters');
+    const in2 = await call('POST', '/api/login', null, { name: ' MOHSEY', password: 'secret-Mohsey' });
+    ok(in2.status === 200 && in2.json.key !== A.key && in2.json.me.id === A.me.id && (await call('GET', '/api/me', in2.json.key)).status === 200 && (await call('GET', '/api/me', A.key)).status === 200, 'name and password sign the same player in on a second device, and both devices stay signed in');
+    ok((await call('POST', '/api/login', null, { name: 'Mohsey', password: 'wrong-one' })).status === 401 && (await call('POST', '/api/login', null, { name: 'Nobody', password: 'secret-Mohsey' })).status === 401 && (await call('POST', '/api/login', null, { name: { toString: 1 }, password: [1] })).status === 401, 'a wrong password, an unknown name and malformed input are all refused the same way');
+    await call('POST', '/api/logout', in2.json.key); ok((await call('GET', '/api/me', in2.json.key)).status === 401 && (await call('GET', '/api/me', A.key)).status === 200, 'signing out ends that device only');
     ok((await call('GET', '/api/me', 'p000000.bad')).status === 401 && (await call('GET', '/api/me', A.key.replace(/.$/, 'x'))).status === 401 && (await call('GET', '/api/story/1', A.key)).status === 403, 'a wrong key is refused, and a locked chapter cannot be read');
 
     const code = (await call('POST', '/api/rooms', A.key, {})).json.code;
@@ -71,7 +76,7 @@ const until = async (f, what) => { for (let i = 0; i < 100; i++) { if (f()) retu
     ok((await call('POST', '/api/quiz/answer', A.key, { answers: [0, 0, 0, 0, 0] })).status === 409, 'a quiz cannot be answered twice');
 
     const lb = (await call('GET', '/api/leaderboard')).json.players;
-    ok(lb[0].name === 'Mohsey' && lb[0].level === 1 && lb.length === 3 && !JSON.stringify(lb).includes('hash'), 'the leaderboard ranks everyone, chapter first, and leaks no keys');
+    ok(lb[0].name === 'Mohsey' && lb[0].level === 1 && lb.length === 3 && !/hash|sessions|pw"/.test(JSON.stringify(lb)), 'the leaderboard ranks everyone, chapter first, and leaks no keys');
 
     // a lone player is practice only
     const solo = (await call('POST', '/api/rooms', C.key, { open: false })).json.code, s = await listen(solo, C.key);
@@ -82,7 +87,7 @@ const until = async (f, what) => { for (let i = 0; i < 100; i++) { if (f()) retu
     ok(s.state.scores.scored === false && (await call('GET', '/api/me', C.key)).json.me.total === before && !(await call('GET', '/api/rooms', A.key)).json.tables.some(t => t.code === solo), 'a round alone is practice: no points; an invite-only table is not listed');
 
     await sleep(400); const saved = JSON.parse(fs.readFileSync(path.join(fx.dir, 'players.json'), 'utf8')).players;
-    ok(Object.keys(saved).length === 3 && saved[A.me.id].level === 1 && saved[A.me.id].hash.length === 64 && !JSON.stringify(saved).includes(A.key.split('.')[1]), 'players are saved to disk, with the key stored only as a hash');
+    ok(Object.keys(saved).length === 3 && saved[A.me.id].level === 1 && saved[A.me.id].sessions[0].length === 64 && !JSON.stringify(saved).includes(A.key.split('.')[1]) && !JSON.stringify(saved).includes('secret-') && /^[0-9a-f]{32}:[0-9a-f]{64}$/.test(saved[A.me.id].pw), 'players are saved to disk; passwords and sign-in tokens only as hashes');
     // hostile input must never take the server down or bend the rules
     const weird = { toString: 1 };
     ok((await call('GET', '/api/meta?k=__proto__.x')).status === 200 && (await call('GET', '/api/me', 'constructor.x')).status === 401 && (await call('GET', '/api/me', '__proto__.x')).status === 401, 'keys named after built-in properties are simply refused');
@@ -100,6 +105,11 @@ const until = async (f, what) => { for (let i = 0; i < 100; i++) { if (f()) retu
     await call('POST', '/api/quiz/start', A.key);
     const junk = (await call('POST', '/api/quiz/answer', A.key, { answers: [weird, '__proto__', -1, 1.5, null] })).json;
     ok(junk.passed === false && junk.correct === 0 && junk.wrong === undefined, 'junk quiz answers are graded wrong, and the reply does not say which questions were wrong');
+    const dev2 = (await call('POST', '/api/login', null, { name: 'Sufi', password: 'secret-Sufi' })).json.key;
+    ok((await call('POST', '/api/password', B.key, { current: 'nope', password: 'brand-new-1' })).status === 401 && (await call('POST', '/api/password', B.key, { current: 'secret-Sufi', password: 'brand-new-1' })).status === 200, 'changing the password needs the current one');
+    ok((await call('GET', '/api/me', dev2)).status === 401 && (await call('GET', '/api/me', B.key)).status === 200 && (await call('POST', '/api/login', null, { name: 'Sufi', password: 'secret-Sufi' })).status === 401 && (await call('POST', '/api/login', null, { name: 'Sufi', password: 'brand-new-1' })).status === 200, 'a new password signs out the other devices and replaces the old one');
+    let locked = 0; for (let i = 0; i < 12; i++) locked = (await call('POST', '/api/login', null, { name: 'Rudabeh', password: 'guess' + i })).status;
+    ok(locked === 429 && (await call('POST', '/api/login', null, { name: 'Rudabeh', password: 'secret-Rudabeh' })).status === 429, 'repeated wrong passwords are locked out for a while');
     const before2 = (await call('GET', '/health')).json.tables; for (let i = 0; i < 6; i++) await call('POST', '/api/rooms', B.key, {});
     ok((await call('GET', '/health')).json.tables <= before2 + 1, 'one player cannot pile up empty tables');
     const again = await listen(code, A.key); await until(() => again.state, 'second stream'); await sleep(200);
@@ -110,7 +120,7 @@ const until = async (f, what) => { for (let i = 0; i < 100; i++) { if (f()) retu
     try {
       await sleep(600); const b2 = 'http://127.0.0.1:' + (PORT + 1), c2 = async (m, p, k, body) => { const r = await fetch(b2 + p, { method: m, headers: Object.assign({ 'Content-Type': 'application/json' }, k ? { Authorization: 'Bearer ' + k } : {}), body: body ? JSON.stringify(body) : undefined }); return { status: r.status, json: await r.json().catch(() => ({})) }; };
       const l2 = async (code, key) => { const ctl = new AbortController(), box = { state: null, close: () => ctl.abort() }; const r = await fetch(b2 + '/api/rooms/' + code + '/events?k=' + key, { signal: ctl.signal }); (async () => { const dec = new TextDecoder(); let buf = ''; try { for await (const ch of r.body) { buf += dec.decode(ch, { stream: true }); let i; while ((i = buf.indexOf('\n\n')) >= 0) { const m = /data: (.*)/.exec(buf.slice(0, i)); buf = buf.slice(i + 2); if (m) box.state = JSON.parse(m[1]); } } } catch (e) { /* closed */ } })(); return box; };
-      const X = (await c2('POST', '/api/register', null, { name: 'Xena' })).json, Y = (await c2('POST', '/api/register', null, { name: 'Yara' })).json;
+      const X = (await c2('POST', '/api/register', null, { name: 'Xena', password: 'secret-x' })).json, Y = (await c2('POST', '/api/register', null, { name: 'Yara', password: 'secret-y' })).json;
       const t1 = (await c2('POST', '/api/rooms', X.key, {})).json.code, x = await l2(t1, X.key), y = await l2(t1, Y.key); await until(() => x.state && x.state.players.length === 2, 'two at table');
       const play = async (leaver) => {
         await c2('POST', '/api/rooms/' + t1 + '/start', X.key); await until(() => x.state.phase === 'play', 'play'); const all = s => Object.fromEntries(x.state.settings.cats.map(k => [k, x.state.letter + s + k]));

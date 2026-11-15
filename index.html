@@ -281,6 +281,27 @@ h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
 .q legend { font-weight: 700; padding: 0 0 6px; }
 .q label { display: flex; gap: 10px; align-items: flex-start; font-weight: 500; background: var(--surface-2); border-radius: 12px; padding: 12px; }
 .q input { width: 20px; height: 20px; flex: none; margin-top: 2px; accent-color: var(--gold); }
+
+/* the map of the two kingdoms: fixed colours, a painted plate like the profile panels */
+.map { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.map svg { width: 100%; height: auto; display: block; border-radius: 14px; border: 1.5px solid var(--gold); }
+.map-sea { fill: #16233F; }
+.map-land polygon { fill: #4A4468; stroke: #1B1430; stroke-width: 1; stroke-linejoin: round; }
+.map-iran { fill: #D9A93A; opacity: .9; }
+.map-turan { fill: #5C86E8; opacity: .9; }
+.map-name { font: 700 30px var(--display); letter-spacing: .2em; paint-order: stroke; stroke: #1B1430; stroke-width: 5px; }
+.map-name-i { fill: #FFE7A6; } .map-name-t { fill: #DCE8FF; }
+.map-dot { fill: #FFFDF6; stroke: #1B1430; stroke-width: 1.5; }
+.map-place { font: 600 15px var(--body); fill: #FFFDF6; paint-order: stroke; stroke: #1B1430; stroke-width: 4px; }
+.map figcaption { font-size: .85rem; color: var(--soft); }
+.map figcaption .i { color: var(--gold); } .map figcaption .t { color: var(--sky); }
+.seg { display: flex; gap: 6px; }
+.seg .chip { flex: 1; }
+.btn.wa { background: #25D366; color: #06301A; }
+input[type="password"] { width: 100%; min-width: 0; font: 1rem var(--body); color: var(--ink); background: var(--surface-2); border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 14px; min-height: 48px; }
+.prince { border-radius: 50%; flex: none; display: block; object-fit: cover; object-position: top; }
+.hero .prince { margin: 0 auto 4px; box-shadow: 0 0 28px -6px var(--gold); }
+.chapter.final { opacity: 1; align-items: center; }
 </style></head><body>
 <div class="wrap">
   <header class="top">
@@ -341,7 +362,61 @@ h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
       '<circle cx="60" cy="60" r="38" fill="none" stroke="' + F + '" stroke-width="1.6" stroke-dasharray="0.100 6.530" stroke-linecap="round"/>' +
       '<g fill="' + F + '" stroke="' + D + '" stroke-width="1.6" stroke-linejoin="round" transform="translate(60 60) scale(.86) translate(-60 -60)">' + (typeof g === 'function' ? g() : g) + '</g></svg>';
   }
+  /* Prince Mohsey. If config.js names a picture (princeImage), that is shown; otherwise this drawn portrait:
+     dark curls, a warm smile, a navy coat with a gold collar. */
+  window.WPM_PRINCE = function (size) {
+    var src = (window.WPM_CONFIG || {}).princeImage;
+    if (src) return '<img class="prince" src="' + esc(src) + '" width="' + size + '" height="' + size + '" alt="Prince Mohsey">';
+    var curls = [[38,40,13],[50,30,13],[64,28,13],[77,33,13],[86,44,12],[32,54,11],[89,57,10],[44,24,9],[72,22,9],[58,20,9],[30,66,8],[91,68,7]].map(function (c) { return '<circle cx="' + c[0] + '" cy="' + c[1] + '" r="' + c[2] + '"/>'; }).join('');
+    return '<svg class="prince" viewBox="0 0 120 120" width="' + size + '" height="' + size + '" role="img" aria-label="Prince Mohsey"><defs><clipPath id="prince-clip"><circle cx="60" cy="60" r="54"/></clipPath></defs>' +
+      '<circle cx="60" cy="60" r="58" fill="url(#m-gold)"/><circle cx="60" cy="60" r="54" fill="#1E2A5A"/><g clip-path="url(#prince-clip)">' +
+      '<path d="M14 120c2-22 20-30 46-30s44 8 46 30z" fill="#1B2A63"/><path d="M40 92c6 8 34 8 40 0l-4 28H44z" fill="#F1E3B8"/><path d="M38 90c8 10 36 10 44 0l3 6c-10 12-40 12-50 0z" fill="url(#m-gold)"/>' +
+      '<rect x="52" y="74" width="16" height="18" rx="6" fill="#B9763F"/><ellipse cx="60" cy="58" rx="22" ry="26" fill="#C98A52"/>' +
+      '<g fill="#17110F">' + curls + '</g>' +
+      '<path d="M46 52c4-3 8-3 11-1M63 51c3-2 7-2 11 1" fill="none" stroke="#17110F" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="51" cy="58" rx="2.600" ry="3" fill="#2A1A12"/><ellipse cx="69" cy="58" rx="2.600" ry="3" fill="#2A1A12"/>' +
+      '<path d="M60 60c-1 4-2 6 0 8" fill="none" stroke="#9A5F33" stroke-width="1.8" stroke-linecap="round"/><path d="M50 71c6 7 14 7 20 0-6 3-14 3-20 0z" fill="#FFF8F0" stroke="#7A3F25" stroke-width="1.4" stroke-linejoin="round"/></g></svg>';
+  };
   window.WPM_ART = art;
+})();
+
+/* The map of the game's two kingdoms, drawn from simplified coastlines (longitude, latitude pairs).
+   It is a game map, not an atlas: Turan is the north, from Ireland and Britain across to the steppe;
+   Iran is the band from Egypt to China. window.WPM_MAP() returns the SVG markup. */
+(function () {
+  'use strict';
+  var W = 767, H = 378;
+  function pt(p) { return ((p[0] + 12) * 5.6).toFixed(1) + ',' + ((62 - p[1]) * 7).toFixed(1); }
+  function poly(list) { return list.map(pt).join(' '); }
+  var LAND = [
+    // Europe and Asia
+    [[-9,37],[-9.3,39],[-8.8,43],[-1.8,43.4],[-1.2,46],[-4.5,48.4],[-1.6,48.7],[1.6,50.9],[4,51.9],[8.6,53.6],[8.2,56.8],[10.5,57.6],[10.8,54],[14,54.2],[19,54.6],[21,57],[24,59.4],[28,59.6],[30,60],[30,62],[125,62],[125,40],[122,40],[118,39],[122,37],[119,35],[121.8,31],[120,27],[116,23],[110,21],[108,21.6],[106,19],[108.8,15],[109.2,11.6],[105,9],[102,12],[100,13.5],[99,9],[98.3,8],[97.5,16.5],[94.3,16],[92,21],[89,22],[87,21.4],[80.2,15.5],[80,12],[77.5,8],[76,10],[73,17],[72.6,21],[70,21],[67,24.6],[61.5,25.2],[57,25.6],[56.3,27],[51.5,27.8],[50,30],[48.8,30.2],[48,29.5],[50,26.6],[51.6,25],[51.5,24.3],[54,24.2],[56.4,26.3],[56.6,24.5],[59.8,22.5],[57.7,19],[55,17],[52,16],[45,12.7],[43.3,13],[42.7,16],[39,21],[37,25],[35,28],[34.9,29.5],[34.3,31.3],[35,33],[36,35.8],[36.2,36.6],[32.5,36.1],[30.5,36.6],[27.3,37],[26.3,39.3],[26.7,40.4],[24,40.8],[22.8,40.2],[23.5,38],[22.5,36.5],[21.2,37.8],[19.4,40.8],[19.5,42],[16,43.5],[13.7,45.6],[12.4,45.3],[12.3,44.2],[14,42.3],[16,41.8],[18.5,40.2],[17,40.4],[16.5,39.5],[16,38],[15.6,38],[16.2,39.9],[14.5,40.6],[12.2,41.8],[10.3,42.9],[8.8,44.4],[6.2,43.1],[3.2,43],[3.2,41.8],[0.8,41],[-0.4,39.5],[-0.2,38.5],[-2,36.8],[-5.3,36],[-6.5,36.9]],
+    // Great Britain, Ireland, Scandinavia, Finland
+    [[-5.7,50.1],[-3,50.6],[1.4,51.2],[1.7,52.7],[0.2,53.5],[-1.5,55],[-2,56],[-1.8,57.6],[-3.5,58.6],[-5,58.5],[-6.2,56.6],[-5,55],[-3.2,54.8],[-3,53.4],[-4.6,53.2],[-4.2,52.3],[-5.2,51.8],[-3.2,51.4]],
+    [[-10,51.6],[-6.2,52.2],[-6,53.5],[-5.5,54.6],[-7.3,55.3],[-8.3,54.6],[-10,54.2],[-9.5,53.2],[-10.3,52.2]],
+    [[5,58.5],[7,58],[11,59],[12.5,56],[14.5,56],[16.5,57],[18.5,59.5],[17.5,62],[5,62]],
+    [[21,60],[30,60],[30,62],[21,62]],
+    // North Africa
+    [[-6,35.8],[-5.3,35.9],[-2,35.1],[3,36.9],[9.8,37.3],[11,36.9],[10,34.2],[11.2,33.2],[15.3,32.3],[19.8,30.4],[20,32.5],[23,32.6],[25,31.6],[29,30.9],[31,31.5],[32.3,31.2],[34.2,31.3],[34.9,29.5],[34.3,27.8],[33.3,28.5],[32.6,29.9],[33.6,27.5],[35.5,24],[37.2,21],[38.5,18],[43.2,12.5],[43,11.5],[51,12],[51,8],[-12,8],[-12,28],[-9.8,31.5],[-6.8,34]]
+  ];
+  var SEAS = [
+    [[28,41.7],[29,41.2],[31.5,41.2],[35,42],[38.5,41],[41.5,41.6],[41,43],[38.5,44.4],[37.3,45.3],[39,47],[37.5,47],[35,45.6],[33.6,44.5],[32.5,45.5],[30.8,46.5],[29.6,45.3],[28.6,43.8],[27.9,42.6]],
+    [[49,37.5],[51,36.8],[54,37],[53.8,39.5],[52.8,41],[54.5,42],[52.5,45],[53,46.8],[49.5,46.5],[47,44.5],[48.5,42],[49.8,40.3],[49,39]]
+  ];
+  var IRAN = [[24.5,31.8],[24.5,21.5],[37.5,21.5],[35.5,29],[48,29],[57,25],[62,24.8],[68,23.5],[75,30],[80,29],[88,27],[98,24],[102,21],[110,19.5],[124,21],[124,42.5],[110,43.5],[96,43.5],[87,49.5],[80,45.5],[72,40.5],[62,38.5],[53,39],[48,41],[44,39.5],[40,37.5],[36,37],[34,33],[30,32.5]];
+  var TURAN = [[-12,62],[-12,49.6],[1,49.8],[8,51],[20,50],[35,48],[47,47],[48,41],[53,39],[62,38.5],[72,40.5],[80,45.5],[87,49.5],[96,43.5],[110,43.5],[124,42.5],[125,42.5],[125,62]];
+  window.WPM_MAP = function () {
+    var land = LAND.map(function (p) { return '<polygon points="' + poly(p) + '"/>'; }).join('');
+    var label = function (lon, lat, text, cls) { var p = pt([lon, lat]).split(','); return '<text x="' + p[0] + '" y="' + p[1] + '" class="' + cls + '" text-anchor="middle">' + text + '</text>'; };
+    var dot = function (lon, lat, text, dx, dy, anchor) { var p = pt([lon, lat]).split(','), x = +p[0], y = +p[1]; return '<circle cx="' + x + '" cy="' + y + '" r="3.2" class="map-dot"/><text x="' + (x + dx) + '" y="' + (y + dy) + '" class="map-place" text-anchor="' + anchor + '">' + text + '</text>'; };
+    return '<figure class="map"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Map of the game: Turan covers the north from Ireland and Britain to the steppe, Iran runs from Egypt to China">' +
+      '<defs><clipPath id="map-land">' + land + '</clipPath></defs>' +
+      '<rect width="' + W + '" height="' + H + '" class="map-sea" rx="14"/><g class="map-land">' + land + '</g>' +
+      '<g clip-path="url(#map-land)"><polygon points="' + poly(TURAN) + '" class="map-turan"/><polygon points="' + poly(IRAN) + '" class="map-iran"/></g>' +
+      SEAS.map(function (p) { return '<polygon points="' + poly(p) + '" class="map-sea"/>'; }).join('') +
+      label(52, 57, 'TURAN', 'map-name map-name-t') + label(74, 35.5, 'IRAN', 'map-name map-name-i') +
+      dot(-1.5, 53, 'Britain', 8, -2, 'start') + dot(-8, 53.2, 'Ireland', -6, 26, 'start') + dot(31, 27, 'Egypt', 8, 5, 'start') + dot(52, 33, 'Persia', 8, 5, 'start') + dot(110, 33, 'China', -8, 5, 'end') + dot(64, 41.5, 'Oxus', 8, 5, 'start') +
+      '</svg><figcaption>The map of our game. <b class="t">Turan</b> is the north, from Ireland and Britain to the steppe. <b class="i">Iran</b> runs from Egypt to China. In the Shahnameh the two are divided by the river Oxus; the rest is our own invention.</figcaption></figure>';
+  };
 })();
 
 /* Where is Prince Mohsey? — the website. Everything that matters (letters, clocks, scores, points,
@@ -358,7 +433,11 @@ h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
   function lsSet(k, v) { try { if (v == null) window.localStorage.removeItem('wpm:' + k); else window.localStorage.setItem('wpm:' + k, v); } catch (e) { /* fine */ } }
 
   var app, key = lsGet('key'), me = null, meta = null, toastTimer = 0;
-  var table = null, es = null, offset = 0, mine = {}, sendTimer = 0, lastResults = '', armed = '';
+  var table = null, es = null, offset = 0, mine = {}, sendTimer = 0, lastResults = '', armed = '', mode = 'new';
+  var SITE = location.origin + location.pathname;
+  function shareRow(text, url) {   // WhatsApp link works everywhere; the phone's own share sheet is offered where it exists
+    return '<div class="row"><a class="btn small wa" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(text + ' ' + url) + '">Share on WhatsApp</a>' + (navigator.share ? '<button type="button" class="btn small ghost" data-act="share" data-text="' + esc(text) + '" data-url="' + esc(url) + '">Share another way</button>' : '') + '</div>';
+  }
 
   /* ---------- server ---------- */
   function api(method, path, body) {
@@ -412,12 +491,16 @@ h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
   var views = {};
 
   views.welcome = function () {
-    app.innerHTML = '<section class="hero"><p class="eyebrow">A word game from the Book of Kings</p><h1>Where is <em>Prince Mohsey?</em></h1><p class="soft">Play Esm Famil with friends, earn crowns from the Shahnameh, and unlock the life of Rostam chapter by chapter.</p></section>' +
-      '<form class="card" data-form="register"><div class="field"><label for="w-name">Your name in the kingdom</label><input id="w-name" type="text" maxlength="20" autocomplete="nickname" placeholder="For example: Sufi"></div>' +
-      '<div class="row" role="group" aria-label="Kingdom"><button type="button" class="chip" data-act="pick" data-f="kingdom" data-v="iran" aria-pressed="true">Kingdom of Iran</button><button type="button" class="chip" data-act="pick" data-f="kingdom" data-v="turan" aria-pressed="false">Kingdom of Turan</button></div>' +
-      '<div class="row" role="group" aria-label="Title">' + ['Champion', 'Prince', 'Princess'].map(function (t, i) { return '<button type="button" class="chip" data-act="pick" data-f="royal" data-v="' + t + '" aria-pressed="' + (i === 0) + '">' + t + '</button>'; }).join('') + '</div>' +
-      '<button class="btn big" type="submit">Enter the kingdom</button><p class="note">No email, no password. This device remembers you.</p></form>' +
-      '<details class="setup"><summary>I already have a player key</summary><form class="stack" data-form="signin"><div class="field"><label for="w-key">Player key</label><input id="w-key" type="text" autocomplete="off" placeholder="Paste the key from your other device"></div><button class="btn small ghost" type="submit">Sign in</button></form></details>';
+    var isNew = mode === 'new';
+    app.innerHTML = '<section class="hero">' + window.WPM_PRINCE(112) + '<p class="eyebrow">A word game from the Book of Kings</p><h1>Where is <em>Prince Mohsey?</em></h1><p class="soft">Play Esm Famil with friends, earn crowns from the Shahnameh, and unlock the life of Rostam chapter by chapter.</p></section>' +
+      '<div class="seg" role="group" aria-label="Account"><button class="chip" data-act="mode" data-m="new" aria-pressed="' + isNew + '">New player</button><button class="chip" data-act="mode" data-m="login" aria-pressed="' + !isNew + '">I have an account</button></div>' +
+      '<form class="card" data-form="' + (isNew ? 'register' : 'login') + '"><div class="field"><label for="w-name">' + (isNew ? 'Your name in the kingdom' : 'Your name') + '</label><input id="w-name" type="text" maxlength="20" autocomplete="username" placeholder="For example: Sufi"></div>' +
+      '<div class="field"><label for="w-pass">Password</label><input id="w-pass" type="password" maxlength="100" autocomplete="' + (isNew ? 'new-password' : 'current-password') + '" placeholder="' + (isNew ? 'At least 6 characters' : '') + '"></div>' +
+      (isNew ? '<p><b>Choose your kingdom</b></p>' + window.WPM_MAP() +
+        '<div class="row" role="group" aria-label="Kingdom"><button type="button" class="chip" data-act="pick" data-f="kingdom" data-v="iran" aria-pressed="true">Kingdom of Iran</button><button type="button" class="chip" data-act="pick" data-f="kingdom" data-v="turan" aria-pressed="false">Kingdom of Turan</button></div>' +
+        '<div class="row" role="group" aria-label="Title">' + ['Champion', 'Prince', 'Princess'].map(function (t, i) { return '<button type="button" class="chip" data-act="pick" data-f="royal" data-v="' + t + '" aria-pressed="' + (i === 0) + '">' + t + '</button>'; }).join('') + '</div>' +
+        '<button class="btn big" type="submit">Enter the kingdom</button><p class="note">Your name and password sign you in on any phone or computer, with all your points, crowns and chapters.</p>'
+        : '<button class="btn big" type="submit">Sign in</button><p class="note">Your points, crowns and chapters are waiting.</p>') + '</form>';
   };
 
   views.home = function () {
@@ -428,6 +511,7 @@ h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
       '<form class="inline" data-form="join"><label class="sr" for="h-code">Table code</label><input id="h-code" type="text" maxlength="5" autocapitalize="characters" autocomplete="off" placeholder="Table code"><button class="btn ghost" type="submit">Join</button></form>' +
       '<div id="h-tables"><p class="note">Looking for open tables…</p></div></section>' +
       '<section class="card"><div class="row split"><h2>Leaderboard</h2><a class="btn small ghost" href="#leaders">See everyone</a></div><div id="h-leaders"><p class="note">Loading…</p></div></section>' +
+      '<section class="card"><h2>Bring your friends</h2><p class="soft">The more players at the table, the better the game.</p>' + shareRow('Come and play Esm Famil with me in “Where is Prince Mohsey?”', SITE) + '</section>' +
       '<a class="book-link hall-link" href="#journey"><span><b>📜 The life of Rostam</b><br><span class="note">Seven chapters to unlock, and one still to come</span></span><span aria-hidden="true">→</span></a>';
     api('GET', '/api/rooms').then(function (j) {
       var box = $('#h-tables'); if (!box) return;
@@ -452,7 +536,7 @@ h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
         var passed = L.n <= me.level, open = L.n === me.level + 1 && me.quizReady, current = L.n === me.level + 1;
         return '<li class="chapter' + (passed ? ' passed' : open ? ' open' : current ? ' current' : ' locked') + '"><span class="ch-n">' + (passed ? '✓' : L.n) + '</span><div><b>' + esc(L.title) + '</b><small>' + esc(L.teaser) + '</small>' +
           (passed ? '<a class="btn small ghost" href="#level-' + L.n + '">Read again</a>' : open ? '<a class="btn small" href="#level-' + L.n + '">Read the story and take the quiz</a>' : current ? bar(me.levelPoints, me.need) + '<small>' + num(me.levelPoints) + ' of ' + num(L.points) + ' points</small>' : '<small>Needs ' + num(L.points) + ' points after chapter ' + (L.n - 1) + '</small>') + '</div></li>';
-      }).join('') + '<li class="chapter locked final"><span class="ch-n">8</span><div><b>Where is Prince Mohsey?</b><small>The last chapter is still being written.</small></div></li></ol>';
+      }).join('') + '<li class="chapter locked final">' + window.WPM_PRINCE(56) + '<div><b>Where is Prince Mohsey?</b><small>The last chapter is still being written.</small></div></li></ol>';
   };
 
   var quiz = null;
@@ -484,8 +568,11 @@ h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
       '<div class="card"><p><b>Royal ranks</b> <span class="note">' + earnedR + ' of ' + meta.ranks.length + ', earned by victories</span></p><ul class="medals">' + meta.ranks.map(function (r) { var at = me.ranks[r.id]; return '<li class="medal-card' + (at ? ' earned' : '') + (at && r.legendary ? ' legendary' : '') + '">' + art(r.art, r.metal, 64, r.badge, !at) + '<div><b>' + esc(rankTitle(r, me)) + '</b><small>' + r.badge + ' · ' + r.wins + (r.wins === 1 ? ' victory' : ' victories') + '</small>' + (at ? '<small class="got">Unlocked ' + new Date(at).toLocaleDateString() + '</small>' : bar(me.wins, r.wins)) + '</div></li>'; }).join('') + '</ul>' +
       '<p><b>Achievements</b></p><ul class="medals">' + meta.achievements.map(function (a) { var at = me.ach[a.id], hid = a.hidden && !at; return '<li class="medal-card' + (at ? ' earned' : '') + (at && a.legendary ? ' legendary' : '') + '">' + (hid ? art('lock', 'bronze', 64, 'Hidden', true) : art(a.art, a.metal, 64, a.name, !at)) + '<div><b>' + (hid ? 'A hidden achievement' : esc(a.name)) + '</b><small>' + (hid ? 'Keep playing. It is earned at the table, not by luck.' : esc(a.desc)) + '</small>' + (at ? '<small class="got">Unlocked ' + new Date(at).toLocaleDateString() + '</small>' : bar(me.progress[a.id], a.goal) + '<small>' + me.progress[a.id] + ' of ' + a.goal + '</small>') + '</div></li>'; }).join('') + '</ul></div>' +
       '<form class="card" data-form="rename"><div class="field"><label for="p-name">Name</label><div class="inline"><input id="p-name" type="text" maxlength="20" value="' + esc(me.name) + '"><button class="btn small ghost" type="submit">Save</button></div></div></form>' +
-      '<div class="card"><p><b>Play on another device</b></p><p class="note">Your player key signs you in elsewhere. Anyone who has it can play as you, so keep it to yourself.</p><div class="inline"><label class="sr" for="p-key">Player key</label><input id="p-key" type="text" readonly value="' + esc(key) + '"><button class="btn small" data-act="copykey">Copy</button></div>' +
-      '<div class="row"><button class="linkbtn" data-act="signout">' + (armed === 'signout' ? 'Tap again to sign out. Copy your key first, or this player is lost.' : 'Sign out on this device') + '</button></div></div>';
+      '<div class="card"><p><b>The two kingdoms</b></p>' + window.WPM_MAP() + '</div>' +
+      '<form class="card" data-form="password"><p><b>' + (me.hasPassword ? 'Change your password' : 'Set a password') + '</b></p><p class="note">' + (me.hasPassword ? 'Changing it signs you out on your other devices.' : 'With a password you can sign in on any phone or computer.') + '</p>' +
+      (me.hasPassword ? '<div class="field"><label for="p-cur">Current password</label><input id="p-cur" type="password" maxlength="100" autocomplete="current-password"></div>' : '') +
+      '<div class="field"><label for="p-new">New password</label><input id="p-new" type="password" maxlength="100" autocomplete="new-password" placeholder="At least 6 characters"></div><button class="btn small ghost" type="submit">Save password</button></form>' +
+      '<div class="row mid"><button class="linkbtn" data-act="signout">' + (armed === 'signout' ? 'Tap again to sign out' : 'Sign out on this device') + '</button></div>';
   };
 
   /* ---------- the table ---------- */
@@ -513,7 +600,7 @@ h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
     app.dataset.key = k;
     var link = location.origin + location.pathname + '#table-' + st.code;
     if (st.phase === 'lobby') {
-      body = '<div class="card"><p><b>Invite players</b> <span class="note">up to ' + meta.maxPlayers + ' at a table</span></p><p class="code">' + st.code + '</p><div class="inline"><label class="sr" for="t-link">Invite link</label><input id="t-link" type="text" readonly value="' + esc(link) + '"><button class="btn small" data-act="copylink">Copy</button></div></div>' +
+      body = '<div class="card"><p><b>Invite players</b> <span class="note">up to ' + meta.maxPlayers + ' at a table</span></p><p class="code">' + st.code + '</p><div class="inline"><label class="sr" for="t-link">Invite link</label><input id="t-link" type="text" readonly value="' + esc(link) + '"><button class="btn small" data-act="copylink">Copy</button></div>' + shareRow(me.name + ' invites you to a round of Esm Famil in “Where is Prince Mohsey?”. Table ' + st.code + ':', link) + '</div>' +
         (host ? '<div class="card"><p><b>Table rules</b></p><div class="row" role="group" aria-label="Alphabet"><button class="chip" data-act="set" data-f="lang" data-v="en" aria-pressed="' + (s.lang === 'en') + '">English letters</button><button class="chip" data-act="set" data-f="lang" data-v="fa" aria-pressed="' + (s.lang === 'fa') + '">حروف فارسی</button></div>' +
           '<div class="checks">' + meta.categories.map(function (c) { return '<label><input type="checkbox" id="c-' + c.id + '" data-act="cat" data-id="' + c.id + '"' + (s.cats.indexOf(c.id) >= 0 ? ' checked' : '') + '> ' + c.en + ' <span class="soft" lang="fa">' + c.fa + '</span></label>'; }).join('') + '</div>' +
           '<div class="row" role="group" aria-label="Time">' + [60, 90, 120].map(function (x) { return '<button class="chip" data-act="set" data-f="secs" data-v="' + x + '" aria-pressed="' + (s.secs === x) + '">' + x + ' seconds</button>'; }).join('') + '</div>' +
@@ -547,8 +634,9 @@ h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
     pick: function (el) { $$('[data-f="' + el.dataset.f + '"]').forEach(function (b) { b.setAttribute('aria-pressed', b === el); }); },
     create: function () { api('POST', '/api/rooms', {}).then(function (j) { location.hash = 'table-' + j.code; }).catch(fail); },
     copylink: function () { copy($('#t-link'), 'Link copied. Send it to your friends.'); },
-    copykey: function () { copy($('#p-key'), 'Key copied. Keep it private.'); },
-    signout: function () { if (armed !== 'signout') { armed = 'signout'; route(); setTimeout(function () { armed = ''; }, 5000); return; } armed = ''; key = null; lsSet('key', null); setMe(null); location.hash = 'home'; route(); },
+    mode: function (el) { mode = el.dataset.m; views.welcome(); },
+    share: function (el) { navigator.share({ text: el.dataset.text, url: el.dataset.url }).catch(function () { /* closed without sharing */ }); },
+    signout: function () { if (armed !== 'signout') { armed = 'signout'; route(); setTimeout(function () { armed = ''; }, 5000); return; } armed = ''; api('POST', '/api/logout').catch(function () { /* signed out here either way */ }); key = null; lsSet('key', null); setMe(null); mode = 'login'; location.hash = 'home'; route(); },
     profile: function (el) { var b = {}; b[el.dataset.f] = el.dataset.v; api('POST', '/api/profile', b).then(function (j) { setMe(j.me); route(); }).catch(fail); },
     quiz: function () { api('POST', '/api/quiz/start').then(showQuiz).catch(fail); },
     leave: function () { var t = table; leaveTable(); if (t) api('POST', '/api/rooms/' + t.code + '/leave', {}).catch(function () { /* already gone */ }); location.hash = 'home'; },
@@ -559,13 +647,17 @@ h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
     vote: function (el) { T('vote', { player: el.dataset.p, cat: el.dataset.cat, reject: el.getAttribute('aria-pressed') !== 'true' }).catch(fail); },
     ready: function () { T('ready').catch(fail); }
   };
+  function enter(j) { key = j.key; lsSet('key', key); setMe(j.me); route(); }
   function copy(input, msg) { var manual = function () { input.focus(); input.select(); toast('Select the text and copy it'); }; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(input.value).then(function () { toast(msg); }, manual); else manual(); }
   var forms = {
     register: function () {
-      var b = { name: $('#w-name').value, kingdom: ($('[data-f="kingdom"][aria-pressed="true"]') || {}).dataset.v, royal: ($('[data-f="royal"][aria-pressed="true"]') || {}).dataset.v };
-      api('POST', '/api/register', b).then(function (j) { key = j.key; lsSet('key', key); setMe(j.me); route(); }).catch(fail);
+      var b = { name: $('#w-name').value, password: $('#w-pass').value, kingdom: ($('[data-f="kingdom"][aria-pressed="true"]') || {}).dataset.v, royal: ($('[data-f="royal"][aria-pressed="true"]') || {}).dataset.v };
+      api('POST', '/api/register', b).then(enter).catch(fail);
     },
-    signin: function () { var k = $('#w-key').value.trim(), old = key; key = k; refreshMe().then(function () { lsSet('key', key); route(); }).catch(function () { key = old; toast('That key was not recognised.'); }); },
+    login: function () { api('POST', '/api/login', { name: $('#w-name').value, password: $('#w-pass').value }).then(enter).catch(fail); },
+    password: function () {
+      api('POST', '/api/password', { current: ($('#p-cur') || {}).value, password: $('#p-new').value }).then(function (j) { setMe(j.me); toast('Password saved'); route(); }).catch(fail);
+    },
     join: function () { var c = $('#h-code').value.trim().toUpperCase(); if (c) location.hash = 'table-' + c; },
     rename: function () { api('POST', '/api/profile', { name: $('#p-name').value }).then(function (j) { setMe(j.me); toast('Name saved'); route(); }).catch(fail); },
     quiz: function () {

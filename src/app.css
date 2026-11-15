@@ -280,3 +280,24 @@ h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
 .q legend { font-weight: 700; padding: 0 0 6px; }
 .q label { display: flex; gap: 10px; align-items: flex-start; font-weight: 500; background: var(--surface-2); border-radius: 12px; padding: 12px; }
 .q input { width: 20px; height: 20px; flex: none; margin-top: 2px; accent-color: var(--gold); }
+
+/* the map of the two kingdoms: fixed colours, a painted plate like the profile panels */
+.map { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.map svg { width: 100%; height: auto; display: block; border-radius: 14px; border: 1.5px solid var(--gold); }
+.map-sea { fill: #16233F; }
+.map-land polygon { fill: #4A4468; stroke: #1B1430; stroke-width: 1; stroke-linejoin: round; }
+.map-iran { fill: #D9A93A; opacity: .9; }
+.map-turan { fill: #5C86E8; opacity: .9; }
+.map-name { font: 700 30px var(--display); letter-spacing: .2em; paint-order: stroke; stroke: #1B1430; stroke-width: 5px; }
+.map-name-i { fill: #FFE7A6; } .map-name-t { fill: #DCE8FF; }
+.map-dot { fill: #FFFDF6; stroke: #1B1430; stroke-width: 1.5; }
+.map-place { font: 600 15px var(--body); fill: #FFFDF6; paint-order: stroke; stroke: #1B1430; stroke-width: 4px; }
+.map figcaption { font-size: .85rem; color: var(--soft); }
+.map figcaption .i { color: var(--gold); } .map figcaption .t { color: var(--sky); }
+.seg { display: flex; gap: 6px; }
+.seg .chip { flex: 1; }
+.btn.wa { background: #25D366; color: #06301A; }
+input[type="password"] { width: 100%; min-width: 0; font: 1rem var(--body); color: var(--ink); background: var(--surface-2); border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 14px; min-height: 48px; }
+.prince { border-radius: 50%; flex: none; display: block; object-fit: cover; object-position: top; }
+.hero .prince { margin: 0 auto 4px; box-shadow: 0 0 28px -6px var(--gold); }
+.chapter.final { opacity: 1; align-items: center; }

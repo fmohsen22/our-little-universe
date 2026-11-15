@@ -52,16 +52,27 @@ const has = id => typeof id === 'string' && Object.prototype.hasOwnProperty.call
 function auth(req, url, allowQuery) {
   const h = req.headers.authorization || '', raw = h.startsWith('Bearer ') ? h.slice(7) : (allowQuery ? url.searchParams.get('k') || '' : '');
   const dot = raw.indexOf('.'); if (dot < 1) return null;
-  const id = raw.slice(0, dot), p = has(id) ? players[id] : null; if (!p || typeof p.hash !== 'string') return null;
-  const a = Buffer.from(sha(raw.slice(dot + 1))), b = Buffer.from(p.hash);
-  return a.length === b.length && crypto.timingSafeEqual(a, b) ? p : null;
+  const id = raw.slice(0, dot), p = has(id) ? players[id] : null; if (!p) return null;
+  const mine = sha(raw.slice(dot + 1));                     // a signed-in device holds a random token; only its hash is kept
+  if (!sessionsOf(p).includes(mine)) return null;
+  req.session = mine; return p;
 }
+function sessionsOf(p) { if (!Array.isArray(p.sessions)) { p.sessions = typeof p.hash === 'string' ? [p.hash] : []; delete p.hash; } return p.sessions; }
+function signIn(p) { const token = rid(24); p.sessions = sessionsOf(p).concat([sha(token)]).slice(-8); savePlayers(); return p.id + '.' + token; }
+const okPw = v => typeof v === 'string' && v.length >= 6 && v.length <= 100;
+function hashPw(pw, cb) { const salt = crypto.randomBytes(16); crypto.scrypt(pw, salt, 32, (e, k) => cb(e, e ? '' : salt.toString('hex') + ':' + k.toString('hex'))); }
+function checkPw(pw, stored, cb) {
+  const parts = String(stored || '').split(':'), salt = Buffer.from(parts[0] || '00', 'hex'), want = Buffer.from(parts[1] || '', 'hex');
+  crypto.scrypt(pw, salt, 32, (e, k) => cb(!e && want.length === k.length && crypto.timingSafeEqual(k, want)));   // always does the work, so a missing account answers no faster
+}
+const tries = new Map();
+function tooManyTries(k, max) { const now = Date.now(), list = (tries.get(k) || []).filter(t => now - t < 900000); if (list.length >= max) { tries.set(k, list); return true; } list.push(now); tries.set(k, list); return false; }
 function cleanName(s) { return (typeof s === 'string' ? s : '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 20); }
 function nameTaken(name, except) { const k = G.key(name); return Object.values(players).some(p => p.id !== except && G.key(p.name) === k); }
 function pub(p) { const r = G.rankOf(p); return { id: p.id, name: p.name, kingdom: p.kingdom, royal: p.royal, level: p.level, total: p.total, wins: p.wins, rounds: p.rounds, streak: p.streak, best: p.best, rank: r ? r.id : null, title: r ? G.rankTitle(r, p) : '' }; }
 function priv(p) {
   const prog = {}; G.ACHIEVEMENTS.forEach(a => { prog[a.id] = Math.min(a.goal, a.value(p)); });
-  return Object.assign(pub(p), { levelPoints: p.levelPoints, need: G.nextLevelNeed(p), quizReady: G.quizReady(p), quizPending: !!p.quiz, quizFails: p.quizFails, ranks: p.ranks, ach: p.ach, progress: prog });
+  return Object.assign(pub(p), { levelPoints: p.levelPoints, need: G.nextLevelNeed(p), quizReady: G.quizReady(p), quizPending: !!p.quiz, quizFails: p.quizFails, hasPassword: !!p.pw, ranks: p.ranks, ach: p.ach, progress: prog });
 }
 function meta() {
   return {
@@ -159,6 +170,7 @@ setInterval(() => {
   const now = Date.now();
   rooms.forEach((r, code) => { const idle = now - r.active; if (!Array.from(r.members.values()).some(online) && idle > (r.members.size ? 10 * 60000 : 90000)) { clearTimeout(r.timer); clearTimeout(r.early); rooms.delete(code); } });
   regs.forEach((list, ip) => { if (!list.some(t => now - t < 3600000)) regs.delete(ip); });
+  tries.forEach((list, k) => { if (!list.some(t => now - t < 900000)) tries.delete(k); });
   pace.forEach((list, id) => { if (!list.some(t => now - t < 3600000)) pace.delete(id); });
 }, 60000).unref();
 
@@ -206,15 +218,36 @@ function handle(req, res) {
     if (limited(ip)) return send(res, 429, { error: 'Too many new players from here. Try again later.' });
     const name = cleanName(b.name);
     if (G.key(name).length < 2) return send(res, 400, { error: 'Choose a name with at least two letters.' });
-    if (nameTaken(name)) return send(res, 409, { error: 'That name is taken. Choose another.' });
-    const id = 'p' + rid(6), token = rid(24), p = G.newPlayer(id, name, Date.now());
-    p.hash = sha(token); if (b.kingdom === 'turan') p.kingdom = 'turan'; if (['Prince', 'Princess', 'Champion'].includes(b.royal)) p.royal = b.royal;
-    players[id] = p; savePlayers(); send(res, 200, { key: id + '.' + token, me: priv(p) });
+    if (!okPw(b.password)) return send(res, 400, { error: 'Choose a password of at least 6 characters.' });
+    if (nameTaken(name)) return send(res, 409, { error: 'That name is taken. If it is yours, sign in instead.' });
+    hashPw(b.password, (err, pw) => { try {
+      if (err) return oops(res, err);
+      if (nameTaken(name)) return send(res, 409, { error: 'That name is taken. If it is yours, sign in instead.' });
+      const id = 'p' + rid(6), p = G.newPlayer(id, name, Date.now());
+      p.pw = pw; p.sessions = []; if (b.kingdom === 'turan') p.kingdom = 'turan'; if (['Prince', 'Princess', 'Champion'].includes(b.royal)) p.royal = b.royal;
+      players[id] = p; send(res, 200, { key: signIn(p), me: priv(p) });
+    } catch (e) { oops(res, e); } });
+  });
+  if (POST && what === 'login') return readBody(req, res, b => {
+    const ip = String(req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '').slice(0, 64), k = G.key(cleanName(b.name));
+    if (tooManyTries('ip:' + ip, 60) || tooManyTries(ip + '|' + k, 10)) return send(res, 429, { error: 'Too many attempts. Wait a few minutes and try again.' });
+    const p = k ? Object.values(players).find(x => G.key(x.name) === k) : null;
+    checkPw(typeof b.password === 'string' ? b.password.slice(0, 100) : '', p && p.pw, good => { try {
+      if (!p || !good) return send(res, 401, { error: 'That name and password do not match.' });
+      send(res, 200, { key: signIn(p), me: priv(p) });
+    } catch (e) { oops(res, e); } });
   });
   if (!me) return send(res, 401, { error: 'Sign in first.' });
   me.lastSeen = Date.now();
 
   if (GET && what === 'me') return send(res, 200, { me: priv(me) });
+  if (POST && what === 'logout') { me.sessions = sessionsOf(me).filter(h => h !== req.session); savePlayers(); return send(res, 200, { ok: true }); }
+  if (POST && what === 'password') return readBody(req, res, b => {
+    if (!okPw(b.password)) return send(res, 400, { error: 'Choose a password of at least 6 characters.' });
+    const set = () => hashPw(b.password, (err, pw) => { try { if (err) return oops(res, err); me.pw = pw; me.sessions = [req.session]; savePlayers(); send(res, 200, { me: priv(me) }); } catch (e) { oops(res, e); } });   // other devices are signed out
+    if (!me.pw) return set();
+    checkPw(typeof b.current === 'string' ? b.current.slice(0, 100) : '', me.pw, good => { try { if (!good) return send(res, 401, { error: 'The current password is not right.' }); set(); } catch (e) { oops(res, e); } });
+  });
   if (POST && what === 'profile') return readBody(req, res, b => {
     if (b.name !== undefined) { const name = cleanName(b.name); if (G.key(name).length < 2) return send(res, 400, { error: 'Choose a name with at least two letters.' }); if (nameTaken(name, me.id)) return send(res, 409, { error: 'That name is taken. Choose another.' }); me.name = name; }
     if (b.kingdom === 'iran' || b.kingdom === 'turan') me.kingdom = b.kingdom;

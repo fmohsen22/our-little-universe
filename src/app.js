@@ -12,7 +12,11 @@
   function lsSet(k, v) { try { if (v == null) window.localStorage.removeItem('wpm:' + k); else window.localStorage.setItem('wpm:' + k, v); } catch (e) { /* fine */ } }
 
   var app, key = lsGet('key'), me = null, meta = null, toastTimer = 0;
-  var table = null, es = null, offset = 0, mine = {}, sendTimer = 0, lastResults = '', armed = '';
+  var table = null, es = null, offset = 0, mine = {}, sendTimer = 0, lastResults = '', armed = '', mode = 'new';
+  var SITE = location.origin + location.pathname;
+  function shareRow(text, url) {   // WhatsApp link works everywhere; the phone's own share sheet is offered where it exists
+    return '<div class="row"><a class="btn small wa" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(text + ' ' + url) + '">Share on WhatsApp</a>' + (navigator.share ? '<button type="button" class="btn small ghost" data-act="share" data-text="' + esc(text) + '" data-url="' + esc(url) + '">Share another way</button>' : '') + '</div>';
+  }
 
   /* ---------- server ---------- */
   function api(method, path, body) {
@@ -66,12 +70,16 @@
   var views = {};
 
   views.welcome = function () {
-    app.innerHTML = '<section class="hero"><p class="eyebrow">A word game from the Book of Kings</p><h1>Where is <em>Prince Mohsey?</em></h1><p class="soft">Play Esm Famil with friends, earn crowns from the Shahnameh, and unlock the life of Rostam chapter by chapter.</p></section>' +
-      '<form class="card" data-form="register"><div class="field"><label for="w-name">Your name in the kingdom</label><input id="w-name" type="text" maxlength="20" autocomplete="nickname" placeholder="For example: Sufi"></div>' +
-      '<div class="row" role="group" aria-label="Kingdom"><button type="button" class="chip" data-act="pick" data-f="kingdom" data-v="iran" aria-pressed="true">Kingdom of Iran</button><button type="button" class="chip" data-act="pick" data-f="kingdom" data-v="turan" aria-pressed="false">Kingdom of Turan</button></div>' +
-      '<div class="row" role="group" aria-label="Title">' + ['Champion', 'Prince', 'Princess'].map(function (t, i) { return '<button type="button" class="chip" data-act="pick" data-f="royal" data-v="' + t + '" aria-pressed="' + (i === 0) + '">' + t + '</button>'; }).join('') + '</div>' +
-      '<button class="btn big" type="submit">Enter the kingdom</button><p class="note">No email, no password. This device remembers you.</p></form>' +
-      '<details class="setup"><summary>I already have a player key</summary><form class="stack" data-form="signin"><div class="field"><label for="w-key">Player key</label><input id="w-key" type="text" autocomplete="off" placeholder="Paste the key from your other device"></div><button class="btn small ghost" type="submit">Sign in</button></form></details>';
+    var isNew = mode === 'new';
+    app.innerHTML = '<section class="hero">' + window.WPM_PRINCE(112) + '<p class="eyebrow">A word game from the Book of Kings</p><h1>Where is <em>Prince Mohsey?</em></h1><p class="soft">Play Esm Famil with friends, earn crowns from the Shahnameh, and unlock the life of Rostam chapter by chapter.</p></section>' +
+      '<div class="seg" role="group" aria-label="Account"><button class="chip" data-act="mode" data-m="new" aria-pressed="' + isNew + '">New player</button><button class="chip" data-act="mode" data-m="login" aria-pressed="' + !isNew + '">I have an account</button></div>' +
+      '<form class="card" data-form="' + (isNew ? 'register' : 'login') + '"><div class="field"><label for="w-name">' + (isNew ? 'Your name in the kingdom' : 'Your name') + '</label><input id="w-name" type="text" maxlength="20" autocomplete="username" placeholder="For example: Sufi"></div>' +
+      '<div class="field"><label for="w-pass">Password</label><input id="w-pass" type="password" maxlength="100" autocomplete="' + (isNew ? 'new-password' : 'current-password') + '" placeholder="' + (isNew ? 'At least 6 characters' : '') + '"></div>' +
+      (isNew ? '<p><b>Choose your kingdom</b></p>' + window.WPM_MAP() +
+        '<div class="row" role="group" aria-label="Kingdom"><button type="button" class="chip" data-act="pick" data-f="kingdom" data-v="iran" aria-pressed="true">Kingdom of Iran</button><button type="button" class="chip" data-act="pick" data-f="kingdom" data-v="turan" aria-pressed="false">Kingdom of Turan</button></div>' +
+        '<div class="row" role="group" aria-label="Title">' + ['Champion', 'Prince', 'Princess'].map(function (t, i) { return '<button type="button" class="chip" data-act="pick" data-f="royal" data-v="' + t + '" aria-pressed="' + (i === 0) + '">' + t + '</button>'; }).join('') + '</div>' +
+        '<button class="btn big" type="submit">Enter the kingdom</button><p class="note">Your name and password sign you in on any phone or computer, with all your points, crowns and chapters.</p>'
+        : '<button class="btn big" type="submit">Sign in</button><p class="note">Your points, crowns and chapters are waiting.</p>') + '</form>';
   };
 
   views.home = function () {
@@ -82,6 +90,7 @@
       '<form class="inline" data-form="join"><label class="sr" for="h-code">Table code</label><input id="h-code" type="text" maxlength="5" autocapitalize="characters" autocomplete="off" placeholder="Table code"><button class="btn ghost" type="submit">Join</button></form>' +
       '<div id="h-tables"><p class="note">Looking for open tables…</p></div></section>' +
       '<section class="card"><div class="row split"><h2>Leaderboard</h2><a class="btn small ghost" href="#leaders">See everyone</a></div><div id="h-leaders"><p class="note">Loading…</p></div></section>' +
+      '<section class="card"><h2>Bring your friends</h2><p class="soft">The more players at the table, the better the game.</p>' + shareRow('Come and play Esm Famil with me in “Where is Prince Mohsey?”', SITE) + '</section>' +
       '<a class="book-link hall-link" href="#journey"><span><b>📜 The life of Rostam</b><br><span class="note">Seven chapters to unlock, and one still to come</span></span><span aria-hidden="true">→</span></a>';
     api('GET', '/api/rooms').then(function (j) {
       var box = $('#h-tables'); if (!box) return;
@@ -106,7 +115,7 @@
         var passed = L.n <= me.level, open = L.n === me.level + 1 && me.quizReady, current = L.n === me.level + 1;
         return '<li class="chapter' + (passed ? ' passed' : open ? ' open' : current ? ' current' : ' locked') + '"><span class="ch-n">' + (passed ? '✓' : L.n) + '</span><div><b>' + esc(L.title) + '</b><small>' + esc(L.teaser) + '</small>' +
           (passed ? '<a class="btn small ghost" href="#level-' + L.n + '">Read again</a>' : open ? '<a class="btn small" href="#level-' + L.n + '">Read the story and take the quiz</a>' : current ? bar(me.levelPoints, me.need) + '<small>' + num(me.levelPoints) + ' of ' + num(L.points) + ' points</small>' : '<small>Needs ' + num(L.points) + ' points after chapter ' + (L.n - 1) + '</small>') + '</div></li>';
-      }).join('') + '<li class="chapter locked final"><span class="ch-n">8</span><div><b>Where is Prince Mohsey?</b><small>The last chapter is still being written.</small></div></li></ol>';
+      }).join('') + '<li class="chapter locked final">' + window.WPM_PRINCE(56) + '<div><b>Where is Prince Mohsey?</b><small>The last chapter is still being written.</small></div></li></ol>';
   };
 
   var quiz = null;
@@ -138,8 +147,11 @@
       '<div class="card"><p><b>Royal ranks</b> <span class="note">' + earnedR + ' of ' + meta.ranks.length + ', earned by victories</span></p><ul class="medals">' + meta.ranks.map(function (r) { var at = me.ranks[r.id]; return '<li class="medal-card' + (at ? ' earned' : '') + (at && r.legendary ? ' legendary' : '') + '">' + art(r.art, r.metal, 64, r.badge, !at) + '<div><b>' + esc(rankTitle(r, me)) + '</b><small>' + r.badge + ' · ' + r.wins + (r.wins === 1 ? ' victory' : ' victories') + '</small>' + (at ? '<small class="got">Unlocked ' + new Date(at).toLocaleDateString() + '</small>' : bar(me.wins, r.wins)) + '</div></li>'; }).join('') + '</ul>' +
       '<p><b>Achievements</b></p><ul class="medals">' + meta.achievements.map(function (a) { var at = me.ach[a.id], hid = a.hidden && !at; return '<li class="medal-card' + (at ? ' earned' : '') + (at && a.legendary ? ' legendary' : '') + '">' + (hid ? art('lock', 'bronze', 64, 'Hidden', true) : art(a.art, a.metal, 64, a.name, !at)) + '<div><b>' + (hid ? 'A hidden achievement' : esc(a.name)) + '</b><small>' + (hid ? 'Keep playing. It is earned at the table, not by luck.' : esc(a.desc)) + '</small>' + (at ? '<small class="got">Unlocked ' + new Date(at).toLocaleDateString() + '</small>' : bar(me.progress[a.id], a.goal) + '<small>' + me.progress[a.id] + ' of ' + a.goal + '</small>') + '</div></li>'; }).join('') + '</ul></div>' +
       '<form class="card" data-form="rename"><div class="field"><label for="p-name">Name</label><div class="inline"><input id="p-name" type="text" maxlength="20" value="' + esc(me.name) + '"><button class="btn small ghost" type="submit">Save</button></div></div></form>' +
-      '<div class="card"><p><b>Play on another device</b></p><p class="note">Your player key signs you in elsewhere. Anyone who has it can play as you, so keep it to yourself.</p><div class="inline"><label class="sr" for="p-key">Player key</label><input id="p-key" type="text" readonly value="' + esc(key) + '"><button class="btn small" data-act="copykey">Copy</button></div>' +
-      '<div class="row"><button class="linkbtn" data-act="signout">' + (armed === 'signout' ? 'Tap again to sign out. Copy your key first, or this player is lost.' : 'Sign out on this device') + '</button></div></div>';
+      '<div class="card"><p><b>The two kingdoms</b></p>' + window.WPM_MAP() + '</div>' +
+      '<form class="card" data-form="password"><p><b>' + (me.hasPassword ? 'Change your password' : 'Set a password') + '</b></p><p class="note">' + (me.hasPassword ? 'Changing it signs you out on your other devices.' : 'With a password you can sign in on any phone or computer.') + '</p>' +
+      (me.hasPassword ? '<div class="field"><label for="p-cur">Current password</label><input id="p-cur" type="password" maxlength="100" autocomplete="current-password"></div>' : '') +
+      '<div class="field"><label for="p-new">New password</label><input id="p-new" type="password" maxlength="100" autocomplete="new-password" placeholder="At least 6 characters"></div><button class="btn small ghost" type="submit">Save password</button></form>' +
+      '<div class="row mid"><button class="linkbtn" data-act="signout">' + (armed === 'signout' ? 'Tap again to sign out' : 'Sign out on this device') + '</button></div>';
   };
 
   /* ---------- the table ---------- */
@@ -167,7 +179,7 @@
     app.dataset.key = k;
     var link = location.origin + location.pathname + '#table-' + st.code;
     if (st.phase === 'lobby') {
-      body = '<div class="card"><p><b>Invite players</b> <span class="note">up to ' + meta.maxPlayers + ' at a table</span></p><p class="code">' + st.code + '</p><div class="inline"><label class="sr" for="t-link">Invite link</label><input id="t-link" type="text" readonly value="' + esc(link) + '"><button class="btn small" data-act="copylink">Copy</button></div></div>' +
+      body = '<div class="card"><p><b>Invite players</b> <span class="note">up to ' + meta.maxPlayers + ' at a table</span></p><p class="code">' + st.code + '</p><div class="inline"><label class="sr" for="t-link">Invite link</label><input id="t-link" type="text" readonly value="' + esc(link) + '"><button class="btn small" data-act="copylink">Copy</button></div>' + shareRow(me.name + ' invites you to a round of Esm Famil in “Where is Prince Mohsey?”. Table ' + st.code + ':', link) + '</div>' +
         (host ? '<div class="card"><p><b>Table rules</b></p><div class="row" role="group" aria-label="Alphabet"><button class="chip" data-act="set" data-f="lang" data-v="en" aria-pressed="' + (s.lang === 'en') + '">English letters</button><button class="chip" data-act="set" data-f="lang" data-v="fa" aria-pressed="' + (s.lang === 'fa') + '">حروف فارسی</button></div>' +
           '<div class="checks">' + meta.categories.map(function (c) { return '<label><input type="checkbox" id="c-' + c.id + '" data-act="cat" data-id="' + c.id + '"' + (s.cats.indexOf(c.id) >= 0 ? ' checked' : '') + '> ' + c.en + ' <span class="soft" lang="fa">' + c.fa + '</span></label>'; }).join('') + '</div>' +
           '<div class="row" role="group" aria-label="Time">' + [60, 90, 120].map(function (x) { return '<button class="chip" data-act="set" data-f="secs" data-v="' + x + '" aria-pressed="' + (s.secs === x) + '">' + x + ' seconds</button>'; }).join('') + '</div>' +
@@ -201,8 +213,9 @@
     pick: function (el) { $$('[data-f="' + el.dataset.f + '"]').forEach(function (b) { b.setAttribute('aria-pressed', b === el); }); },
     create: function () { api('POST', '/api/rooms', {}).then(function (j) { location.hash = 'table-' + j.code; }).catch(fail); },
     copylink: function () { copy($('#t-link'), 'Link copied. Send it to your friends.'); },
-    copykey: function () { copy($('#p-key'), 'Key copied. Keep it private.'); },
-    signout: function () { if (armed !== 'signout') { armed = 'signout'; route(); setTimeout(function () { armed = ''; }, 5000); return; } armed = ''; key = null; lsSet('key', null); setMe(null); location.hash = 'home'; route(); },
+    mode: function (el) { mode = el.dataset.m; views.welcome(); },
+    share: function (el) { navigator.share({ text: el.dataset.text, url: el.dataset.url }).catch(function () { /* closed without sharing */ }); },
+    signout: function () { if (armed !== 'signout') { armed = 'signout'; route(); setTimeout(function () { armed = ''; }, 5000); return; } armed = ''; api('POST', '/api/logout').catch(function () { /* signed out here either way */ }); key = null; lsSet('key', null); setMe(null); mode = 'login'; location.hash = 'home'; route(); },
     profile: function (el) { var b = {}; b[el.dataset.f] = el.dataset.v; api('POST', '/api/profile', b).then(function (j) { setMe(j.me); route(); }).catch(fail); },
     quiz: function () { api('POST', '/api/quiz/start').then(showQuiz).catch(fail); },
     leave: function () { var t = table; leaveTable(); if (t) api('POST', '/api/rooms/' + t.code + '/leave', {}).catch(function () { /* already gone */ }); location.hash = 'home'; },
@@ -213,13 +226,17 @@
     vote: function (el) { T('vote', { player: el.dataset.p, cat: el.dataset.cat, reject: el.getAttribute('aria-pressed') !== 'true' }).catch(fail); },
     ready: function () { T('ready').catch(fail); }
   };
+  function enter(j) { key = j.key; lsSet('key', key); setMe(j.me); route(); }
   function copy(input, msg) { var manual = function () { input.focus(); input.select(); toast('Select the text and copy it'); }; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(input.value).then(function () { toast(msg); }, manual); else manual(); }
   var forms = {
     register: function () {
-      var b = { name: $('#w-name').value, kingdom: ($('[data-f="kingdom"][aria-pressed="true"]') || {}).dataset.v, royal: ($('[data-f="royal"][aria-pressed="true"]') || {}).dataset.v };
-      api('POST', '/api/register', b).then(function (j) { key = j.key; lsSet('key', key); setMe(j.me); route(); }).catch(fail);
+      var b = { name: $('#w-name').value, password: $('#w-pass').value, kingdom: ($('[data-f="kingdom"][aria-pressed="true"]') || {}).dataset.v, royal: ($('[data-f="royal"][aria-pressed="true"]') || {}).dataset.v };
+      api('POST', '/api/register', b).then(enter).catch(fail);
     },
-    signin: function () { var k = $('#w-key').value.trim(), old = key; key = k; refreshMe().then(function () { lsSet('key', key); route(); }).catch(function () { key = old; toast('That key was not recognised.'); }); },
+    login: function () { api('POST', '/api/login', { name: $('#w-name').value, password: $('#w-pass').value }).then(enter).catch(fail); },
+    password: function () {
+      api('POST', '/api/password', { current: ($('#p-cur') || {}).value, password: $('#p-new').value }).then(function (j) { setMe(j.me); toast('Password saved'); route(); }).catch(fail);
+    },
     join: function () { var c = $('#h-code').value.trim().toUpperCase(); if (c) location.hash = 'table-' + c; },
     rename: function () { api('POST', '/api/profile', { name: $('#p-name').value }).then(function (j) { setMe(j.me); toast('Name saved'); route(); }).catch(fail); },
     quiz: function () {

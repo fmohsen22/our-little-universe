@@ -10,17 +10,17 @@ const ok = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log('  o
   await new Promise(r => setTimeout(r, 900));
   const browser = await chromium.launch(), errors = [];
   const person = async (name, opts) => { const ctx = await browser.newContext(opts); await ctx.route('**/config.js', r => r.fulfill({ contentType: 'text/javascript', body: "window.WPM_CONFIG={serverUrl:'" + apiUrl + "'};" })); const p = await ctx.newPage();
-    p.on('console', m => { if (m.type() === 'error' && !/fonts\.g|net::ERR|409|403/.test(m.text())) errors.push(name + ': ' + m.text()); }); p.on('pageerror', e => errors.push(name + ': ' + e)); return p; };
+    p.on('console', m => { if (m.type() === 'error' && !/fonts\.g|net::ERR|409|403|401/.test(m.text())) errors.push(name + ': ' + m.text()); }); p.on('pageerror', e => errors.push(name + ': ' + e)); return p; };
   const shot = async (p, n) => { if (shots) await p.screenshot({ path: path.join(shots, n + '.png'), fullPage: true }); };
   const fits = async (p, w) => ok(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no sideways scroll: ' + w);
   const dismiss = async p => { for (let i = 0; i < 5 && await p.locator('#ceremony button[data-cer]').isVisible(); i++) await p.locator('#ceremony button[data-cer]').click(); };
   try {
     const a = await person('A', { ...devices['Pixel 7'] }), b = await person('B', { ...devices['iPhone 13'] }), c = await person('C', { viewport: { width: 1280, height: 800 } });
     await a.goto(site); await a.waitForSelector('#w-name'); await fits(a, 'welcome'); await shot(a, 'welcome');
-    await a.fill('#w-name', 'Mohsey'); await a.locator('[data-f="royal"][data-v="Prince"]').click(); await a.click('form[data-form="register"] [type=submit]');
+    ok(await a.locator('.map svg').isVisible() && /Turan/.test(await a.textContent('.map figcaption')), 'the welcome screen shows the map of Iran and Turan'); await a.fill('#w-name', 'Mohsey'); await a.fill('#w-pass', 'rostam-123'); await a.locator('[data-f="royal"][data-v="Prince"]').click(); await a.click('form[data-form="register"] [type=submit]');
     await a.waitForSelector('.me-card'); ok(/Prince Mohsey/.test(await a.textContent('.me-name')) && /0 of 40 points to chapter 1/.test(await a.textContent('.me-card')), 'sign-up lands on home with level progress');
-    await fits(a, 'home'); await a.locator('[data-act="create"]').click(); await a.waitForSelector('#t-link'); const link = await a.inputValue('#t-link'); await fits(a, 'lobby'); await shot(a, 'lobby');
-    for (const [p, name, k] of [[b, 'Sufi', 'turan'], [c, 'Rudabeh', 'iran']]) { await p.goto(link); await p.waitForSelector('#w-name'); await p.fill('#w-name', name); await p.locator('[data-f="kingdom"][data-v="' + k + '"]').click(); await p.click('form[data-form="register"] [type=submit]'); await p.waitForSelector('#t-people'); }
+    await fits(a, 'home'); await a.locator('[data-act="create"]').click(); await a.waitForSelector('#t-link'); const link = await a.inputValue('#t-link'); const wa = await a.locator('a.wa').getAttribute('href'); ok(wa.startsWith('https://wa.me/?text=') && decodeURIComponent(wa).includes(link), 'the table has a Share on WhatsApp link carrying the invite'); await fits(a, 'lobby'); await shot(a, 'lobby');
+    for (const [p, name, k] of [[b, 'Sufi', 'turan'], [c, 'Rudabeh', 'iran']]) { await p.goto(link); await p.waitForSelector('#w-name'); await p.fill('#w-name', name); await p.fill('#w-pass', 'secret-' + name); await p.locator('[data-f="kingdom"][data-v="' + k + '"]').click(); await p.click('form[data-form="register"] [type=submit]'); await p.waitForSelector('#t-people'); }
     await a.waitForFunction(() => document.querySelectorAll('#t-people li').length === 3); ok(/Waiting for the host/.test(await b.textContent('#app')), 'two friends join by invite link and wait for the host');
     await a.locator('[data-act="start"]').click(); for (const p of [a, b, c]) await p.waitForSelector('#e-name');
     const L = await a.textContent('.letter'); ok(L === await b.textContent('.letter') && L === await c.textContent('.letter') && Math.abs(+(await a.textContent('#t-time')) - +(await c.textContent('#t-time'))) <= 1, 'all three see the same letter and clock');
@@ -49,8 +49,11 @@ const ok = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log('  o
     await b.goto(site + '#leaders'); await b.waitForSelector('.leaders tbody tr'); const rows = await b.locator('.leaders tbody tr').allTextContents();
     ok(rows.length === 3 && /Mohsey/.test(rows[0]) && /Young Hero/.test(rows[0]) && await b.locator('.leaders tr.you').count() === 1, 'the leaderboard lists all three, Mohsey first, and highlights you'); await fits(b, 'leaderboard'); await shot(b, 'leaders');
     await a.goto(site + '#me'); await a.waitForSelector('.profile'); ok(await a.locator('.medal-card.earned').count() === 1 && await a.locator('.medal-card').count() === 16, 'the profile shows eight ranks and eight achievements, one earned'); await fits(a, 'profile'); await shot(a, 'profile');
-    const key = await a.inputValue('#p-key'), d = await person('D', { ...devices['Pixel 7'] }); await d.goto(site); await d.waitForSelector('#w-name'); await d.locator('details.setup summary').click(); await d.fill('#w-key', key); await d.click('form[data-form="signin"] [type=submit]');
-    await d.waitForSelector('.me-card'); ok(/Prince Mohsey/.test(await d.textContent('.me-name')), 'the player key signs the same player in on another device');
+    const d = await person('D', { ...devices['Pixel 7'] }); await d.goto(site); await d.waitForSelector('#w-name'); await d.locator('[data-m="login"]').click(); await d.fill('#w-name', 'mohsey'); await d.fill('#w-pass', 'wrong-pass'); await d.click('form[data-form="login"] [type=submit]');
+    await d.waitForFunction(() => /do not match/.test(document.querySelector('#toast').textContent)); await d.fill('#w-pass', 'rostam-123'); await d.click('form[data-form="login"] [type=submit]');
+    await d.waitForSelector('.me-card'); ok(/Prince Mohsey/.test(await d.textContent('.me-name')) && /chapter 1 of 7/.test(await d.textContent('.me-card')), 'name and password sign the same player in on another device, with all their progress');
+    await d.goto(site + '#level-1'); await d.waitForSelector('.story'); ok(/You have passed this chapter/.test(await d.textContent('#app')), 'a chapter that was won can be read again, on any device');
+    await d.goto(site + '#me'); await d.waitForSelector('[data-act="signout"]'); await d.locator('[data-act="signout"]').click(); await d.locator('[data-act="signout"]').click(); await d.waitForSelector('#w-name'); ok(true, 'signing out returns to the welcome screen');
     await a.reload(); await a.waitForSelector('.profile'); ok(/Young Hero/.test(await a.textContent('.p-title')), 'everything is still there after a reload');
     ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
     console.log('\nALL PASSED');

@@ -11,6 +11,7 @@ ${r('app.css')}</style></head><body>
 ${r('body.html')}<script src="config.js"></script>
 <script>
 ${r('art.js')}
+${r('map.js')}
 ${r('app.js')}</script>
 </body></html>
 `;

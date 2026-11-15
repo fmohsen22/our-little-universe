@@ -7,8 +7,8 @@ Esm Famil (اسم فامیل) for a table of friends, with crowns and badges fro
 
 ## How the game works
 
-1. Choose a name, a kingdom (Iran or Turan) and a title. No email or password: the device remembers you, and a player key on your profile signs you in elsewhere.
-2. Start a table and share its link or 5-letter code, or join an open table. Up to 12 players.
+1. Create an account with a name and password, and choose a kingdom (Iran or Turan, shown on a map) and a title. The same name and password sign you in on any phone or computer.
+2. Start a table and share it on WhatsApp (or copy the link or 5-letter code), or join an open table. Up to 12 players.
 3. The host starts a round. Everyone gets the same letter and clock, and fills in the categories. The first to fill every box can call Stop.
 4. Everyone checks the answers. Empty answers and wrong letters are refused automatically. Any other answer falls if more than half of the other players reject it.
 5. A unique answer scores 10, an answer shared with someone else 5. The highest score wins the round; a tie has no winner.
@@ -49,7 +49,9 @@ The stories were written from memory of Ferdowsi's narrative as told in the Davi
 - Nobody receives another player's answers while a round is running.
 - Points, wins, chapters and badges change only through rounds the server scored and quizzes it graded.
 - Quiz answers never leave the server. A quiz is drawn once and can be answered once.
-- Player keys are stored only as a hash.
+- Passwords are stored only as salted scrypt hashes, and sign-in tokens only as SHA-256 hashes. Wrong passwords are locked out after 10 tries in 15 minutes. Changing a password signs out the other devices.
+
+There is no password reset by email, because there is no email. If someone forgets their password, the server owner can remove the `pw` field from their entry in `players.json` (with the server stopped); they can then set a new one from a device where they are still signed in.
 
 - Pace limits keep points honest: Stop opens 20 seconds into a round, checking takes at least 8 seconds, a player sits at one table at a time, and at most 40 rounds an hour count.
 - It listens on 127.0.0.1 only; the tunnel on the same machine is the way in.
@@ -82,8 +84,8 @@ If `players.json` cannot be read at start, the server refuses to start instead o
 
 ## Changing the website
 
-- `src/app.js`: all screens. `src/art.js`: the badge drawings. `src/app.css`, `src/body.html`: look and skeleton.
-- `config.js`: the server address.
+- `src/app.js`: all screens. `src/art.js`: the badge drawings and the Prince Mohsey portrait. `src/map.js`: the map of the two kingdoms. `src/app.css`, `src/body.html`: look and skeleton.
+- `config.js`: the server address, and `princeImage`: a picture of Prince Mohsey (for example `assets/prince-mohsey.png`) to use instead of the drawn portrait.
 - After editing, run `node build.js` to regenerate `index.html`, then commit.
 
 ## Tests
