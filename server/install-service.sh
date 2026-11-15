@@ -46,8 +46,17 @@ if [ ! -f /etc/our-little-universe.env ] || ! sudo grep -q ANTHROPIC_API_KEY /et
 SETTINGS
   sudo chmod 600 /etc/our-little-universe.env
 fi
+# The nightly referee is a scheduled Claude session that comes to this server with a secret token.
+if ! sudo grep -q '^REFEREE_TOKEN=' /etc/our-little-universe.env 2>/dev/null; then
+  echo "REFEREE_TOKEN=$(openssl rand -hex 24)" | sudo tee -a /etc/our-little-universe.env >/dev/null
+  sudo chmod 600 /etc/our-little-universe.env
+fi
+REFEREE_TOKEN_VALUE="$(sudo grep '^REFEREE_TOKEN=' /etc/our-little-universe.env | head -n 1 | cut -d= -f2-)"
 sudo systemctl daemon-reload
 sudo systemctl enable our-little-universe
 sudo systemctl restart our-little-universe   # always pick up the new code
 sleep 1
 curl -fsS "http://localhost:$PORT/health" && echo "  <- the server is running on port $PORT, data in $DATA"
+echo
+echo "Referee token (paste it into the secure form in the Claude app; do not share it anywhere else):"
+echo "  $REFEREE_TOKEN_VALUE"

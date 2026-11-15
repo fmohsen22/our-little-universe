@@ -22,6 +22,10 @@ const COLLECT_MS = +(process.env.COLLECT_MS || 1500), REVIEW_MS = +(process.env.
 // Pace limits, so points cannot be manufactured faster than a real table plays.
 const MIN_PLAY_MS = +(process.env.MIN_PLAY_MS || 20000), MIN_REVIEW_MS = +(process.env.MIN_REVIEW_MS || 8000), ROUNDS_PER_HOUR = +(process.env.ROUNDS_PER_HOUR || 40);
 const REFEREE_AT = /^\d{1,2}:\d{2}$/.test(process.env.REFEREE_AT || '') ? process.env.REFEREE_AT : '22:00';   // local time of the nightly check
+// With REFEREE_TOKEN set, the referee is an outside agent (a scheduled Claude session) that fetches the waiting answers
+// and sends back verdicts over two token-protected endpoints. The server then never judges on its own.
+const REFEREE_TOKEN = process.env.REFEREE_TOKEN || '';
+const refMode = () => (REFEREE_TOKEN ? 'agent' : REF.mode());
 const MAX_PLAYERS_TOTAL = 5000, MAX_STREAMS = 600, NEW_PLAYERS_PER_HOUR = 300;
 fs.mkdirSync(DATA, { recursive: true });
 
@@ -88,7 +92,7 @@ function priv(p) {
 }
 function meta() {
   return {
-    referee: { at: REFEREE_AT, mode: REF.mode(), lastRun: book.lastRun },
+    referee: { at: REFEREE_AT, mode: refMode(), lastRun: book.lastRun },
     categories: G.CATEGORIES, defaults: G.DEFAULT_SETTINGS, points: G.POINTS, maxPlayers: G.MAX_PLAYERS, minScored: G.MIN_SCORED, reviewSeconds: REVIEW_MS / 1000,
     quiz: { size: G.LEVELS.quizSize, pass: G.LEVELS.quizPass },
     ranks: G.RANKS.map(r => ({ id: r.id, wins: r.wins, title: r.title, badge: r.badge, art: r.art, metal: r.metal, legendary: !!r.legendary })),
@@ -184,19 +188,25 @@ function finish(room) {
 }
 /* ---------- the nightly referee ---------- */
 let refereeing = null;
-function runReferee() {
+// Every answer that survived the table, once per letter, category and wording, and which answers each round needs.
+function collect(rounds) {
+  const items = new Map(), need = new Map();
+  rounds.forEach(r => { const res = G.scoreRound(r), keys = []; r.ids = res.ids; res.ids.forEach(id => r.cats.forEach(c => { const a = res.players[id].cats[c]; if (a.status !== 'ok') return;
+    const k = r.letter + '|' + c + '|' + G.key(a.text); keys.push(k); if (!items.has(k)) items.set(k, { key: k, cat: (G.CATEGORIES.find(x => x.id === c) || { en: c }).en, letter: r.letter, answer: a.text }); })); need.set(r.id, keys); });
+  return { items, need };
+}
+// given: verdicts sent in by the agent referee (Map key -> { valid, why }); without it, the built-in referee is asked.
+function runReferee(given) {
   if (refereeing) return refereeing;
   refereeing = (async () => {
-    const rounds = book.pending.slice(), started = Date.now();
+    let rounds = book.pending.slice(); const started = Date.now();
     if (!rounds.length) { book.lastRun = new Date().toISOString(); book.lastError = ''; saveRounds(); return { rounds: 0 }; }
-    // every answer that survived the table, asked about once per letter, category and wording
-    const items = new Map();
-    rounds.forEach(r => { const res = G.scoreRound(r); r.ids = res.ids; res.ids.forEach(id => r.cats.forEach(c => { const a = res.players[id].cats[c]; if (a.status !== 'ok') return;
-      const k = r.letter + '|' + c + '|' + G.key(a.text); if (!items.has(k)) items.set(k, { key: k, cat: (G.CATEGORIES.find(x => x.id === c) || { en: c }).en, letter: r.letter, answer: a.text }); })); });
+    const { items, need } = collect(rounds);
     let verdicts;
-    try { verdicts = await REF.judge(Array.from(items.values())); }
+    if (given) { rounds = rounds.filter(r => need.get(r.id).every(k => given.has(k))); verdicts = given; if (!rounds.length) return { rounds: 0, waiting: book.pending.length }; }   // rounds that arrived after the agent looked wait for the next night
+    else try { verdicts = await REF.judge(Array.from(items.values())); }
     catch (e) { book.lastError = e.message; book.lastRun = new Date().toISOString(); saveRounds(); console.error('referee could not finish, rounds wait for the next run: ' + e.message); return { rounds: 0, error: e.message }; }
-    const by = REF.mode(), summary = {};
+    const by = given ? 'agent' : REF.mode(), summary = {};
     rounds.sort((a, b) => a.at - b.at).forEach(r => {
       const invalid = {}, struck = [];
       r.ids.forEach(id => r.cats.forEach(c => { const text = G.clean(r.answers[id][c]), v = verdicts.get(r.letter + '|' + c + '|' + G.key(text)); if (v && !v.valid) { (invalid[id] = invalid[id] || {})[c] = true; struck.push({ id, c, text, why: v.why }); } }));
@@ -216,13 +226,14 @@ function runReferee() {
     const done = new Set(rounds.map(r => r.id)); book.pending = book.pending.filter(r => !done.has(r.id)); book.judged = book.judged.slice(-2000);
     book.lastRun = new Date().toISOString(); book.lastError = ''; savePlayers(); saveRounds();
     console.log('referee (' + by + ') judged ' + rounds.length + ' rounds, ' + items.size + ' answers');
-    return { rounds: rounds.length, answers: items.size, by };
+    return { rounds: rounds.length, answers: items.size, by, waiting: book.pending.length };
   })().finally(() => { refereeing = null; });
   return refereeing;
 }
 let lastDay = book.lastRun ? new Date(book.lastRun).toDateString() : '';
 setInterval(() => {                                   // once a day, at REFEREE_AT local time
   const d = new Date(), [h, m] = REFEREE_AT.split(':').map(Number);
+  if (REFEREE_TOKEN) return;   // the agent referee comes to the server instead
   if (d.getHours() * 60 + d.getMinutes() >= h * 60 + m && d.toDateString() !== lastDay) { lastDay = d.toDateString(); runReferee(); }
 }, 30000).unref();
 
@@ -304,6 +315,18 @@ function handle(req, res) {
       send(res, 200, { key: signIn(p), me: priv(p) });
     } catch (e) { oops(res, e); } });
   });
+  if (what === 'referee' && (parts[2] === 'pending' || parts[2] === 'verdicts')) {
+    const t = String(req.headers['x-referee-token'] || ''), ok = REFEREE_TOKEN && t && crypto.timingSafeEqual(Buffer.from(sha(t)), Buffer.from(sha(REFEREE_TOKEN)));
+    if (!ok) return send(res, 401, { error: 'Referee only.' });
+    if (GET && parts[2] === 'pending') { const { items } = collect(book.pending.slice()); return send(res, 200, { rounds: book.pending.length, items: Array.from(items.values()).slice(0, 3000), categories: G.CATEGORIES.map(c => c.en) }); }
+    if (POST && parts[2] === 'verdicts') return readBody(req, res, b => {
+      const list = Array.isArray(b.verdicts) ? b.verdicts : [], map = new Map();
+      list.slice(0, 3000).forEach(v => { if (v && typeof v.key === 'string' && typeof v.valid === 'boolean') map.set(v.key, { valid: v.valid, why: typeof v.why === 'string' ? v.why.slice(0, 80) : '' }); });
+      if (!map.size) return send(res, 400, { error: 'No verdicts.' });
+      runReferee(map).then(r => send(res, 200, r), e => oops(res, e));
+    });
+    return send(res, 404, { error: 'not found' });
+  }
   if (!me) return send(res, 401, { error: 'Sign in first.' });
   me.lastSeen = Date.now();
 
@@ -424,4 +447,4 @@ function handle(req, res) {
   });
 }
 function answersOf(room, src) { const a = {}, o = src && typeof src === 'object' ? src : {}; room.cats.forEach(c => { a[c] = G.clean(o[c]); }); return a; }
-server.listen(PORT, HOST, () => console.log('Where is Prince Mohsey? server on ' + HOST + ':' + PORT + ', referee ' + REF.mode() + ' at ' + REFEREE_AT + ', ' + book.pending.length + ' rounds waiting' + ', data in ' + DATA + ', ' + LEVELS.length + ' level stories, allowing ' + ORIGINS.join(', ')));
+server.listen(PORT, HOST, () => console.log('Where is Prince Mohsey? server on ' + HOST + ':' + PORT + ', referee ' + refMode() + (REFEREE_TOKEN ? '' : ' at ' + REFEREE_AT) + ', ' + book.pending.length + ' rounds waiting' + ', data in ' + DATA + ', ' + LEVELS.length + ' level stories, allowing ' + ORIGINS.join(', ')));

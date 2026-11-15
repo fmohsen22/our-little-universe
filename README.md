@@ -17,19 +17,14 @@ A round counts only with at least two players. Alone it is practice.
 
 ## The nightly referee
 
-Every round's points wait for the referee. At 22:00 each night it checks every answer that got past the table, strikes the ones that are not real examples of their category, and only then adds points, wins, crowns and chapter progress to each player's record. Players see what is waiting, and the next day a short verdict listing any answers that were struck.
+Every round's points wait for the referee. Each night at 22:00 it checks every answer that got past the table, strikes the ones that are not real examples of their category, and only then adds points, wins, crowns and chapter progress to each player's record. Players see what is waiting, and the next day a short verdict listing any answers that were struck.
 
 - **Instant checks:** a single letter or one letter repeated ("jjjj") never scores. A Country answer must be a real country (the list is `server/countries.js`); "jajaja" scores nothing on the spot.
-- **The referee is Claude** (model `claude-opus-5-5`, through the official Anthropic SDK). It decides whether each remaining answer is a real name, surname, city, animal, food, object or colour. If the model declines a batch, the API retries it on a fallback model.
-- **Without a key** only the instant checks apply. **If the referee cannot run** (Node older than 20, SDK not installed, or the API failing), nothing is scored and the rounds wait for the next night.
-- **Privacy:** the answers (not player names) are sent to Anthropic for judging.
+- **The referee is a scheduled Claude session.** At 22:00 it fetches the waiting answers from `GET /api/referee/pending`, judges them, and sends verdicts to `POST /api/referee/verdicts`. Both need the `X-Referee-Token` header, matching `REFEREE_TOKEN` in `/etc/our-little-universe.env` (the installer creates it and prints it once). No API key is needed.
+- **Rounds played after the referee looked** wait for the next night. If the referee does not come, rounds simply wait.
+- **Privacy:** only the answers, letters and categories are sent, never player names.
 
-To switch it on:
-
-1. Node 20 or newer: `node -v`. To upgrade on Ubuntu: `curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt-get install -y nodejs`.
-2. `bash server/install-service.sh` (installs the SDK and creates `/etc/our-little-universe.env`, readable only by root).
-3. In `/etc/our-little-universe.env`, set `ANTHROPIC_API_KEY=sk-ant-...` (an API key from console.anthropic.com) and `TZ=` your time zone.
-4. `sudo systemctl restart our-little-universe`. The log line `journalctl -u our-little-universe -n 5` says `referee ai at 22:00` when it is on.
+Alternatives, if you ever want them: with no `REFEREE_TOKEN` but an `ANTHROPIC_API_KEY` (and Node 20+), the server judges by itself through the Anthropic SDK at `REFEREE_AT`; with neither, only the instant checks apply.
 
 Pending rounds are kept in `rounds.json` beside `players.json`.
 
@@ -114,5 +109,6 @@ node tests/game.test.js      # the rules: scoring, votes, ranks, streaks, levels
 node tests/server.test.js    # the real server over HTTP with three players
 node tests/play.js           # three browsers playing a full round, the story, the quiz and the leaderboard (needs Playwright)
 node tests/scenario.test.js  # nine players at three tables at once, sign-ins, two server restarts, and every record cross-checked
+node tests/agent.test.js     # the agent referee: token, fetching answers, verdicts, late rounds waiting
 node tests/crowd.test.js     # thirty players at four tables at once, the referee striking made-up answers, every score cross-checked
 ```
