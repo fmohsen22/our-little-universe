@@ -530,9 +530,10 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
   };
 
   views.home = function () {
-    app.innerHTML = '<section class="card me-card"><div class="row split"><div class="row">' + medal(me, 64) + '<div><h1 class="me-name">' + esc(royalName(me)) + '</h1><p class="soft">' + esc(me.title || 'Not yet crowned') + ' · chapter ' + me.level + ' of ' + meta.levels.length + '</p></div></div><a class="btn small ghost" href="#me">Profile</a></div>' +
+    app.innerHTML = '<section class="card me-card"><div class="row split"><div class="row">' + medal(me, 64) + '<div><h1 class="me-name">' + esc(royalName(me)) + '</h1><p class="soft">' + esc(me.title || 'Not yet crowned') + ' · chapter ' + me.level + ' of ' + meta.levels.length + '</p></div></div><div class="row">' + (me.admin ? '<a class="btn small" href="#admin">🛡️ Admin</a>' : '') + '<a class="btn small ghost" href="#me">Profile</a></div></div>' +
       levelLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') +
       '<dl class="stats4"><div><dt>Points</dt><dd>' + num(me.total) + '</dd></div><div><dt>Victories</dt><dd>' + me.wins + '</dd></div><div><dt>Rounds</dt><dd>' + me.rounds + '</dd></div><div><dt>Best streak</dt><dd>' + me.best + '</dd></div></dl></section>' +
+      (me.admin ? '<a class="book-link hall-link" href="#admin"><span><b>🛡️ Admin</b><br><span class="note">Accounts and the leaderboard</span></span><span aria-hidden="true">→</span></a>' : '') +
       '<section class="card"><h2>Play Esm Famil</h2><p class="soft">One letter, eight categories, and a clock. A referee chosen by the table decides which answers count. Unique answers score ' + meta.points.unique + ', shared answers ' + meta.points.shared + '. A table needs at least ' + meta.minTable + ' people.</p><button class="btn big" data-act="create">Start a table</button>' +
       '<form class="inline" data-form="join"><label class="sr" for="h-code">Table code</label><input id="h-code" type="text" maxlength="5" autocapitalize="characters" autocomplete="off" placeholder="Table code"><button class="btn ghost" type="submit">Join</button></form>' +
       '<div id="h-tables"><p class="note">Looking for open tables…</p></div></section>' +
@@ -543,7 +544,6 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
       '<p>Jealous of their brother’s share, Salm and Tur murder Iraj, and from that crime grows the long war between Iran and Turan that fills the age of heroes, and the life of Rostam.</p>' +
       '<p class="note">You belong to the Kingdom of ' + kingdom(me.kingdom).name + ', the realm of ' + kingdom(me.kingdom).heir + '.</p>' +
       '<details class="map-more"><summary>Show the map</summary>' + window.WPM_MAP() + '</details></section>' +
-      (me.admin ? '<a class="book-link hall-link" href="#admin"><span><b>🛡️ Admin</b><br><span class="note">Accounts and the leaderboard</span></span><span aria-hidden="true">→</span></a>' : '') +
       '<a class="book-link hall-link" href="#journey"><span><b>📜 The life of Rostam</b><br><span class="note">Seven chapters to unlock, and one still to come</span></span><span aria-hidden="true">→</span></a>';
     api('GET', '/api/rooms').then(function (j) {
       var box = $('#h-tables'); if (!box) return;
