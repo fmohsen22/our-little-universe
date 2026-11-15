@@ -48,7 +48,7 @@ function fold(s) {
 }
 // The key two answers are compared by: letters and digits only.
 function key(s) { return fold(s).replace(/[^\p{L}\p{N}]+/gu, ''); }
-function clean(s) { return String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40); }
+function clean(s) { return (typeof s === 'string' ? s : '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40); }
 function startsWith(answer, letter) { const k = key(answer); return k.length > 0 && k[0] === key(letter)[0]; }
 
 /* ---------- scoring a round ----------
@@ -74,7 +74,7 @@ function scoreRound(round) {
   let best = -1, winners = [];
   ids.forEach(id => { if (out[id].total > best) { best = out[id].total; winners = [id]; } else if (out[id].total === best) winners.push(id); });
   const order = ids.slice().sort((a, b) => out[b].total - out[a].total);
-  return { players: out, order, winner: best > 0 && winners.length === 1 ? winners[0] : null, scored: ids.length >= MIN_SCORED };
+  return { players: out, order, cats: round.cats, winner: best > 0 && winners.length === 1 ? winners[0] : null, scored: ids.length >= MIN_SCORED };
 }
 
 /* ---------- players ---------- */

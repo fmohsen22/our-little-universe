@@ -51,7 +51,10 @@ The stories were written from memory of Ferdowsi's narrative as told in the Davi
 - Quiz answers never leave the server. A quiz is drawn once and can be answered once.
 - Player keys are stored only as a hash.
 
-It does not judge whether "Wxyz" is a real city. That is what the table's votes are for.
+- Pace limits keep points honest: Stop opens 20 seconds into a round, checking takes at least 8 seconds, a player sits at one table at a time, and at most 40 rounds an hour count.
+- It listens on 127.0.0.1 only; the tunnel on the same machine is the way in.
+
+It does not judge whether "Wxyz" is a real city; that is what the table's votes are for. And it cannot tell one person with two accounts from two people.
 
 ## Running the server
 
@@ -73,7 +76,9 @@ cd ~/our-little-universe && git pull && sudo systemctl restart our-little-univer
 
 Players are stored in `players.json` in the data folder (`~/our-little-universe-data` by default). Back it up. Tables live in memory and end when the server restarts.
 
-Settings (environment): `PORT`, `DATA_DIR`, `ALLOWED_ORIGINS`.
+Settings (environment): `PORT`, `HOST` (default `127.0.0.1`), `DATA_DIR`, `ALLOWED_ORIGINS`, and the pace limits `MIN_PLAY_MS`, `MIN_REVIEW_MS`, `ROUNDS_PER_HOUR`.
+
+If `players.json` cannot be read at start, the server refuses to start instead of overwriting it; the previous good save is `players.json.bak`.
 
 ## Changing the website
 

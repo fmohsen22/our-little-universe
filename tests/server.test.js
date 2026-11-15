@@ -11,7 +11,7 @@ async function listen(code, key) { const ctl = new AbortController(), box = { st
 const until = async (f, what) => { for (let i = 0; i < 100; i++) { if (f()) return; await sleep(50); } throw new Error('timed out: ' + what); };
 
 (async () => {
-  const srv = spawn('node', [path.join(__dirname, '..', 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT, DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '150', REVIEW_MS: '2500', ALLOWED_ORIGINS: 'https://game.mosi-app.com' }), stdio: 'inherit' });
+  const srv = spawn('node', [path.join(__dirname, '..', 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT, DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '150', REVIEW_MS: '2500', MIN_PLAY_MS: '0', MIN_REVIEW_MS: '0', ALLOWED_ORIGINS: 'https://game.mosi-app.com' }), stdio: 'inherit' });
   try {
     await sleep(700);
     const meta = (await call('GET', '/api/meta')).json;
@@ -83,6 +83,53 @@ const until = async (f, what) => { for (let i = 0; i < 100; i++) { if (f()) retu
 
     await sleep(400); const saved = JSON.parse(fs.readFileSync(path.join(fx.dir, 'players.json'), 'utf8')).players;
     ok(Object.keys(saved).length === 3 && saved[A.me.id].level === 1 && saved[A.me.id].hash.length === 64 && !JSON.stringify(saved).includes(A.key.split('.')[1]), 'players are saved to disk, with the key stored only as a hash');
+    // hostile input must never take the server down or bend the rules
+    const weird = { toString: 1 };
+    ok((await call('GET', '/api/meta?k=__proto__.x')).status === 200 && (await call('GET', '/api/me', 'constructor.x')).status === 401 && (await call('GET', '/api/me', '__proto__.x')).status === 401, 'keys named after built-in properties are simply refused');
+    ok((await call('POST', '/api/register', null, { name: weird })).status === 400 && (await call('POST', '/api/profile', A.key, { name: weird })).status === 400 && (await call('POST', '/api/register', null, [1, 2])).status === 400, 'objects and arrays where a name belongs are refused');
+    ok((await call('GET', '/api/me?k=' + A.key)).status === 401, 'a key in the address is accepted only for the event stream');
+    await call('POST', '/api/rooms/' + code + '/start', A.key); await until(() => a.state.phase === 'play', 'hostile round');
+    ok((await call('POST', '/api/rooms/' + code + '/answers', B.key, { answers: { name: weird, city: [weird], food: 7 } })).status === 200 && (await call('POST', '/api/rooms/' + code + '/answers', B.key, { answers: 'x' })).status === 200, 'malformed answers are stored as empty');
+    await call('POST', '/api/rooms/' + code + '/stop', A.key, { answers: { name: a.state.letter + 'a', city: a.state.letter + 'b', food: a.state.letter + 'c' } }); await until(() => a.state.phase === 'review', 'hostile review');
+    ok((await call('POST', '/api/rooms/' + code + '/vote', B.key, { player: weird, cat: 'name', reject: true })).status === 409 && (await call('POST', '/api/rooms/' + code + '/vote', B.key, { player: A.me.id, cat: weird, reject: true })).status === 409, 'malformed votes are refused');
+    await call('POST', '/api/rooms/' + code + '/settings', A.key, { cats: ['name', 'city', 'food', 'color', 'thing'] });
+    for (const k of [A.key, B.key, C.key]) await call('POST', '/api/rooms/' + code + '/ready', k); await until(() => a.state.phase === 'results', 'hostile results');
+    await call('POST', '/api/rooms/' + code + '/settings', A.key, { cats: ['name', 'city', 'food', 'color', 'thing'] }); await until(() => a.state.settings.cats.length === 5, 'cats changed');
+    ok(a.state.scores.cats.length === 3 && Object.keys(a.state.scores.players[A.me.id].cats).length === 3, 'changing the categories after a round does not disturb that round’s results');
+    for (let i = 0; i < 2; i++) { await call('POST', '/api/rooms/' + code + '/start', A.key); await until(() => a.state.phase === 'play', 'q round'); await call('POST', '/api/rooms/' + code + '/stop', A.key, { answers: Object.fromEntries(a.state.settings.cats.map(k => [k, a.state.letter + k])) }); await until(() => a.state.phase === 'review', 'q review'); for (const k of [A.key, B.key, C.key]) await call('POST', '/api/rooms/' + code + '/ready', k); await until(() => a.state.phase === 'results', 'q results'); }
+    await call('POST', '/api/quiz/start', A.key);
+    const junk = (await call('POST', '/api/quiz/answer', A.key, { answers: [weird, '__proto__', -1, 1.5, null] })).json;
+    ok(junk.passed === false && junk.correct === 0 && junk.wrong === undefined, 'junk quiz answers are graded wrong, and the reply does not say which questions were wrong');
+    const before2 = (await call('GET', '/health')).json.tables; for (let i = 0; i < 6; i++) await call('POST', '/api/rooms', B.key, {});
+    ok((await call('GET', '/health')).json.tables <= before2 + 1, 'one player cannot pile up empty tables');
+    const again = await listen(code, A.key); await until(() => again.state, 'second stream'); await sleep(200);
+    ok((await call('GET', '/health')).json.ok === true, 'the server is still up after all of that'); again.close();
+
+    // pace limits and fairness, on a second server with realistic minimums
+    const srv2 = spawn('node', [path.join(__dirname, '..', 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT: PORT + 1, DATA_DIR: fs.mkdtempSync(path.join(fx.dir, 'two-')), LEVELS_FILE: fx.file, COLLECT_MS: '100', REVIEW_MS: '6000', MIN_PLAY_MS: '1500', MIN_REVIEW_MS: '1200', ROUNDS_PER_HOUR: '2' }), stdio: 'inherit' });
+    try {
+      await sleep(600); const b2 = 'http://127.0.0.1:' + (PORT + 1), c2 = async (m, p, k, body) => { const r = await fetch(b2 + p, { method: m, headers: Object.assign({ 'Content-Type': 'application/json' }, k ? { Authorization: 'Bearer ' + k } : {}), body: body ? JSON.stringify(body) : undefined }); return { status: r.status, json: await r.json().catch(() => ({})) }; };
+      const l2 = async (code, key) => { const ctl = new AbortController(), box = { state: null, close: () => ctl.abort() }; const r = await fetch(b2 + '/api/rooms/' + code + '/events?k=' + key, { signal: ctl.signal }); (async () => { const dec = new TextDecoder(); let buf = ''; try { for await (const ch of r.body) { buf += dec.decode(ch, { stream: true }); let i; while ((i = buf.indexOf('\n\n')) >= 0) { const m = /data: (.*)/.exec(buf.slice(0, i)); buf = buf.slice(i + 2); if (m) box.state = JSON.parse(m[1]); } } } catch (e) { /* closed */ } })(); return box; };
+      const X = (await c2('POST', '/api/register', null, { name: 'Xena' })).json, Y = (await c2('POST', '/api/register', null, { name: 'Yara' })).json;
+      const t1 = (await c2('POST', '/api/rooms', X.key, {})).json.code, x = await l2(t1, X.key), y = await l2(t1, Y.key); await until(() => x.state && x.state.players.length === 2, 'two at table');
+      const play = async (leaver) => {
+        await c2('POST', '/api/rooms/' + t1 + '/start', X.key); await until(() => x.state.phase === 'play', 'play'); const all = s => Object.fromEntries(x.state.settings.cats.map(k => [k, x.state.letter + s + k]));
+        const fast = await c2('POST', '/api/rooms/' + t1 + '/stop', X.key, { answers: all('x') }); await c2('POST', '/api/rooms/' + t1 + '/answers', Y.key, { answers: { name: x.state.letter + 'y' } });
+        await sleep(1600); await c2('POST', '/api/rooms/' + t1 + '/stop', X.key, { answers: all('x') }); await until(() => x.state.phase === 'review', 'review'); const t0 = Date.now();
+        if (leaver) { await c2('POST', '/api/rooms/' + t1 + '/leave', Y.key); } else { await c2('POST', '/api/rooms/' + t1 + '/ready', X.key); await c2('POST', '/api/rooms/' + t1 + '/vote', Y.key, { player: X.me.id, cat: 'name', reject: true }); await until(() => !x.state.players.find(p => p.id === X.me.id).ready, 'ready cleared'); await c2('POST', '/api/rooms/' + t1 + '/vote', Y.key, { player: X.me.id, cat: 'name', reject: false }); await c2('POST', '/api/rooms/' + t1 + '/ready', Y.key); }
+        await c2('POST', '/api/rooms/' + t1 + '/ready', X.key); await until(() => x.state.phase === 'results', 'results'); return { fast, took: Date.now() - t0 };
+      };
+      const r1 = await play(false);
+      ok(r1.fast.status === 409 && /Too fast/.test(r1.fast.json.error) && r1.took >= 1100, 'Stop is refused in the first moments of a round, and checking cannot be skipped in under the minimum');
+      ok((await c2('GET', '/api/me', X.key)).json.me.wins === 1, 'a vote after someone pressed Done reopens the check, so nobody is ambushed');
+      const y2 = await l2(t1, Y.key); await until(() => x.state.players.length === 2 && x.state.players.every(p => p.online), 'Y back'); const r2 = await play(true); void r2;
+      const mx = (await c2('GET', '/api/me', X.key)).json.me; ok(mx.wins === 2 && mx.total === 120, 'an opponent who leaves during the check does not cancel your win');
+      const two = (await c2('POST', '/api/rooms', Y.key, {})).json.code, yb = await l2(two, Y.key); await until(() => yb.state, 'Y at another table'); await until(() => !x.state.players.some(p => p.id === Y.me.id && p.online), 'Y gone from first');
+      ok(true, 'sitting down at a second table takes you off the first: one table at a time');
+      const y3 = await l2(t1, Y.key); await until(() => x.state.players.filter(p => p.online).length === 2, 'Y returns'); await play(false);
+      ok((await c2('GET', '/api/me', X.key)).json.me.total === 120 && x.state.scores.players[X.me.id].capped === true, 'rounds beyond the hourly limit are played but not counted');
+      [x, y, y2, yb, y3].forEach(s => s.close());
+    } finally { srv2.kill(); }
     [a, b, c, s].forEach(x => x.close());
     console.log('server: ' + n + ' checks passed');
   } finally { srv.kill(); fs.rmSync(fx.dir, { recursive: true, force: true }); }

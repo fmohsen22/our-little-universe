@@ -6,7 +6,7 @@ const shots = process.env.SHOTS; if (shots) fs.mkdirSync(shots, { recursive: tru
 const ok = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log('  ok  ' + m); };
 (async () => {
   const web = spawn('python3', ['-m', 'http.server', '4174', '--bind', '127.0.0.1'], { cwd: root, stdio: 'ignore' });
-  const api = spawn('node', [path.join(root, 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT: '8792', DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '300', REVIEW_MS: '20000', ALLOWED_ORIGINS: 'http://127.0.0.1:4174' }), stdio: 'ignore' });
+  const api = spawn('node', [path.join(root, 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT: '8792', DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '300', REVIEW_MS: '20000', MIN_PLAY_MS: '0', MIN_REVIEW_MS: '0', ALLOWED_ORIGINS: 'http://127.0.0.1:4174' }), stdio: 'ignore' });
   await new Promise(r => setTimeout(r, 900));
   const browser = await chromium.launch(), errors = [];
   const person = async (name, opts) => { const ctx = await browser.newContext(opts); await ctx.route('**/config.js', r => r.fulfill({ contentType: 'text/javascript', body: "window.WPM_CONFIG={serverUrl:'" + apiUrl + "'};" })); const p = await ctx.newPage();
