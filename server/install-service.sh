@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Keeps the room server running in the background and after reboots (systemd).
+# Installs the game server as a background service (systemd) and restarts it with the latest code.
 # Run from the repository folder on your server:   bash server/install-service.sh
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
@@ -8,9 +8,10 @@ ORIGINS="${ALLOWED_ORIGINS:-https://game.mosi-app.com}"
 PORT="${PORT:-8787}"
 NODE="$(command -v node)"
 mkdir -p "$DATA"
+
 sudo tee /etc/systemd/system/our-little-universe.service >/dev/null <<UNIT
 [Unit]
-Description=Our Little Universe room server
+Description=Where is Prince Mohsey? game server
 After=network.target
 
 [Service]
@@ -27,36 +28,15 @@ RestartSec=3
 [Install]
 WantedBy=multi-user.target
 UNIT
-# The nightly referee uses Claude through the Anthropic SDK, which needs Node 20 or newer.
-NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
-if [ "$NODE_MAJOR" -lt 20 ]; then
-  echo "Note: Node $(node -v) runs the game, but the referee needs Node 20 or newer. Until then, rounds wait for the referee."
-  echo "      To upgrade on Ubuntu:  curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt-get install -y nodejs"
-  echo "      then run this script again."
-fi
-if command -v npm >/dev/null; then (cd "$REPO/server" && npm install --omit=dev --no-audit --no-fund); else echo "Note: npm is missing, so the referee's SDK was not installed."; fi
 
-# Private settings for the nightly referee (the Anthropic API key) live here, readable only by root and the service.
-if [ ! -f /etc/our-little-universe.env ] || ! sudo grep -q ANTHROPIC_API_KEY /etc/our-little-universe.env; then
-  sudo tee -a /etc/our-little-universe.env >/dev/null <<'SETTINGS'
-# The nightly referee is Claude. Without a key, only the built-in instant checks are used.
-# ANTHROPIC_API_KEY=sk-ant-...
-# REFEREE_AT=22:00
-# TZ=Europe/Vienna
-SETTINGS
-  sudo chmod 600 /etc/our-little-universe.env
+# An earlier version installed a nightly referee; the referee is now a player at each table.
+if [ -f /etc/systemd/system/our-little-universe-referee.timer ]; then
+  sudo systemctl disable --now our-little-universe-referee.timer 2>/dev/null || true
+  sudo rm -f /etc/systemd/system/our-little-universe-referee.timer /etc/systemd/system/our-little-universe-referee.service
 fi
-# The nightly referee is a scheduled Claude session that comes to this server with a secret token.
-if ! sudo grep -q '^REFEREE_TOKEN=' /etc/our-little-universe.env 2>/dev/null; then
-  echo "REFEREE_TOKEN=$(openssl rand -hex 24)" | sudo tee -a /etc/our-little-universe.env >/dev/null
-  sudo chmod 600 /etc/our-little-universe.env
-fi
-REFEREE_TOKEN_VALUE="$(sudo grep '^REFEREE_TOKEN=' /etc/our-little-universe.env | head -n 1 | cut -d= -f2-)"
+
 sudo systemctl daemon-reload
 sudo systemctl enable our-little-universe
 sudo systemctl restart our-little-universe   # always pick up the new code
 sleep 1
-curl -fsS "http://localhost:$PORT/health" && echo "  <- the server is running on port $PORT, data in $DATA"
-echo
-echo "Referee token (paste it into the secure form in the Claude app; do not share it anywhere else):"
-echo "  $REFEREE_TOKEN_VALUE"
+curl -fsS "http://localhost:$PORT/health" && echo "  <- the game server is running on port $PORT, data in $DATA"

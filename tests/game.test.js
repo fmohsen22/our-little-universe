@@ -16,7 +16,7 @@ test('scoring: Persian answers match across Arabic and Persian letter forms', ()
   assert.strictEqual(r.players.a.cats.city.pts, 5); assert.strictEqual(r.players.b.cats.city.pts, 5); assert.strictEqual(r.players.c.cats.city.status, 'letter');
   assert.ok(G.startsWith('آبادان', 'ا')); assert.ok(!G.startsWith('', 'ا'));
 });
-test('a single letter or one letter repeated is not a word; the nightly referee can strike any answer', () => {
+test('a single letter or one letter repeated is not a word; the table referee can reject any answer', () => {
   const r = G.scoreRound({ letter: 'J', cats: ['name', 'city', 'food'], answers: { a: { name: 'j', city: 'JJJJ', food: 'Jam' }, b: { name: 'Jo', city: 'Jaipur', food: 'Jxqz' } }, invalid: { b: { food: true } } });
   assert.strictEqual(r.players.a.cats.name.status, 'short'); assert.strictEqual(r.players.a.cats.city.status, 'short'); assert.strictEqual(r.players.a.total, 10);
   assert.strictEqual(r.players.b.cats.food.status, 'referee'); assert.strictEqual(r.players.b.total, 20); assert.strictEqual(r.winner, 'b');
@@ -65,5 +65,13 @@ test('quiz: 4 of 5 passes and opens the level; fewer loses the level points but 
 test('leaderboard order: level first, then lifetime points, then wins', () => {
   const mk = (id, level, total, wins) => Object.assign(G.newPlayer(id, id, 1), { level, total, wins });
   assert.deepStrictEqual([mk('a', 0, 900, 9), mk('b', 1, 100, 0), mk('c', 1, 100, 2), mk('d', 0, 950, 0)].sort(G.compareBoard).map(p => p.id), ['c', 'b', 'd', 'a']);
+});
+test('a table needs three people: a referee and at least two players', () => {
+  assert.strictEqual(G.MIN_TABLE, 3); assert.strictEqual(G.MIN_SCORED, 2);
+});
+test('the Wise Judge badge comes after refereeing 10 rounds', () => {
+  const p = G.newPlayer('r', 'Ref', 1); assert.strictEqual(p.refereed, 0);
+  p.refereed = 9; assert.ok(!G.checkUnlocks(p, 2).some(u => u.id === 'judge'));
+  p.refereed = 10; assert.ok(G.checkUnlocks(p, 3).some(u => u.id === 'judge')); assert.ok(!G.checkUnlocks(p, 4).some(u => u.id === 'judge'), 'only once');
 });
 console.log('rules: ' + n + ' tests passed');

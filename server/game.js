@@ -10,7 +10,7 @@ const CATEGORIES = [
 const LETTERS = { en: 'ABCDEFGHIJKLMNOPRSTUVW'.split(''), fa: 'ا ب پ ت ج چ خ د ر ز س ش ع ف ق ک گ ل م ن و ه ی'.split(' ') };
 const DEFAULT_SETTINGS = { lang: 'en', cats: ['name', 'surname', 'city', 'country', 'animal', 'food', 'thing', 'color'], secs: 120 };
 const POINTS = { unique: 10, shared: 5 };
-const MAX_PLAYERS = 12, MIN_SCORED = 2;      // a round only counts for points, wins and levels with at least two players
+const MAX_PLAYERS = 12, MIN_SCORED = 2, MIN_TABLE = 3;   // a table needs a referee and at least two players
 
 // Levels. Level 1 is sized for about 10 hours of play (2 hours a day for 5 days); each next level needs 30% more.
 // Assumption: a round with checking takes about 3 minutes and a typical player scores about 40 points, so about 800 points an hour.
@@ -37,6 +37,7 @@ const ACHIEVEMENTS = [
   { id: 'rivalry', name: 'The Great Rivalry', art: 'mask', metal: 'ruby', goal: 50, desc: 'Play 50 scored rounds.', value: p => p.rounds },
   { id: 'keeper', name: 'Keeper of the Book of Kings', art: 'planet', metal: 'gold', legendary: true, goal: 300, desc: 'Play 300 scored rounds.', value: p => p.rounds },
   { id: 'scholar', name: 'Scholar of the Shahnameh', art: 'palette', metal: 'sapphire', goal: 3, desc: 'Pass three level quizzes at the first attempt.', value: p => p.firstTries },
+  { id: 'judge', name: 'Wise Judge of the Court', art: 'book', metal: 'emerald', goal: 10, desc: 'Referee 10 rounds.', value: p => p.refereed || 0 },
   { id: 'cup', name: 'The Cup of Kay Khosrow', art: 'cup', metal: 'gold', legendary: true, hidden: true, goal: 1, desc: 'Win a round at a table of five or more.', value: p => p.bigWins }
 ];
 
@@ -71,7 +72,7 @@ function scoreRound(round) {
       let status = 'ok';
       if (!key(text)) status = 'empty'; else if (!startsWith(text, round.letter)) status = 'letter'; else if (junk(text)) status = 'short'; else if (cat === 'country' && notACountry(text)) status = 'country';
       else if (votes.filter(v => v !== id && ids.includes(v)).length * 2 > others) status = 'rejected';
-      else if (((round.invalid || {})[id] || {})[cat]) status = 'referee';           // struck by the nightly referee
+      else if (((round.invalid || {})[id] || {})[cat]) status = 'referee';           // rejected by the table's referee
       out[id].cats[cat] = { text, status, pts: 0 };
       if (status === 'ok') { const k = key(text); (seen[k] = seen[k] || []).push(id); }
     });
@@ -87,7 +88,7 @@ function scoreRound(round) {
 function newPlayer(id, name, now) {
   return { id, name, kingdom: 'iran', royal: 'Champion', createdAt: now, lastSeen: now,
     total: 0, level: 0, levelPoints: 0, rounds: 0, wins: 0, streak: 0, best: 0, lossStreak: 0, comebacks: 0, cleanStops: 0, bigWins: 0, firstTries: 0,
-    quizFails: 0, quiz: null, ranks: {}, ach: {} };
+    quizFails: 0, quiz: null, refereed: 0, ranks: {}, ach: {} };
 }
 function rankOf(p) { let cur = null; RANKS.forEach(r => { if (p.ranks[r.id]) cur = r; }); return cur; }
 const KINGDOMS = { iran: 'Iran', turan: 'Turan', rum: 'Rum' };   // Fereydun's division: Iraj, Tur and Salm
@@ -124,5 +125,5 @@ function applyQuiz(p, correct, now) {
 // Leaderboard order: highest level, then lifetime points, then wins, then who got there first.
 function compareBoard(a, b) { return b.level - a.level || b.total - a.total || b.wins - a.wins || a.createdAt - b.createdAt; }
 
-module.exports = { notACountry, junk, KINGDOMS, CATEGORIES, LETTERS, DEFAULT_SETTINGS, POINTS, MAX_PLAYERS, MIN_SCORED, LEVELS, RANKS, ACHIEVEMENTS,
+module.exports = { MIN_TABLE, notACountry, junk, KINGDOMS, CATEGORIES, LETTERS, DEFAULT_SETTINGS, POINTS, MAX_PLAYERS, MIN_SCORED, LEVELS, RANKS, ACHIEVEMENTS,
   levelPoints, fold, key, clean, startsWith, scoreRound, newPlayer, rankOf, rankTitle, checkUnlocks, nextLevelNeed, quizReady, applyRound, applyQuiz, compareBoard };

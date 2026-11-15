@@ -1,9 +1,0 @@
-{
-  "name": "where-is-prince-mohsey-server",
-  "private": true,
-  "description": "Game server for Where is Prince Mohsey?. The only dependency is the Anthropic SDK, used by the nightly referee.",
-  "engines": { "node": ">=20" },
-  "dependencies": {
-    "@anthropic-ai/sdk": "1.3.0"
-  }
-}

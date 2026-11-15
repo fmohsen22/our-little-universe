@@ -7,25 +7,21 @@
 //   DATA_DIR         where players are stored (default server/data)
 //   ALLOWED_ORIGINS  comma-separated sites allowed to call it (default https://game.mosi-app.com)
 //
-// The server is the referee: it picks the letter, keeps the clock, hides answers until the round ends,
-// scores the round, and owns every player's points, wins, level and badges. Browsers only send
-// their own answers and votes. Rules live in game.js; level stories and quiz answers in levels.json.
+// Each table elects a referee from its volunteers. The server picks the letter, keeps the clock, hides answers
+// until the round ends, applies the automatic checks and the referee's decisions, scores the round, and owns
+// every player's points, wins, level and badges. Rules live in game.js; stories and quiz answers in levels.json.
 'use strict';
 const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto');
-const G = require('./game.js'), REF = require('./referee.js');
+const G = require('./game.js');
 
 const PORT = +(process.env.PORT || 8787);
 const DATA = process.env.DATA_DIR || path.join(__dirname, 'data');
 const ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://game.mosi-app.com').split(',').map(s => s.trim()).filter(Boolean);
 const HOST = process.env.HOST || '127.0.0.1';   // local only: the tunnel on this machine is the way in
-const COLLECT_MS = +(process.env.COLLECT_MS || 1500), REVIEW_MS = +(process.env.REVIEW_MS || 45000), MAX_BODY = 32 * 1024, MAX_ROOMS = 300;
+const COLLECT_MS = +(process.env.COLLECT_MS || 1500), REVIEW_MS = +(process.env.REVIEW_MS || 300000), MAX_BODY = 32 * 1024, MAX_ROOMS = 300;
 // Pace limits, so points cannot be manufactured faster than a real table plays.
-const MIN_PLAY_MS = +(process.env.MIN_PLAY_MS || 20000), MIN_REVIEW_MS = +(process.env.MIN_REVIEW_MS || 8000), ROUNDS_PER_HOUR = +(process.env.ROUNDS_PER_HOUR || 40);
-const REFEREE_AT = /^\d{1,2}:\d{2}$/.test(process.env.REFEREE_AT || '') ? process.env.REFEREE_AT : '21:30';   // local time of the nightly check (the scheduled referee runs at 21:33)
-// With REFEREE_TOKEN set, the referee is an outside agent (a scheduled Claude session) that fetches the waiting answers
-// and sends back verdicts over two token-protected endpoints. The server then never judges on its own.
-const REFEREE_TOKEN = process.env.REFEREE_TOKEN || '';
-const refMode = () => (REFEREE_TOKEN ? 'agent' : REF.mode());
+const MIN_PLAY_MS = +(process.env.MIN_PLAY_MS || 20000), ROUNDS_PER_HOUR = +(process.env.ROUNDS_PER_HOUR || 40);
+const REFEREE_GRACE_MS = +(process.env.REFEREE_GRACE_MS || 20000);   // how long a round waits for a referee who dropped out
 const MAX_PLAYERS_TOTAL = 5000, MAX_STREAMS = 600, NEW_PLAYERS_PER_HOUR = 300;
 fs.mkdirSync(DATA, { recursive: true });
 
@@ -50,16 +46,6 @@ function writePlayers() {
     if (err) { console.error('save failed: ' + err.message); return done(); }
     fs.copyFile(FILE, FILE + '.bak', () => fs.rename(tmp, FILE, done));   // keep the previous good save beside the new one
   });
-}
-/* ---------- rounds waiting for the referee (persisted) ---------- */
-const RFILE = path.join(DATA, 'rounds.json');
-let book = { pending: [], judged: [], lastRun: '', lastError: '' };
-try { book = Object.assign(book, JSON.parse(fs.readFileSync(RFILE, 'utf8'))); }
-catch (e) { if (e.code !== 'ENOENT') { console.error('rounds.json exists but cannot be read (' + e.message + '). Fix or move it.'); process.exit(1); } }
-let rSaving = false, rDirty = false;
-function saveRounds() {
-  if (rSaving) { rDirty = true; return; } rSaving = true; rDirty = false; const tmp = RFILE + '.tmp';
-  fs.writeFile(tmp, JSON.stringify(book), err => { const done = () => { rSaving = false; if (rDirty) saveRounds(); }; if (err) { console.error('round save failed: ' + err.message); return done(); } fs.rename(tmp, RFILE, done); });
 }
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
 const rid = n => crypto.randomBytes(n).toString('hex');
@@ -87,13 +73,11 @@ function nameTaken(name, except) { const k = G.key(name); return Object.values(p
 function pub(p) { const r = G.rankOf(p); return { id: p.id, name: p.name, kingdom: p.kingdom, royal: p.royal, level: p.level, total: p.total, wins: p.wins, rounds: p.rounds, streak: p.streak, best: p.best, rank: r ? r.id : null, title: r ? G.rankTitle(r, p) : '' }; }
 function priv(p) {
   const prog = {}; G.ACHIEVEMENTS.forEach(a => { prog[a.id] = Math.min(a.goal, a.value(p)); });
-  const waiting = book.pending.filter(r => r.counted.includes(p.id)).map(r => r.provisional[p.id] || 0);
-  return Object.assign(pub(p), { pending: waiting.reduce((a, b) => a + b, 0), pendingRounds: waiting.length, verdict: p.verdict || null, news: p.news || [], levelPoints: p.levelPoints, need: G.nextLevelNeed(p), quizReady: G.quizReady(p), quizPending: !!p.quiz, quizFails: p.quizFails, hasPassword: !!p.pw, ranks: p.ranks, ach: p.ach, progress: prog });
+  return Object.assign(pub(p), { refereed: p.refereed || 0, news: p.news || [], levelPoints: p.levelPoints, need: G.nextLevelNeed(p), quizReady: G.quizReady(p), quizPending: !!p.quiz, quizFails: p.quizFails, hasPassword: !!p.pw, ranks: p.ranks, ach: p.ach, progress: prog });
 }
 function meta() {
   return {
-    referee: { at: REFEREE_AT, mode: refMode(), lastRun: book.lastRun },
-    categories: G.CATEGORIES, defaults: G.DEFAULT_SETTINGS, points: G.POINTS, maxPlayers: G.MAX_PLAYERS, minScored: G.MIN_SCORED, reviewSeconds: REVIEW_MS / 1000,
+    categories: G.CATEGORIES, defaults: G.DEFAULT_SETTINGS, points: G.POINTS, maxPlayers: G.MAX_PLAYERS, minScored: G.MIN_SCORED, minTable: G.MIN_TABLE, reviewSeconds: REVIEW_MS / 1000,
     quiz: { size: G.LEVELS.quizSize, pass: G.LEVELS.quizPass },
     ranks: G.RANKS.map(r => ({ id: r.id, wins: r.wins, title: r.title, badge: r.badge, art: r.art, metal: r.metal, legendary: !!r.legendary })),
     achievements: G.ACHIEVEMENTS.map(a => ({ id: a.id, name: a.name, desc: a.desc, art: a.art, metal: a.metal, goal: a.goal, legendary: !!a.legendary, hidden: !!a.hidden })),
@@ -108,17 +92,19 @@ const online = m => m.conns.size > 0;
 function view(room) {
   const live = room.phase === 'review' || room.phase === 'results', v = {
     code: room.code, host: room.host, open: room.open, settings: room.settings, phase: room.phase, letter: room.letter, endsAt: room.endsAt, reviewEndsAt: room.reviewEndsAt, round: room.round, now: Date.now(),
+    referee: room.phase === 'lobby' || room.phase === 'results' ? electedReferee(room) : room.referee, notice: room.notice || '',
+    volunteers: Array.from(room.volunteers.keys()).filter(id => room.members.has(id)), votes: Object.fromEntries(Array.from(room.votes).filter(([v, c]) => room.members.has(v) && room.volunteers.has(c))),
     players: Array.from(room.members.values()).filter(m => has(m.id)).map(m => Object.assign(pub(players[m.id]), { online: online(m), inRound: m.inRound, ready: m.ready, session: m.session,
       filled: room.phase === 'play' || room.phase === 'collect' ? room.cats.filter(c => G.key((m.answers || {})[c])).length : 0 }))
   };
-  if (live) { v.scores = room.results || score(room); v.rejects = {}; Object.keys(room.rejects).forEach(id => { v.rejects[id] = {}; Object.keys(room.rejects[id]).forEach(c => { v.rejects[id][c] = Array.from(room.rejects[id][c]); }); }); }
+  if (live) v.scores = room.results || score(room);
   if (room.phase === 'results') { v.stopper = room.stopper; v.unlocks = room.unlocks; }
   return v;
 }
 function score(room) {
-  const answers = {}, rejects = {};
-  room.members.forEach(m => { if (m.inRound) { answers[m.id] = m.answers; rejects[m.id] = {}; Object.keys(room.rejects[m.id] || {}).forEach(c => { rejects[m.id][c] = Array.from(room.rejects[m.id][c]); }); } });
-  return G.scoreRound({ letter: room.letter, cats: room.cats, answers, rejects });
+  const answers = {};
+  room.members.forEach(m => { if (m.inRound) answers[m.id] = m.answers; });
+  return G.scoreRound({ letter: room.letter, cats: room.cats, answers, invalid: room.rejects });   // the referee's rejections
 }
 function tell(room) {
   const msg = 'event: state\ndata: ' + JSON.stringify(view(room)) + '\n\n';
@@ -137,24 +123,43 @@ function depart(room, id) {
   const stay = Array.from(room.members.values()).filter(x => !x.left);
   if (!stay.length) { clearTimeout(room.timer); rooms.delete(room.code); return; }
   if (room.host === id) room.host = (stay.find(online) || stay[0]).id;
-  tell(room); allReady(room);
+  room.volunteers.delete(id); room.votes.delete(id);
+  if (id === room.referee) refereeGone(room); else tell(room);
 }
-function allReady(room) {
-  if (room.phase !== 'review') return;
-  const here = Array.from(room.members.values()).filter(x => x.inRound && online(x));
-  if (here.length && !here.every(x => x.ready)) return;
-  const wait = room.reviewStart + MIN_REVIEW_MS - Date.now();
-  if (wait > 0) { clearTimeout(room.early); room.early = setTimeout(() => allReady(room), wait); } else finish(room);
+/* ---------- choosing the referee ----------
+   Anyone can volunteer; everyone else votes for one volunteer. The online volunteer with the most votes (at least one)
+   is the referee; a tie goes to whoever volunteered first. The choice is fixed while a round is running. */
+function electedReferee(room) {
+  const counts = new Map();
+  room.votes.forEach((cand, voter) => { const v = room.members.get(voter), c = room.members.get(cand); if (v && c && voter !== cand && room.volunteers.has(cand) && online(c)) counts.set(cand, (counts.get(cand) || 0) + 1); });
+  let best = null;
+  counts.forEach((n, id) => { if (!best || n > counts.get(best) || (n === counts.get(best) && room.volunteers.get(id) < room.volunteers.get(best))) best = id; });
+  return best;
+}
+// The referee dropped out mid-round: wait a little for them to come back, then cancel the round.
+function refereeGone(room) {
+  tell(room);
+  if (room.phase === 'lobby' || room.phase === 'results') return;
+  clearTimeout(room.grace);
+  room.grace = setTimeout(() => {
+    const r = room.members.get(room.referee);
+    if (r && online(r) && !r.left) return;
+    clearTimeout(room.timer); room.phase = 'lobby'; room.results = null; room.referee = null;
+    room.members.forEach((m, id) => { m.inRound = false; if (m.left) room.members.delete(id); });
+    room.notice = 'The referee left, so the round was cancelled and nobody scored. Choose a new referee.'; tell(room);
+  }, REFEREE_GRACE_MS);
 }
 function canDrive(room, id) { const h = room.members.get(room.host); return id === room.host || !h || !online(h); }
 
 function startRound(room) {
-  room.members.forEach((m, id) => { if (m.left || !online(m)) room.members.delete(id); });   // seats of people who have gone are freed between rounds
-  if (!room.members.size) return 'nobody is here';
-  clearTimeout(room.timer); clearTimeout(room.early); room.cats = room.settings.cats.slice(); room.startedAt = Date.now();
+  room.members.forEach((m, id) => { if (m.left || !online(m)) { room.members.delete(id); room.volunteers.delete(id); room.votes.delete(id); } });   // seats of people who have gone are freed between rounds
+  const ref = electedReferee(room), playing = Array.from(room.members.values()).filter(m => online(m) && m.id !== ref);
+  if (!ref) return 'Choose a referee first: someone volunteers, and the others vote.';
+  if (playing.length < G.MIN_TABLE - 1) return 'You need at least ' + (G.MIN_TABLE - 1) + ' players besides the referee.';
+  clearTimeout(room.timer); clearTimeout(room.grace); room.cats = room.settings.cats.slice(); room.startedAt = Date.now(); room.referee = ref; room.notice = '';
   const pool = G.LETTERS[room.settings.lang].filter(l => l !== room.letter);
   room.letter = pool[crypto.randomInt(pool.length)]; room.round += 1; room.phase = 'play'; room.stopper = null; room.results = null; room.unlocks = {}; room.rejects = {};
-  room.members.forEach(m => { m.inRound = online(m); m.answers = {}; m.ready = false; });
+  room.members.forEach(m => { m.inRound = online(m) && m.id !== ref; m.answers = {}; m.ready = false; });
   room.endsAt = Date.now() + room.settings.secs * 1000; room.reviewEndsAt = 0;
   room.timer = setTimeout(() => endPlay(room), room.settings.secs * 1000);
   tell(room); return null;
@@ -166,8 +171,8 @@ function endPlay(room) {
 }
 function finish(room) {
   if (room.phase !== 'review') return;
-  clearTimeout(room.timer); clearTimeout(room.early);
-  const res = score(room), now = Date.now(), counted = []; room.results = res; room.unlocks = {};
+  clearTimeout(room.timer); clearTimeout(room.grace);
+  const res = score(room), now = Date.now(), n = res.order.length; room.results = res; room.unlocks = {};
   res.order.forEach(id => {
     const m = room.members.get(id), p = has(id) ? players[id] : null, mine = res.players[id]; if (!p) return;
     if (m) m.session += mine.total;
@@ -175,72 +180,20 @@ function finish(room) {
     const recent = (pace.get(id) || []).filter(t => now - t < 3600000);
     if (recent.length >= ROUNDS_PER_HOUR) { mine.capped = true; return; }      // more rounds in an hour than a table can really play: not counted
     recent.push(now); pace.set(id, recent);
-    counted.push(id);
+    const clean = room.stopper === id && room.cats.every(c => mine.cats[c].status === 'ok');
+    const got = G.applyRound(p, { points: mine.total, won: res.winner === id, hadWinner: !!res.winner, tableSize: n, cleanStop: clean }, now);
+    if (got.length) { room.unlocks[id] = got; p.news = (p.news || []).concat(got).slice(-20); }
   });
-  // Nothing is added to anyone's record yet: the round waits for tonight's referee.
-  if (counted.length) {
-    const answers = {}, rejects = {}, provisional = {};
-    res.order.forEach(id => { const m = room.members.get(id); answers[id] = Object.assign({}, m ? m.answers : {}); rejects[id] = {}; Object.keys(room.rejects[id] || {}).forEach(c => { rejects[id][c] = Array.from(room.rejects[id][c]); }); provisional[id] = res.players[id].total; });
-    book.pending.push({ id: 'r' + rid(6), at: now, letter: room.letter, lang: room.settings.lang, cats: room.cats.slice(), answers, rejects, stopper: room.stopper, counted, provisional });
-    saveRounds(); res.provisional = true; boardCache = null;
-  }
+  const ref = has(room.referee) ? players[room.referee] : null;
+  if (ref && res.scored) { ref.refereed = (ref.refereed || 0) + 1; const got = G.checkUnlocks(ref, now); if (got.length) { room.unlocks[ref.id] = got; ref.news = (ref.news || []).concat(got).slice(-20); } }
+  res.referee = room.referee;
+  if (res.scored) savePlayers();
   room.phase = 'results'; tell(room);
 }
-/* ---------- the nightly referee ---------- */
-let refereeing = null;
-// Every answer that survived the table, once per letter, category and wording, and which answers each round needs.
-function collect(rounds) {
-  const items = new Map(), need = new Map();
-  rounds.forEach(r => { const res = G.scoreRound(r), keys = []; r.ids = res.ids; res.ids.forEach(id => r.cats.forEach(c => { const a = res.players[id].cats[c]; if (a.status !== 'ok') return;
-    const k = r.letter + '|' + c + '|' + G.key(a.text); keys.push(k); if (!items.has(k)) items.set(k, { key: k, cat: (G.CATEGORIES.find(x => x.id === c) || { en: c }).en, letter: r.letter, answer: a.text }); })); need.set(r.id, keys); });
-  return { items, need };
-}
-// given: verdicts sent in by the agent referee (Map key -> { valid, why }); without it, the built-in referee is asked.
-function runReferee(given) {
-  if (refereeing) return refereeing;
-  refereeing = (async () => {
-    let rounds = book.pending.slice(); const started = Date.now();
-    if (!rounds.length) { book.lastRun = new Date().toISOString(); book.lastError = ''; saveRounds(); return { rounds: 0 }; }
-    const { items, need } = collect(rounds);
-    let verdicts;
-    if (given) { rounds = rounds.filter(r => need.get(r.id).every(k => given.has(k))); verdicts = given; if (!rounds.length) return { rounds: 0, waiting: book.pending.length }; }   // rounds that arrived after the agent looked wait for the next night
-    else try { verdicts = await REF.judge(Array.from(items.values())); }
-    catch (e) { book.lastError = e.message; book.lastRun = new Date().toISOString(); saveRounds(); console.error('referee could not finish, rounds wait for the next run: ' + e.message); return { rounds: 0, error: e.message }; }
-    const by = given ? 'agent' : REF.mode(), summary = {};
-    rounds.sort((a, b) => a.at - b.at).forEach(r => {
-      const invalid = {}, struck = [];
-      r.ids.forEach(id => r.cats.forEach(c => { const text = G.clean(r.answers[id][c]), v = verdicts.get(r.letter + '|' + c + '|' + G.key(text)); if (v && !v.valid) { (invalid[id] = invalid[id] || {})[c] = true; struck.push({ id, c, text, why: v.why }); } }));
-      const res = G.scoreRound(Object.assign({}, r, { invalid })), n = res.order.length;
-      r.counted.forEach(id => {
-        const p = has(id) ? players[id] : null; if (!p) return; const mine = res.players[id];
-        const clean = r.stopper === id && r.cats.every(c => mine.cats[c].status === 'ok');
-        const got = G.applyRound(p, { points: mine.total, won: res.winner === id, hadWinner: !!res.winner, tableSize: n, cleanStop: clean }, Date.now());
-        const sm = summary[id] = summary[id] || { rounds: 0, points: 0, claimed: 0, struck: [] };
-        sm.rounds += 1; sm.points += mine.total; sm.claimed += r.provisional[id] || 0;
-        struck.filter(x => x.id === id).forEach(x => { if (sm.struck.length < 12) sm.struck.push({ cat: x.c, text: x.text, why: x.why }); });
-        if (got.length) p.news = (p.news || []).concat(got).slice(-20);
-      });
-      book.judged.push({ id: r.id, at: r.at, letter: r.letter, judgedAt: started, by, struck: struck.map(x => ({ player: x.id, cat: x.c, text: x.text, why: x.why })), totals: Object.fromEntries(res.order.map(id => [id, res.players[id].total])) });
-    });
-    Object.keys(summary).forEach(id => { if (has(id)) players[id].verdict = Object.assign({ at: started, by }, summary[id]); });
-    const done = new Set(rounds.map(r => r.id)); book.pending = book.pending.filter(r => !done.has(r.id)); book.judged = book.judged.slice(-2000);
-    book.lastRun = new Date().toISOString(); book.lastError = ''; savePlayers(); saveRounds();
-    console.log('referee (' + by + ') judged ' + rounds.length + ' rounds, ' + items.size + ' answers');
-    return { rounds: rounds.length, answers: items.size, by, waiting: book.pending.length };
-  })().finally(() => { refereeing = null; });
-  return refereeing;
-}
-let lastDay = book.lastRun ? new Date(book.lastRun).toDateString() : '';
-setInterval(() => {                                   // once a day, at REFEREE_AT local time
-  const d = new Date(), [h, m] = REFEREE_AT.split(':').map(Number);
-  if (REFEREE_TOKEN) return;   // the agent referee comes to the server instead
-  if (d.getHours() * 60 + d.getMinutes() >= h * 60 + m && d.toDateString() !== lastDay) { lastDay = d.toDateString(); runReferee(); }
-}, 30000).unref();
-
 const pace = new Map();
 setInterval(() => {
   const now = Date.now();
-  rooms.forEach((r, code) => { const idle = now - r.active; if (!Array.from(r.members.values()).some(online) && idle > (r.members.size ? 10 * 60000 : 90000)) { clearTimeout(r.timer); clearTimeout(r.early); rooms.delete(code); } });
+  rooms.forEach((r, code) => { const idle = now - r.active; if (!Array.from(r.members.values()).some(online) && idle > (r.members.size ? 10 * 60000 : 90000)) { clearTimeout(r.timer); clearTimeout(r.grace); rooms.delete(code); } });
   regs.forEach((list, ip) => { if (!list.some(t => now - t < 3600000)) regs.delete(ip); });
   tries.forEach((list, k) => { if (!list.some(t => now - t < 900000)) tries.delete(k); });
   pace.forEach((list, id) => { if (!list.some(t => now - t < 3600000)) pace.delete(id); });
@@ -315,24 +268,12 @@ function handle(req, res) {
       send(res, 200, { key: signIn(p), me: priv(p) });
     } catch (e) { oops(res, e); } });
   });
-  if (what === 'referee' && (parts[2] === 'pending' || parts[2] === 'verdicts')) {
-    const t = String(req.headers['x-referee-token'] || ''), ok = REFEREE_TOKEN && t && crypto.timingSafeEqual(Buffer.from(sha(t)), Buffer.from(sha(REFEREE_TOKEN)));
-    if (!ok) return send(res, 401, { error: 'Referee only.' });
-    if (GET && parts[2] === 'pending') { const { items } = collect(book.pending.slice()); return send(res, 200, { rounds: book.pending.length, items: Array.from(items.values()).slice(0, 3000), categories: G.CATEGORIES.map(c => c.en) }); }
-    if (POST && parts[2] === 'verdicts') return readBody(req, res, b => {
-      const list = Array.isArray(b.verdicts) ? b.verdicts : [], map = new Map();
-      list.slice(0, 3000).forEach(v => { if (v && typeof v.key === 'string' && typeof v.valid === 'boolean') map.set(v.key, { valid: v.valid, why: typeof v.why === 'string' ? v.why.slice(0, 80) : '' }); });
-      if (!map.size) return send(res, 400, { error: 'No verdicts.' });
-      runReferee(map).then(r => send(res, 200, r), e => oops(res, e));
-    });
-    return send(res, 404, { error: 'not found' });
-  }
   if (!me) return send(res, 401, { error: 'Sign in first.' });
   me.lastSeen = Date.now();
 
   if (GET && what === 'me') return send(res, 200, { me: priv(me) });
   if (POST && what === 'news') { me.news = []; savePlayers(); return send(res, 200, { ok: true }); }
-  if (POST && what === 'referee' && process.env.REFEREE_TEST === '1') { runReferee().then(r => send(res, 200, r), e => oops(res, e)); return; }   // tests only
+
   if (POST && what === 'logout') { me.sessions = sessionsOf(me).filter(h => h !== req.session); savePlayers(); return send(res, 200, { ok: true }); }
   if (POST && what === 'password') return readBody(req, res, b => {
     if (!okPw(b.password)) return send(res, 400, { error: 'Choose a password of at least 6 characters.' });
@@ -378,7 +319,7 @@ function handle(req, res) {
     if (rooms.size >= MAX_ROOMS) return send(res, 503, { error: 'Every table is taken. Try again in a few minutes.' });
     rooms.forEach((r, c) => { if (r.host === me.id && !Array.from(r.members.values()).some(x => x.id !== me.id && online(x))) { clearTimeout(r.timer); clearTimeout(r.early); rooms.delete(c); } });   // one table per host
     const code = roomCode();
-    rooms.set(code, { code, host: me.id, open: true, settings: JSON.parse(JSON.stringify(G.DEFAULT_SETTINGS)), members: new Map(), phase: 'lobby', letter: '', cats: G.DEFAULT_SETTINGS.cats.slice(), startedAt: 0, reviewStart: 0, early: null, endsAt: 0, reviewEndsAt: 0, round: 0, stopper: null, rejects: {}, results: null, unlocks: {}, timer: null, active: Date.now() });
+    rooms.set(code, { code, host: me.id, open: true, settings: JSON.parse(JSON.stringify(G.DEFAULT_SETTINGS)), members: new Map(), phase: 'lobby', letter: '', cats: G.DEFAULT_SETTINGS.cats.slice(), startedAt: 0, reviewStart: 0, grace: null, referee: null, volunteers: new Map(), votes: new Map(), notice: '', endsAt: 0, reviewEndsAt: 0, round: 0, stopper: null, rejects: {}, results: null, unlocks: {}, timer: null, active: Date.now() });
     send(res, 200, { code });
   });
   const room = rooms.get(String(parts[2] || '').toUpperCase()), action = parts[3];
@@ -397,7 +338,7 @@ function handle(req, res) {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
     res.write('retry: 2000\n\n'); m.conns.add(res); streams += 1; tell(room);
     const beat = setInterval(() => res.write(': keep-alive\n\n'), 25000);
-    req.on('close', () => { clearInterval(beat); streams -= 1; m.conns.delete(res); if (rooms.get(room.code) === room) { tell(room); allReady(room); } });
+    req.on('close', () => { clearInterval(beat); streams -= 1; m.conns.delete(res); if (rooms.get(room.code) === room) { if (m.id === room.referee && !online(m)) refereeGone(room); else tell(room); } });
     return;
   }
   const m = room.members.get(me.id);
@@ -430,21 +371,34 @@ function handle(req, res) {
       if (!room.cats.every(c => G.key(m.answers[c]))) return send(res, 409, { error: 'Fill in every category before you call Stop.' });
       room.stopper = me.id; endPlay(room); return send(res, 200, { ok: true });
     }
-    if (action === 'vote') {
-      const t = typeof b.player === 'string' ? room.members.get(b.player) : null;
-      if (room.phase !== 'review' || !m.inRound || !t || !t.inRound || t.id === me.id || typeof b.cat !== 'string' || !room.cats.includes(b.cat)) return send(res, 409, { error: 'You cannot vote on that.' });
-      const set = ((room.rejects[t.id] = room.rejects[t.id] || {})[b.cat] = room.rejects[t.id][b.cat] || new Set());
-      const had = set.has(me.id); if (b.reject === true) set.add(me.id); else set.delete(me.id);
-      if (had !== set.has(me.id)) { room.members.forEach(x => { x.ready = false; }); clearTimeout(room.early); }   // a changed vote reopens the check for everyone
-      tell(room); return send(res, 200, { ok: true });
+    /* choosing the referee, between rounds */
+    const between = room.phase === 'lobby' || room.phase === 'results';
+    if (action === 'volunteer') {
+      if (!between) return send(res, 409, { error: 'You can volunteer between rounds.' });
+      if (b.on === true) { if (!room.volunteers.has(me.id)) room.volunteers.set(me.id, Date.now()); room.votes.delete(me.id); }
+      else { room.volunteers.delete(me.id); room.votes.forEach((c, v) => { if (c === me.id) room.votes.delete(v); }); }
+      room.notice = ''; tell(room); return send(res, 200, { ok: true });
     }
-    if (action === 'ready') {
-      if (room.phase !== 'review') return send(res, 409, { error: 'Nothing to confirm.' });
-      m.ready = true; tell(room); allReady(room);
-      return send(res, 200, { ok: true });
+    if (action === 'elect') {
+      if (!between) return send(res, 409, { error: 'You can vote between rounds.' });
+      if (b.player === null) { room.votes.delete(me.id); tell(room); return send(res, 200, { ok: true }); }
+      if (typeof b.player !== 'string' || !room.volunteers.has(b.player) || !room.members.has(b.player)) return send(res, 409, { error: 'Vote for someone who has volunteered.' });
+      if (b.player === me.id) return send(res, 409, { error: 'You cannot vote for yourself.' });
+      room.votes.set(me.id, b.player); tell(room); return send(res, 200, { ok: true });
+    }
+    /* the referee at work */
+    if (action === 'judge' || action === 'verdict') {
+      if (room.phase !== 'review') return send(res, 409, { error: 'There is nothing to judge right now.' });
+      if (me.id !== room.referee) return send(res, 403, { error: 'Only the referee decides.' });
+      if (action === 'verdict') { finish(room); return send(res, 200, { ok: true }); }
+      const t = typeof b.player === 'string' ? room.members.get(b.player) : null;
+      if (!t || !t.inRound || typeof b.cat !== 'string' || !room.cats.includes(b.cat) || typeof b.accept !== 'boolean') return send(res, 409, { error: 'You cannot judge that.' });
+      const mine = room.rejects[t.id] = room.rejects[t.id] || {};
+      if (b.accept) delete mine[b.cat]; else mine[b.cat] = true;
+      tell(room); return send(res, 200, { ok: true });
     }
     send(res, 404, { error: 'not found' });
   });
 }
 function answersOf(room, src) { const a = {}, o = src && typeof src === 'object' ? src : {}; room.cats.forEach(c => { a[c] = G.clean(o[c]); }); return a; }
-server.listen(PORT, HOST, () => console.log('Where is Prince Mohsey? server on ' + HOST + ':' + PORT + ', referee ' + refMode() + (REFEREE_TOKEN ? '' : ' at ' + REFEREE_AT) + ', ' + book.pending.length + ' rounds waiting' + ', data in ' + DATA + ', ' + LEVELS.length + ' level stories, allowing ' + ORIGINS.join(', ')));
+server.listen(PORT, HOST, () => console.log('Where is Prince Mohsey? server on ' + HOST + ':' + PORT + ', data in ' + DATA + ', ' + LEVELS.length + ' level stories, allowing ' + ORIGINS.join(', ')));

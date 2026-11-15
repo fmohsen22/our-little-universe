@@ -3,34 +3,24 @@
 Esm Famil (اسم فامیل) for a table of friends, with crowns and badges from the Shahnameh and the life of Rostam to unlock, chapter by chapter.
 
 - **Website:** plain HTML, CSS and JavaScript, served by GitHub Pages at game.mosi-app.com.
-- **Game server:** `server/server.js`, one Node file with no dependencies, on your own machine at game-api.mosi-app.com. It is the referee and the database.
+- **Game server:** `server/server.js`, one Node file with no dependencies, on your own machine at game-api.mosi-app.com. It keeps the clock, applies the rules and stores everything.
 
 ## How the game works
 
-1. Create an account with a name and password (every table is open to everyone with an account), and choose a kingdom (Iran, Turan or Rum, shown on a map after Fereydun's division of the world in the Shahnameh) and a title. The same name and password sign you in on any phone or computer.
-2. Start a table and share it on WhatsApp (or copy the link or 5-letter code), or join an open table. Up to 12 players.
-3. The host starts a round. Everyone gets the same letter and clock, and fills in the categories. The first to fill every box can call Stop.
-4. Everyone checks the answers. Empty answers and wrong letters are refused automatically. Any other answer falls if more than half of the other players reject it.
-5. A unique answer scores 10, an answer shared with someone else 5. The highest score wins the round; a tie has no winner.
+1. Create an account with a name and password, and choose a kingdom (Iran, Turan or Rum, shown on a map after Fereydun's division of the world in the Shahnameh). The same name and password sign you in on any phone or computer.
+2. Start a table and share it on WhatsApp (or copy the link or 5-letter code), or join an open table. Every table is open to everyone with an account. A table needs 3 to 12 people.
+3. **Choose a referee.** Anyone can volunteer; everyone else votes for one volunteer. The online volunteer with the most votes is the referee (a tie goes to whoever volunteered first). Votes can change between rounds.
+4. The host starts a round. Everyone except the referee gets the same letter and clock and fills in the categories (Name, Surname, City, Country, Animal, Food, Object, Colour). The first to fill every box can call Stop (from 20 seconds in).
+5. **The referee judges.** The referee sees every player's answers in one list and taps an answer to reject it (tap again to accept it back); everyone watches the scores change live. Then the referee taps "Give the verdict".
+6. A unique answer scores 10, an answer someone else also gave 5. The highest score wins the round; a tie has no winner. Points, wins, crowns and chapter progress count at once.
 
-A round counts only with at least two players. Alone it is practice.
+Before the referee even looks, the server refuses empty answers, answers with the wrong letter, a single letter or one letter repeated ("jjjj"), and a Country that is not a real country (the list is `server/countries.js`).
 
-## The nightly referee
-
-Every round's points wait for the referee. Each night at about 21:30 it checks every answer that got past the table, strikes the ones that are not real examples of their category, and only then adds points, wins, crowns and chapter progress to each player's record. Players see what is waiting, and the next day a short verdict listing any answers that were struck.
-
-- **Instant checks:** a single letter or one letter repeated ("jjjj") never scores. A Country answer must be a real country (the list is `server/countries.js`); "jajaja" scores nothing on the spot.
-- **The referee is a scheduled Claude session.** At 21:33 (Vienna time) it fetches the waiting answers from `GET /api/referee/pending`, judges them, and sends verdicts to `POST /api/referee/verdicts`. Both need the `X-Referee-Token` header, matching `REFEREE_TOKEN` in `/etc/our-little-universe.env` (the installer creates it and prints it once). No API key is needed.
-- **Rounds played after the referee looked** wait for the next night. If the referee does not come, rounds simply wait.
-- **Privacy:** only the answers, letters and categories are sent, never player names.
-
-Alternatives, if you ever want them: with no `REFEREE_TOKEN` but an `ANTHROPIC_API_KEY` (and Node 20+), the server judges by itself through the Anthropic SDK at `REFEREE_AT`; with neither, only the instant checks apply.
-
-Pending rounds are kept in `rounds.json` beside `players.json`.
+If the referee leaves during a round and is not back within 20 seconds, the round is cancelled (nobody scores) and the table chooses a new referee. Refereeing earns the "Wise Judge of the Court" badge after 10 rounds.
 
 ## Points, crowns and chapters
 
-- **Lifetime points** only ever grow, and only after the referee has checked them. They rank you on the leaderboard after your chapter.
+- **Lifetime points** only ever grow, and They rank you on the leaderboard after your chapter.
 - **Royal ranks** come from victories: 1, 3, 7, 15, 25, 40, 60 and 100 wins, from Young Hero to Shahanshah of Legends. They are never lost.
 - **Achievements:** eight badges for streaks, comebacks, clean Stops, rounds played and quizzes passed. One is hidden.
 - **Chapters:** seven chapters of Rostam's life. Each needs points gathered since the last chapter:
@@ -69,7 +59,7 @@ There is no password reset by email, because there is no email. If someone forge
 - Pace limits keep points honest: Stop opens 20 seconds into a round, checking takes at least 8 seconds, a player sits at one table at a time, and at most 40 rounds an hour count.
 - It listens on 127.0.0.1 only; the tunnel on the same machine is the way in.
 
-It does not judge whether "Wxyz" is a real city; that is what the table's votes are for. And it cannot tell one person with two accounts from two people.
+It does not judge whether "Wxyz" is a real city; that is the referee's job. And it cannot tell one person with two accounts from two people.
 
 ## Running the server
 
@@ -86,18 +76,18 @@ That installs a systemd service on port 8787. A Cloudflare Tunnel public hostnam
 **To update after a change here:**
 
 ```
-cd ~/our-little-universe && git pull && sudo systemctl restart our-little-universe
+cd ~/our-little-universe && git pull && bash server/install-service.sh
 ```
 
 Players are stored in `players.json` in the data folder (`~/our-little-universe-data` by default). Back it up. Tables live in memory and end when the server restarts.
 
-Settings (environment): `PORT`, `HOST` (default `127.0.0.1`), `DATA_DIR`, `ALLOWED_ORIGINS`, and the pace limits `MIN_PLAY_MS`, `MIN_REVIEW_MS`, `ROUNDS_PER_HOUR`.
+Settings (environment): `PORT`, `HOST` (default `127.0.0.1`), `DATA_DIR`, `ALLOWED_ORIGINS`, and the pace limits `MIN_PLAY_MS`, `REVIEW_MS` (how long the referee has, default 5 minutes), `ROUNDS_PER_HOUR`.
 
 If `players.json` cannot be read at start, the server refuses to start instead of overwriting it; the previous good save is `players.json.bak`.
 
 ## Changing the website
 
-- `src/app.js`: all screens. `src/art.js`: the badge drawings and the Prince Mohsey portrait. `src/map.js`: the map of the two kingdoms; its outlines in `src/map-data.js` are generated by `tools/make-map.js` from Natural Earth (public domain). Which countries belong to which kingdom is the `KINGDOMS` list at the top of that script. `src/app.css`, `src/body.html`: look and skeleton.
+- `src/app.js`: all screens. `src/art.js`: the badge drawings and the Prince Mohsey portrait. `src/map.js`: the map of the three kingdoms; its outlines in `src/map-data.js` are generated by `tools/make-map.js` from Natural Earth (public domain). Which countries belong to which kingdom is the `KINGDOMS` list at the top of that script. `src/app.css`, `src/body.html`: look and skeleton.
 - `config.js`: the server address.
 - `assets/prince-mohsey.jpg`: the picture of Prince Mohsey, shown in a round gold frame. Replace the file (a square crop of the face) to change it; if it is missing, a drawn stand-in is shown.
 - After editing, run `node build.js` to regenerate `index.html`, then commit.
@@ -105,10 +95,9 @@ If `players.json` cannot be read at start, the server refuses to start instead o
 ## Tests
 
 ```
-node tests/game.test.js      # the rules: scoring, votes, ranks, streaks, levels, quiz
+node tests/game.test.js      # the rules: scoring, referee rejections, ranks, streaks, levels, quiz
 node tests/server.test.js    # the real server over HTTP with three players
-node tests/play.js           # three browsers playing a full round, the story, the quiz and the leaderboard (needs Playwright)
+node tests/play.js           # four phone-sized browsers electing a referee, playing and judging a full round, the story, the quiz and the leaderboard (needs Playwright)
 node tests/scenario.test.js  # nine players at three tables at once, sign-ins, two server restarts, and every record cross-checked
-node tests/agent.test.js     # the agent referee: token, fetching answers, verdicts, late rounds waiting
-node tests/crowd.test.js     # thirty players at four tables at once, the referee striking made-up answers, every score cross-checked
+node tests/crowd.test.js     # thirty players at four tables at once, each table with an elected referee rejecting made-up answers, every score cross-checked
 ```
