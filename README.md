@@ -94,4 +94,5 @@ If `players.json` cannot be read at start, the server refuses to start instead o
 node tests/game.test.js      # the rules: scoring, votes, ranks, streaks, levels, quiz
 node tests/server.test.js    # the real server over HTTP with three players
 node tests/play.js           # three browsers playing a full round, the story, the quiz and the leaderboard (needs Playwright)
+node tests/scenario.test.js  # nine players at three tables at once, sign-ins, two server restarts, and every record cross-checked
 ```
