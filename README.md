@@ -7,7 +7,7 @@ Esm Famil (اسم فامیل) for a table of friends, with crowns and badges fro
 
 ## How the game works
 
-1. Create an account with a name and password, and choose a kingdom (Iran, Turan or Rum, shown on a map after Fereydun's division of the world in the Shahnameh) and a title. The same name and password sign you in on any phone or computer.
+1. Create an account with a name and password (every table is open to everyone with an account), and choose a kingdom (Iran, Turan or Rum, shown on a map after Fereydun's division of the world in the Shahnameh) and a title. The same name and password sign you in on any phone or computer.
 2. Start a table and share it on WhatsApp (or copy the link or 5-letter code), or join an open table. Up to 12 players.
 3. The host starts a round. Everyone gets the same letter and clock, and fills in the categories. The first to fill every box can call Stop.
 4. Everyone checks the answers. Empty answers and wrong letters are refused automatically. Any other answer falls if more than half of the other players reject it.
@@ -15,9 +15,31 @@ Esm Famil (اسم فامیل) for a table of friends, with crowns and badges fro
 
 A round counts only with at least two players. Alone it is practice.
 
+## The nightly referee
+
+Every round's points wait for the referee. At 22:00 each night it checks every answer that got past the table, strikes the ones that are not real examples of their category, and only then adds points, wins, crowns and chapter progress to each player's record. Players see what is waiting, and the next day a short verdict listing any answers that were struck.
+
+- **Instant checks:** a single letter or one letter repeated ("jjjj") never scores. A Country answer must be a real country (the list is `server/countries.js`); "jajaja" scores nothing on the spot.
+- **The referee itself** asks an OpenAI model (OpenAI makes Codex) whether each remaining answer is a real name, surname, city, animal, food, object or colour. Without a key it uses only the instant checks.
+- **If the service fails,** nothing is scored and the rounds wait for the next night.
+- **Privacy:** the answers (not player names) are sent to OpenAI for judging.
+
+To switch it on, put your key in `/etc/our-little-universe.env` on the server (created by `install-service.sh`, readable only by root):
+
+```
+OPENAI_API_KEY=sk-...
+REFEREE_MODEL=a model your OpenAI account can use
+REFEREE_AT=22:00
+TZ=Europe/Vienna
+```
+
+then `sudo systemctl restart our-little-universe`. The server log says `referee ai at 22:00` when it is on: `journalctl -u our-little-universe -n 5`.
+
+Pending rounds are kept in `rounds.json` beside `players.json`.
+
 ## Points, crowns and chapters
 
-- **Lifetime points** only ever grow. They rank you on the leaderboard after your chapter.
+- **Lifetime points** only ever grow, and only after the referee has checked them. They rank you on the leaderboard after your chapter.
 - **Royal ranks** come from victories: 1, 3, 7, 15, 25, 40, 60 and 100 wins, from Young Hero to Shahanshah of Legends. They are never lost.
 - **Achievements:** eight badges for streaks, comebacks, clean Stops, rounds played and quizzes passed. One is hidden.
 - **Chapters:** seven chapters of Rostam's life. Each needs points gathered since the last chapter:
@@ -96,4 +118,5 @@ node tests/game.test.js      # the rules: scoring, votes, ranks, streaks, levels
 node tests/server.test.js    # the real server over HTTP with three players
 node tests/play.js           # three browsers playing a full round, the story, the quiz and the leaderboard (needs Playwright)
 node tests/scenario.test.js  # nine players at three tables at once, sign-ins, two server restarts, and every record cross-checked
+node tests/crowd.test.js     # thirty players at four tables at once, the referee striking made-up answers, every score cross-checked
 ```

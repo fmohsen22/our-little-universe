@@ -16,6 +16,18 @@ test('scoring: Persian answers match across Arabic and Persian letter forms', ()
   assert.strictEqual(r.players.a.cats.city.pts, 5); assert.strictEqual(r.players.b.cats.city.pts, 5); assert.strictEqual(r.players.c.cats.city.status, 'letter');
   assert.ok(G.startsWith('آبادان', 'ا')); assert.ok(!G.startsWith('', 'ا'));
 });
+test('a single letter or one letter repeated is not a word; the nightly referee can strike any answer', () => {
+  const r = G.scoreRound({ letter: 'J', cats: ['name', 'city', 'food'], answers: { a: { name: 'j', city: 'JJJJ', food: 'Jam' }, b: { name: 'Jo', city: 'Jaipur', food: 'Jxqz' } }, invalid: { b: { food: true } } });
+  assert.strictEqual(r.players.a.cats.name.status, 'short'); assert.strictEqual(r.players.a.cats.city.status, 'short'); assert.strictEqual(r.players.a.total, 10);
+  assert.strictEqual(r.players.b.cats.food.status, 'referee'); assert.strictEqual(r.players.b.total, 20); assert.strictEqual(r.winner, 'b');
+});
+test('Country answers are checked on the spot against the list of countries', () => {
+  ['Japan', 'japan', 'United Kingdom', 'UK', 'Persia', 'Côte d’Ivoire', 'Wales'].forEach(c => assert.ok(!G.notACountry(c), c));
+  ['jajaja', 'Jamaicaa', 'Jerusalemland'].forEach(c => assert.ok(G.notACountry(c), c));
+  assert.ok(!G.notACountry('ژاپن'), 'Persian script is left to the referee');
+  const r = G.scoreRound({ letter: 'J', cats: ['country'], answers: { a: { country: 'jajaja' }, b: { country: 'Japan' } } });
+  assert.strictEqual(r.players.a.cats.country.status, 'country'); assert.strictEqual(r.players.b.total, 10);
+});
 test('votes: an answer falls only when more than half of the other players reject it', () => {
   const answers = { a: { name: 'Sxyz' }, b: { name: 'Sara' }, c: { name: 'Sam' }, d: { name: 'Sue' } };
   const one = G.scoreRound({ letter: 'S', cats: ['name'], answers, rejects: { a: { name: ['b'] } } });

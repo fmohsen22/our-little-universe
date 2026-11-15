@@ -8,7 +8,7 @@ const CATEGORIES = [
   { id: 'thing', en: 'Object', fa: 'اشیا' }, { id: 'color', en: 'Colour', fa: 'رنگ' }
 ];
 const LETTERS = { en: 'ABCDEFGHIJKLMNOPRSTUVW'.split(''), fa: 'ا ب پ ت ج چ خ د ر ز س ش ع ف ق ک گ ل م ن و ه ی'.split(' ') };
-const DEFAULT_SETTINGS = { lang: 'en', cats: ['name', 'surname', 'city', 'country', 'animal', 'food'], secs: 90 };
+const DEFAULT_SETTINGS = { lang: 'en', cats: ['name', 'surname', 'city', 'country', 'animal', 'food', 'thing', 'color'], secs: 120 };
 const POINTS = { unique: 10, shared: 5 };
 const MAX_PLAYERS = 12, MIN_SCORED = 2;      // a round only counts for points, wins and levels with at least two players
 
@@ -49,6 +49,11 @@ function fold(s) {
 // The key two answers are compared by: letters and digits only.
 function key(s) { return fold(s).replace(/[^\p{L}\p{N}]+/gu, ''); }
 function clean(s) { return (typeof s === 'string' ? s : '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40); }
+// Countries are a fixed list, so they are checked on the spot. Answers in Persian script are left to the referee.
+const COUNTRY_KEYS = new Set(require('./countries.js').NAMES.map(n => key(n)));
+function notACountry(answer) { const k = key(String(answer).normalize('NFD').replace(/[\u0300-\u036f]/g, '')); return /^[a-z0-9]+$/.test(k) && !COUNTRY_KEYS.has(k); }
+// Answers no referee is needed for: a single letter, or one character repeated ("jjjj").
+function junk(answer) { const k = key(answer); return k.length < 2 || new Set(k).size === 1; }
 function startsWith(answer, letter) { const k = key(answer); return k.length > 0 && k[0] === key(letter)[0]; }
 
 /* ---------- scoring a round ----------
@@ -64,8 +69,9 @@ function scoreRound(round) {
       const text = clean((round.answers[id] || {})[cat]);
       const votes = ((round.rejects || {})[id] || {})[cat] || [];
       let status = 'ok';
-      if (!key(text)) status = 'empty'; else if (!startsWith(text, round.letter)) status = 'letter';
+      if (!key(text)) status = 'empty'; else if (!startsWith(text, round.letter)) status = 'letter'; else if (junk(text)) status = 'short'; else if (cat === 'country' && notACountry(text)) status = 'country';
       else if (votes.filter(v => v !== id && ids.includes(v)).length * 2 > others) status = 'rejected';
+      else if (((round.invalid || {})[id] || {})[cat]) status = 'referee';           // struck by the nightly referee
       out[id].cats[cat] = { text, status, pts: 0 };
       if (status === 'ok') { const k = key(text); (seen[k] = seen[k] || []).push(id); }
     });
@@ -74,7 +80,7 @@ function scoreRound(round) {
   let best = -1, winners = [];
   ids.forEach(id => { if (out[id].total > best) { best = out[id].total; winners = [id]; } else if (out[id].total === best) winners.push(id); });
   const order = ids.slice().sort((a, b) => out[b].total - out[a].total);
-  return { players: out, order, cats: round.cats, winner: best > 0 && winners.length === 1 ? winners[0] : null, scored: ids.length >= MIN_SCORED };
+  return { players: out, order, cats: round.cats, ids, winner: best > 0 && winners.length === 1 ? winners[0] : null, scored: ids.length >= MIN_SCORED };
 }
 
 /* ---------- players ---------- */
@@ -118,5 +124,5 @@ function applyQuiz(p, correct, now) {
 // Leaderboard order: highest level, then lifetime points, then wins, then who got there first.
 function compareBoard(a, b) { return b.level - a.level || b.total - a.total || b.wins - a.wins || a.createdAt - b.createdAt; }
 
-module.exports = { KINGDOMS, CATEGORIES, LETTERS, DEFAULT_SETTINGS, POINTS, MAX_PLAYERS, MIN_SCORED, LEVELS, RANKS, ACHIEVEMENTS,
+module.exports = { notACountry, junk, KINGDOMS, CATEGORIES, LETTERS, DEFAULT_SETTINGS, POINTS, MAX_PLAYERS, MIN_SCORED, LEVELS, RANKS, ACHIEVEMENTS,
   levelPoints, fold, key, clean, startsWith, scoreRound, newPlayer, rankOf, rankTitle, checkUnlocks, nextLevelNeed, quizReady, applyRound, applyQuiz, compareBoard };

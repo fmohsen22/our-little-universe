@@ -313,6 +313,11 @@ input[type="password"] { width: 100%; min-width: 0; font: 1rem var(--body); colo
 .check-time { text-align: center; font-size: .9rem; color: var(--soft); }
 .check-time b { font-variant-numeric: tabular-nums; color: var(--ink); }
 .check-time b.low { color: var(--rose); }
+.referee { font-size: .92rem; background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
+.verdict { font-size: .92rem; }
+.verdict summary { cursor: pointer; font-weight: 600; }
+.verdict ul { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.verdict small { color: var(--soft); }
 </style></head><body>
 <div class="wrap">
   <header class="top">
@@ -442,7 +447,22 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
   }
   function fail(e) { toast(e.message || 'Something went wrong.'); }
   function setMe(m) { me = m; var w = $('#who'); w.hidden = !me; if (me) { w.textContent = ''; w.appendChild(document.createTextNode(me.name)); } }
-  function refreshMe() { return api('GET', '/api/me').then(function (j) { setMe(j.me); return j.me; }); }
+  function refreshMe() {
+    return api('GET', '/api/me').then(function (j) {
+      setMe(j.me);
+      if (me.news && me.news.length) { ceremony(me.news); api('POST', '/api/news').catch(function () { /* shown again next time */ }); }   // what the referee's verdict unlocked
+      return j.me;
+    });
+  }
+  var clock = function () { return meta && meta.referee ? meta.referee.at : '22:00'; };
+  function refereeLine(p) {
+    var out = '';
+    if (p.pendingRounds) out += '<p class="referee">⚖️ <b>' + num(p.pending) + ' points</b> from ' + p.pendingRounds + (p.pendingRounds === 1 ? ' round are' : ' rounds are') + ' waiting for the referee, who checks every answer tonight at ' + clock() + '. They count after that.</p>';
+    var v = p.verdict;
+    if (v) out += '<details class="verdict"><summary>Last verdict, ' + new Date(v.at).toLocaleDateString([], { day: 'numeric', month: 'short' }) + ': ' + num(v.points) + ' of ' + num(v.claimed) + ' points accepted' + (v.struck.length ? ', ' + v.struck.length + (v.struck.length === 1 ? ' answer' : ' answers') + ' struck' : '') + '</summary>' +
+      (v.struck.length ? '<ul>' + v.struck.map(function (x) { var c = catOf(x.cat); return '<li><b dir="auto">' + esc(x.text) + '</b> <small>' + (c ? c.en : esc(x.cat)) + (x.why ? ': ' + esc(x.why) : '') + '</small></li>'; }).join('') + '</ul>' : '<p class="note">Every answer was accepted.</p>') + '</details>';
+    return out;
+  }
   function sync(s) { var el = $('#sync'); el.dataset.s = s; el.textContent = s === 'live' ? 'Online' : s === 'error' ? 'Offline' : ''; }
 
   /* ---------- small ui ---------- */
@@ -502,7 +522,7 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
 
   views.home = function () {
     app.innerHTML = '<section class="card me-card"><div class="row split"><div class="row">' + medal(me, 64) + '<div><h1 class="me-name">' + esc(royalName(me)) + '</h1><p class="soft">' + esc(me.title || 'Not yet crowned') + ' · chapter ' + me.level + ' of ' + meta.levels.length + '</p></div></div><a class="btn small ghost" href="#me">Profile</a></div>' +
-      levelLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') +
+      levelLine(me) + refereeLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') +
       '<dl class="stats4"><div><dt>Points</dt><dd>' + num(me.total) + '</dd></div><div><dt>Victories</dt><dd>' + me.wins + '</dd></div><div><dt>Rounds</dt><dd>' + me.rounds + '</dd></div><div><dt>Best streak</dt><dd>' + me.best + '</dd></div></dl></section>' +
       '<section class="card"><h2>Play Esm Famil</h2><p class="soft">One letter, a handful of categories, and a clock. Unique answers score ' + meta.points.unique + ', shared answers ' + meta.points.shared + '.</p><button class="btn big" data-act="create">Start a table</button>' +
       '<form class="inline" data-form="join"><label class="sr" for="h-code">Table code</label><input id="h-code" type="text" maxlength="5" autocapitalize="characters" autocomplete="off" placeholder="Table code"><button class="btn ghost" type="submit">Join</button></form>' +
@@ -591,7 +611,7 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
   function collect() { var a = {}; $$('input[data-cat]').forEach(function (el) { a[el.dataset.cat] = el.value; }); if (Object.keys(a).length) mine = a; return mine; }
   function onState() {
     if (table.phase === 'collect' && $('input[data-cat]')) { clearTimeout(sendTimer); T('answers', { answers: collect() }).catch(function () { /* the round closed first */ }); }
-    if (table.phase === 'results') { var id = table.code + ':' + table.round; if (id !== lastResults) { lastResults = id; var got = (table.unlocks || {})[me.id]; refreshMe().then(function () { if (got) ceremony(got); renderTable(); }).catch(function () { /* keep the table */ }); if (table.scores.winner === me.id) celebrate(); } }
+    if (table.phase === 'results') { var id = table.code + ':' + table.round; if (id !== lastResults) { lastResults = id; refreshMe().then(function () { renderTable(); }).catch(function () { /* keep the table */ }); if (table.scores.winner === me.id) celebrate(); } }
     renderTable();
   }
   function people() { return '<ul class="people" id="t-people">' + table.players.map(function (p) { return '<li class="' + (p.online ? '' : 'off') + '">' + medal(p, 28) + '<span>' + esc(p.name) + (p.id === table.host ? ' <small>host</small>' : '') + (table.phase === 'play' && p.inRound ? ' <small>' + p.filled + '/' + table.settings.cats.length + '</small>' : '') + (table.phase === 'review' && p.ready ? ' <small>done</small>' : '') + (p.online ? '' : ' <small>away</small>') + '</span></li>'; }).join('') + '</ul>'; }
@@ -603,27 +623,27 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
     var link = location.origin + location.pathname + '#table-' + st.code;
     if (st.phase === 'lobby') {
       body = '<div class="card"><p><b>Invite players</b> <span class="note">up to ' + meta.maxPlayers + ' at a table</span></p><p class="code">' + st.code + '</p><div class="inline"><label class="sr" for="t-link">Invite link</label><input id="t-link" type="text" readonly value="' + esc(link) + '"><button class="btn small" data-act="copylink">Copy</button></div>' + shareRow(me.name + ' invites you to a round of Esm Famil in “Where is Prince Mohsey?”. Table ' + st.code + ':', link) + '</div>' +
-        (host ? '<div class="card"><p><b>Table rules</b></p><div class="row" role="group" aria-label="Alphabet"><button class="chip" data-act="set" data-f="lang" data-v="en" aria-pressed="' + (s.lang === 'en') + '">English letters</button><button class="chip" data-act="set" data-f="lang" data-v="fa" aria-pressed="' + (s.lang === 'fa') + '">حروف فارسی</button></div>' +
-          '<div class="checks">' + meta.categories.map(function (c) { return '<label><input type="checkbox" id="c-' + c.id + '" data-act="cat" data-id="' + c.id + '"' + (s.cats.indexOf(c.id) >= 0 ? ' checked' : '') + '> ' + c.en + ' <span class="soft" lang="fa">' + c.fa + '</span></label>'; }).join('') + '</div>' +
+        (host ? '<div class="card"><p><b>Table rules</b></p>' +
+          '<div class="checks">' + meta.categories.map(function (c) { return '<label><input type="checkbox" id="c-' + c.id + '" data-act="cat" data-id="' + c.id + '"' + (s.cats.indexOf(c.id) >= 0 ? ' checked' : '') + '> ' + c.en + '</label>'; }).join('') + '</div>' +
           '<div class="row" role="group" aria-label="Time">' + [60, 90, 120].map(function (x) { return '<button class="chip" data-act="set" data-f="secs" data-v="' + x + '" aria-pressed="' + (s.secs === x) + '">' + x + ' seconds</button>'; }).join('') + '</div>' +
-          '<div class="row" role="group" aria-label="Who can join"><button class="chip" data-act="set" data-f="open" data-v="1" aria-pressed="' + st.open + '">Listed for everyone</button><button class="chip" data-act="set" data-f="open" data-v="" aria-pressed="' + !st.open + '">Invite link only</button></div>' +
+          
           '<button class="btn big" data-act="start">Start the round</button>' + (st.players.filter(function (p) { return p.online; }).length < meta.minScored ? '<p class="note center">Alone, a round is only practice. Points, victories and chapters need at least ' + meta.minScored + ' players.</p>' : '') + '</div>'
           : '<div class="card feature"><p class="big-text">Waiting for the host to start.</p><p class="soft">' + s.secs + ' seconds · ' + s.cats.map(function (c) { return catOf(c).en; }).join(', ') + '</p></div>');
     } else if (st.phase === 'play' || st.phase === 'collect') {
       body = '<p class="letter" lang="' + s.lang + '">' + esc(st.letter) + '</p><p class="timer" id="t-time">' + (st.phase === 'play' ? left(st.endsAt) : 0) + '</p>' +
         (st.phase === 'collect' ? '<div class="card feature"><p class="big-text">Pens down!</p></div>' : !me2.inRound ? '<div class="card feature"><p class="big-text">A round is running.</p><p class="soft">You join the next one.</p></div>' :
-          '<div class="card">' + s.cats.map(function (id) { var c = catOf(id); return '<div class="field"><label for="e-' + id + '">' + c.en + ' <span class="soft" lang="fa">' + c.fa + '</span></label><input id="e-' + id + '" data-cat="' + id + '" type="text" dir="auto" maxlength="40" autocomplete="off" value="' + esc(mine[id] || '') + '"></div>'; }).join('') +
+          '<div class="card">' + s.cats.map(function (id) { var c = catOf(id); return '<div class="field"><label for="e-' + id + '">' + c.en + '</label><input id="e-' + id + '" data-cat="' + id + '" type="text" dir="auto" maxlength="40" autocomplete="off" value="' + esc(mine[id] || '') + '"></div>'; }).join('') +
           '<button class="btn" data-act="stop">Stop! I am done</button><p class="note center">Stop ends the round for everyone. Every box must be filled.</p></div>');
     } else {
       var final = st.phase === 'results', sc = st.scores, mineSc = sc.players[me.id];
       body = (final ? '<div class="card feature"><p class="big-text">' + (sc.winner ? esc(st.players.filter(function (p) { return p.id === sc.winner; }).map(royalName)[0] || 'Someone') + ' wins the round' : 'No winner this round') + '</p>' +
-          (mineSc ? '<p class="turn">You scored ' + mineSc.total + (!sc.scored ? '. Practice round: nothing was added to your record' : mineSc.capped ? '. You have played more rounds this hour than count: take a break' : '') + '</p>' + (sc.scored ? levelLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') : '') : '') + '</div>'
+          (mineSc ? '<p class="turn">You scored ' + mineSc.total + (!sc.scored ? '. Practice round: nothing was added to your record' : mineSc.capped ? '. You have played more rounds this hour than count: take a break' : '') + '</p>' + (sc.scored && sc.provisional && !mineSc.capped ? '<p class="note">For now. The referee checks every answer tonight at ' + clock() + ', and the points count after that.</p>' : '') + (sc.scored ? levelLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') : '') : '') + '</div>'
         : '<p class="letter" lang="' + s.lang + '">' + esc(st.letter) + '</p><p class="center soft">Check the answers. Reject one that does not count; it falls if more than half of the other players agree.</p>' +
           '<p class="check-time">Checking closes in <b id="t-time">' + left(st.reviewEndsAt) + '</b> seconds, or as soon as everyone presses Done checking.</p>') +
         '<div class="review">' + (sc.cats || s.cats).map(function (id) { var c = catOf(id);
-          return '<div class="review-row"><h3>' + c.en + ' · <span lang="fa">' + c.fa + '</span></h3>' + sc.order.map(function (pid) {
+          return '<div class="review-row"><h3>' + c.en + '</h3>' + sc.order.map(function (pid) {
             var p = st.players.filter(function (x) { return x.id === pid; })[0] || { name: '?' }, a = sc.players[pid].cats[id], votes = ((st.rejects[pid] || {})[id] || []), mineVote = votes.indexOf(me.id) >= 0;
-            var why = a.status === 'empty' ? 'nothing' : a.status === 'letter' ? 'wrong letter' : a.status === 'rejected' ? 'rejected' : a.shared ? 'shared' : '';
+            var why = a.status === 'empty' ? 'nothing' : a.status === 'letter' ? 'wrong letter' : a.status === 'short' ? 'not a word' : a.status === 'country' ? 'not a country' : a.status === 'rejected' ? 'rejected' : a.shared ? 'shared' : '';
             return '<div class="ans' + (a.status === 'ok' ? '' : ' bad') + '"><span dir="auto"><small>' + esc(p.name) + (why ? ' · ' + why : '') + (votes.length && a.status !== 'rejected' ? ' · ' + votes.length + ' against' : '') + '</small><i>' + (esc(a.text) || '—') + '</i></span>' +
               (!final && pid !== me.id && me2.inRound && (a.status === 'ok' || a.status === 'rejected') ? '<button class="chip rej" data-act="vote" data-p="' + pid + '" data-cat="' + id + '" aria-pressed="' + mineVote + '">' + (mineVote ? 'Rejected' : 'Reject') + '</button>' : '') + '<b class="pts" data-v="' + a.pts + '">' + a.pts + '</b></div>'; }).join('') + '</div>'; }).join('') + '</div>' +
         '<div class="card"><table class="board"><thead><tr><th scope="col">Player</th><th scope="col">Round</th><th scope="col">Table total</th></tr></thead><tbody>' + sc.order.map(function (pid) { var p = st.players.filter(function (x) { return x.id === pid; })[0] || { name: '?', session: 0 }; return '<tr' + (pid === me.id ? ' class="you"' : '') + '><th scope="row">' + esc(p.name) + (final && sc.winner === pid ? ' 👑' : '') + '</th><td>' + sc.players[pid].total + '</td><td>' + p.session + '</td></tr>'; }).join('') + '</tbody></table></div>' +

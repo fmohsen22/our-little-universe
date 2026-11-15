@@ -312,3 +312,8 @@ input[type="password"] { width: 100%; min-width: 0; font: 1rem var(--body); colo
 .check-time { text-align: center; font-size: .9rem; color: var(--soft); }
 .check-time b { font-variant-numeric: tabular-nums; color: var(--ink); }
 .check-time b.low { color: var(--rose); }
+.referee { font-size: .92rem; background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
+.verdict { font-size: .92rem; }
+.verdict summary { cursor: pointer; font-weight: 600; }
+.verdict ul { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.verdict small { color: var(--soft); }

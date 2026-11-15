@@ -19,6 +19,7 @@ WorkingDirectory=$REPO
 Environment=PORT=$PORT
 Environment=DATA_DIR=$DATA
 Environment=ALLOWED_ORIGINS=$ORIGINS
+EnvironmentFile=-/etc/our-little-universe.env
 ExecStart=$NODE $REPO/server/server.js
 Restart=always
 RestartSec=3
@@ -26,6 +27,17 @@ RestartSec=3
 [Install]
 WantedBy=multi-user.target
 UNIT
+# Private settings for the nightly referee (the OpenAI key) live here, readable only by root and the service.
+if [ ! -f /etc/our-little-universe.env ]; then
+  sudo tee /etc/our-little-universe.env >/dev/null <<'SETTINGS'
+# The nightly referee. Without a key, only the built-in rules are used.
+# OPENAI_API_KEY=sk-...
+# REFEREE_MODEL=a model your OpenAI account can use
+# REFEREE_AT=22:00
+# TZ=Europe/Vienna
+SETTINGS
+  sudo chmod 600 /etc/our-little-universe.env
+fi
 sudo systemctl daemon-reload
 sudo systemctl enable --now our-little-universe
 sleep 1

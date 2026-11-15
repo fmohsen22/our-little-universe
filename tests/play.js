@@ -6,7 +6,7 @@ const shots = process.env.SHOTS; if (shots) fs.mkdirSync(shots, { recursive: tru
 const ok = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log('  ok  ' + m); };
 (async () => {
   const web = spawn('python3', ['-m', 'http.server', '4174', '--bind', '127.0.0.1'], { cwd: root, stdio: 'ignore' });
-  const api = spawn('node', [path.join(root, 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT: '8792', DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '300', REVIEW_MS: '20000', MIN_PLAY_MS: '0', MIN_REVIEW_MS: '0', ALLOWED_ORIGINS: 'http://127.0.0.1:4174' }), stdio: 'ignore' });
+  const api = spawn('node', [path.join(root, 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT: '8792', DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '300', REVIEW_MS: '20000', MIN_PLAY_MS: '0', MIN_REVIEW_MS: '0', REFEREE_TEST: '1', ALLOWED_ORIGINS: 'http://127.0.0.1:4174' }), stdio: 'ignore' });
   await new Promise(r => setTimeout(r, 900));
   const browser = await chromium.launch(), errors = [];
   const person = async (name, opts) => { const ctx = await browser.newContext(opts); await ctx.route('**/config.js', r => r.fulfill({ contentType: 'text/javascript', body: "window.WPM_CONFIG={serverUrl:'" + apiUrl + "',princeImage:'assets/prince-mohsey.jpg'};" }));
@@ -24,11 +24,13 @@ const ok = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log('  o
     await fits(a, 'home'); await a.locator('.map-more summary').click(); await shot(a, 'home'); await a.locator('[data-act="create"]').click(); await a.waitForSelector('#t-link'); const link = await a.inputValue('#t-link'); const wa = await a.locator('a.wa').getAttribute('href'); ok(wa.startsWith('https://wa.me/?text=') && decodeURIComponent(wa).includes(link), 'the table has a Share on WhatsApp link carrying the invite'); await fits(a, 'lobby'); await shot(a, 'lobby');
     for (const [p, name, k] of [[b, 'Sufi', 'rum'], [c, 'Rudabeh', 'turan']]) { await p.goto(link); await p.waitForSelector('#w-name'); await p.fill('#w-name', name); await p.fill('#w-pass', 'secret-' + name); await p.locator('[data-f="kingdom"][data-v="' + k + '"]').click(); await p.click('form[data-form="register"] [type=submit]'); await p.waitForSelector('#t-people'); }
     await a.waitForFunction(() => document.querySelectorAll('#t-people li').length === 3); ok(/Waiting for the host/.test(await b.textContent('#app')), 'two friends join by invite link and wait for the host');
+    ok(await a.locator('.checks input:checked').count() === 8 && !/فارسی|Invite link only/.test(await a.textContent('#app')), 'a new table has all eight categories, English only, open to everyone');
+    for (const id of ['country', 'color']) { const n = await a.locator('.checks input:checked').count(); await a.locator('#c-' + id).click(); await a.waitForFunction(k => document.querySelectorAll('.checks input:checked').length === k, n - 1); }
     await a.locator('[data-act="start"]').click(); for (const p of [a, b, c]) await p.waitForSelector('#e-name');
     const L = await a.textContent('.letter'); ok(L === await b.textContent('.letter') && L === await c.textContent('.letter') && Math.abs(+(await a.textContent('#t-time')) - +(await c.textContent('#t-time'))) <= 1, 'all three see the same letter and clock');
-    const cats = ['name', 'surname', 'city', 'country', 'animal', 'food'];
+    const cats = ['name', 'surname', 'city', 'animal', 'food', 'thing'];
     for (const k of cats) await a.fill('#e-' + k, L + 'a' + k);
-    for (const k of cats.slice(0, 4)) await b.fill('#e-' + k, k === 'city' ? L + 'same' : L + 'b' + k);
+    for (const k of ['name', 'surname', 'city', 'food']) await b.fill('#e-' + k, k === 'city' ? L + 'same' : L + 'b' + k);
     for (const k of cats.slice(0, 5)) await c.fill('#e-' + k, k === 'city' ? L + 'same' : k === 'animal' ? L + 'qqqq' : L + 'c' + k);
     await a.waitForFunction(() => /4\/6/.test(document.querySelector('#t-people').textContent) && /5\/6/.test(document.querySelector('#t-people').textContent)); ok(await a.inputValue('#e-food') === L + 'afood', 'progress of the others shows without disturbing what you typed');
     await fits(b, 'play'); await shot(b, 'play');
@@ -40,9 +42,13 @@ const ok = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log('  o
     await fits(a, 'review'); await shot(a, 'review');
     for (const p of [a, b, c]) await p.locator('[data-act="ready"]').click();
     for (const p of [a, b, c]) await p.waitForFunction(() => /wins the round/.test(document.querySelector('#app').textContent));
-    await a.waitForSelector('#ceremony .cer-box'); ok(/Young Hero/.test(await a.textContent('#cer-title')) && /Prince Mohsey wins the round/.test(await c.textContent('#app')), 'the winner is announced to all and promoted with a ceremony'); await shot(a, 'ceremony'); await dismiss(a);
+    ok(/Prince Mohsey wins the round/.test(await c.textContent('#app')) && /referee checks every answer tonight/.test(await a.textContent('#app')) && await a.locator('#ceremony .cer-box').count() === 0, 'the winner is announced to all, and the points wait for tonight’s referee');
     await a.waitForFunction(() => /You scored 60/.test(document.querySelector('#app').textContent)); ok(/You scored 35/.test(await b.textContent('#app')) && /You scored 35/.test(await c.textContent('#app')), 'scores: 60 for six unique answers, 35 and 35 for the others');
     await fits(c, 'results'); await shot(c, 'results-desktop');
+    await a.goto(site + '#home'); await a.waitForSelector('.me-card'); ok(/60 points<\/b> from 1 round are waiting for the referee/.test(await a.innerHTML('.me-card')) && /0 of 40 points/.test(await a.textContent('.me-card')), 'home shows the 60 points waiting for the referee, and the chapter still locked');
+    const keyA = await a.evaluate(() => localStorage.getItem('wpm:key')); await fetch(apiUrl + '/api/referee', { method: 'POST', headers: { Authorization: 'Bearer ' + keyA } });
+    await a.reload(); await a.waitForSelector('#ceremony .cer-box'); ok(/Young Hero/.test(await a.textContent('#cer-title')), 'after the referee’s verdict the winner gets the Young Hero ceremony'); await shot(a, 'ceremony'); await dismiss(a);
+    await a.waitForSelector('.me-card'); ok(/Last verdict/.test(await a.textContent('.verdict summary')) && /60 of 60 points accepted/.test(await a.textContent('.verdict summary')), 'home shows the verdict: 60 of 60 points accepted');
     await a.locator('a[href="#level-1"]').first().click(); await a.waitForSelector('.story'); ok(/Test chapter 1/.test(await a.textContent('.story h1')), 'reaching the points opens the chapter story'); await fits(a, 'story');
     await a.locator('[data-act="quiz"]').click(); await a.waitForSelector('fieldset.q'); ok(await a.locator('fieldset.q').count() === 5, 'the quiz has five questions');
     for (let i = 0; i < 5; i++) await a.locator('fieldset.q').nth(i).locator('label', { hasText: 'right' }).click(); await shot(a, 'quiz');
