@@ -1,0 +1,527 @@
+{
+  "levels": [
+    {
+      "n": 1,
+      "id": "zal-and-simurgh",
+      "title": "The White-Haired Child",
+      "teaser": "Before the hero comes his father: a baby abandoned on a mountain and raised by a wondrous bird.",
+      "story": [
+        "A thousand years ago the Persian poet Ferdowsi gathered the old legends of Iran into one vast poem, the Shahnameh, or Book of Kings. Its greatest hero is Rostam, but his story begins before his birth, with his grandfather Sam. Sam was the most trusted champion of King Manuchehr of Iran, and he ruled the province of Zabolestan, also called Sistan, in the south-east of the kingdom. He had everything a man could want except a child.",
+        "At last a son was born to him, strong and beautiful, but with hair as white as an old man's. For days nobody dared to tell Sam. When he finally saw the baby he was filled with shame. He feared that the nobles would laugh at him and whisper that the boy was the child of a demon. So he gave a cruel order: the baby was to be carried far away and left alone on the slopes of Mount Alborz, a peak so high that it seemed to touch the stars.",
+        "On that mountain lived the Simurgh, a huge and wise bird. Flying out to find food for her chicks, she saw the infant crying on the bare rock, and she carried him up to her nest. But pity entered her heart, and instead of feeding him to her young she raised him among them. Years passed. The boy grew into a tall young man, and travellers began to carry tales of him down into the world.",
+        "Sam, meanwhile, was troubled by dreams that reproached him for throwing away the gift God had given him. Full of remorse, he journeyed to Mount Alborz and prayed for forgiveness. The Simurgh saw him and understood why he had come. She told the young man that it was time to return to his own kind, and she gave him feathers from her own wing. If ever he was in desperate trouble, he had only to burn one and she would come. Sam embraced his son, begged his pardon, and named him Zal. The king welcomed the young man kindly, and Sam left him to govern Zabolestan.",
+        "On his travels Zal came to Kabul, a small kingdom that paid tribute to Sam. Its king, Mehrab, was handsome and courteous, but he was descended from Zahhak, the serpent-shouldered tyrant who had once oppressed Iran. Zal heard a description of Mehrab's daughter, Rudabeh, and fell in love with her before he had ever seen her. Rudabeh, hearing her father praise Zal, lost her heart in the same way. Her maids carried messages between them and arranged a secret meeting.",
+        "By night Zal came to the foot of her palace wall. From the roof Rudabeh loosened her long black hair and let it down for him to climb. Zal would not do it; he kissed the dark tresses and said he would never harm them. Instead he threw up his lasso, caught the battlements, and climbed the rope. There the two pledged themselves to each other.",
+        "Their secret did not last, and almost everyone opposed the match. Mehrab was furious and afraid. King Manuchehr dreaded what a child with the blood of Zahhak and the strength of Sam might become, and he ordered Sam to march against Kabul. Zal pleaded with his father, reminding him of the wrong he had once done his son, and Sam sent him to the king with a letter. Rudabeh's mother, Sindokht, went bravely to Sam as an envoy to plead for her city. Then the king's astrologers studied the stars and announced that from this marriage would come a champion who would be the shield of Iran. The king's wise men tested Zal with riddles, he answered every one, and Manuchehr gave his consent. Zal and Rudabeh were married in Kabul.",
+        "In time Rudabeh was with child, but the child was so large that she suffered terribly. One day she fainted from the pain, and the household feared she would die. Zal remembered the Simurgh's promise and burned a feather. At once the great bird appeared. She told him to dry his tears, and gave careful instructions. A skilled priest must bring a sharp blade. Rudabeh should first be made drowsy with wine. Then her side should be cut open, the child lifted out, and the wound sewn up. Finally a herb crushed with milk and musk should be laid on the wound, and it should be stroked with the Simurgh's feather.",
+        "All was done as she said. The boy was as big as a lion cub, and everyone who saw him marvelled. When Rudabeh woke and saw her son she smiled and said that she was delivered from her pain. In Persian the word she used was rastam, and so the child was named Rostam. Ten nurses were needed to feed him. A likeness of the baby was sewn from silk and sent to his grandfather Sam, who gave thanks. The champion the stars had promised had arrived."
+      ],
+      "video": "",
+      "quiz": [
+        {
+          "q": "Why did Sam abandon his newborn son?",
+          "options": ["The king ordered it", "The baby had white hair and Sam felt ashamed", "An astrologer foretold disaster", "The baby was sickly and weak"],
+          "answer": 1
+        },
+        {
+          "q": "Where was the baby left?",
+          "options": ["On Mount Alborz", "In the desert of Sistan", "Beside the river Oxus", "At the gates of Kabul"],
+          "answer": 0
+        },
+        {
+          "q": "What did the Simurgh first intend when she carried the baby to her nest?",
+          "options": ["To return him to Sam", "To teach him to speak", "To hide him from the king", "To feed him to her chicks"],
+          "answer": 3
+        },
+        {
+          "q": "What did the Simurgh give Zal when he left her?",
+          "options": ["A golden mace", "A magic ring", "Feathers to burn when he needed her", "A horse faster than the wind"],
+          "answer": 2
+        },
+        {
+          "q": "Why was Rudabeh's family distrusted by the king of Iran?",
+          "options": ["They refused to pay tribute", "They were descended from the tyrant Zahhak", "They were allies of Turan", "They had killed Sam's father"],
+          "answer": 1
+        },
+        {
+          "q": "How did Zal climb up to Rudabeh at their secret meeting?",
+          "options": ["By climbing her hair", "On the Simurgh's back", "By a ladder her maids let down", "By throwing up his lasso and climbing the rope"],
+          "answer": 3
+        },
+        {
+          "q": "What did the king's astrologers foretell about the marriage of Zal and Rudabeh?",
+          "options": ["It would produce a champion who would protect Iran", "It would bring Zahhak back to power", "It would end the line of Sam", "It would cause a war with Kabul lasting a generation"],
+          "answer": 0
+        },
+        {
+          "q": "Who went to Sam as an envoy to plead for Kabul?",
+          "options": ["Mehrab", "Rudabeh", "Sindokht, Rudabeh's mother", "The Simurgh"],
+          "answer": 2
+        },
+        {
+          "q": "According to the Simurgh's instructions, how was Rostam to be born?",
+          "options": ["By a spell spoken over Rudabeh", "By cutting open Rudabeh's side and lifting the child out", "By carrying Rudabeh to the Simurgh's nest", "By waiting nine more days"],
+          "answer": 1
+        },
+        {
+          "q": "How did Rostam get his name, according to the story?",
+          "options": ["He was named after Sam's father", "The Simurgh chose the name", "From his mother's words on waking, that she was delivered", "King Manuchehr named him in a letter"],
+          "answer": 2
+        }
+      ],
+      "sources": [
+        "Ferdowsi, Shahnameh, reign of Manuchehr: the tale of Sam and the Simurgh, Zal and Rudabeh, and the birth of Rostam (as in Dick Davis, Shahnameh: The Persian Book of Kings, Penguin Classics)",
+        "A. G. Warner and E. Warner, The Shahnama of Firdausi, vol. 1 (1905)"
+      ]
+    },
+    {
+      "n": 2,
+      "id": "rakhsh",
+      "title": "The Boy, the Mace and the Horse",
+      "teaser": "A young giant needs a horse strong enough to carry him, and Iran needs a king.",
+      "story": [
+        "Rostam grew at a pace that astonished everyone in Zabolestan. Ferdowsi tells us that once he was weaned he ate as much as five grown men. While still a boy he had the height and the shoulders of a warrior, and his grandfather Sam travelled a long way simply to look at him and wonder.",
+        "One night, while the household slept, there was shouting in the streets. The white elephant belonging to his father Zal had broken its chains and was rampaging through the town. Rostam woke, snatched up the heavy mace that had belonged to Sam, and ran for the door. The guards barred his way, afraid of what Zal would say if they let his young son out into such danger. Rostam knocked the gatekeeper aside, broke the fastening of the gate, and went out alone. The elephant charged at him like a moving hill. Rostam roared back at it, struck it a single blow on the head with the mace, and the beast fell dead. Then he went back to bed. In the morning Zal heard the story and knew what kind of son he had.",
+        "Iran at that time was in grave trouble. Across the river Oxus lay Turan, the rival kingdom of the northern steppes, and its fiercest prince was Afrasiab. Afrasiab had invaded Iran, and had captured and killed the Iranian king Nowzar. The short reigns that followed left the throne empty and the country open to attack. The nobles came to Zal for help. Zal told them that he was growing old, but that his son, though young, had the heart of a lion.",
+        "Rostam said that he was made for battle, not for feasting, and asked for two things: a mace and a horse. The mace was easy, for Zal gave him the great mace of Sam. The horse was harder. Whenever Rostam tested a horse he pressed his hand down on its back, and each one buckled until its belly touched the ground. So Zal ordered the herds of Zabolestan and Kabul to be driven past his son, one after another.",
+        "Among the herds from Kabul came a grey mare, and behind her a colt with the chest of a lion. His coat was dappled red and gold, like rose petals scattered over saffron. Rostam readied his lasso, but the old herdsman called out a warning. Nobody knew who owned this colt, he said. He had been fit for the saddle for three years, and people simply called him Rostam's Rakhsh. But whenever anyone came near him, his mother attacked like a lioness.",
+        "Rostam threw his lasso over the colt's head. The mare charged with her teeth bared. Rostam gave a shout that stopped her short and struck her with his fist, and she turned and fled back to the herd. Then he pressed his hand on the colt's back with all his strength. The back did not bend. Rostam asked the price. If you are Rostam, the herdsman answered, then the price of this horse is the land of Iran; mount him and set the country right. From that day Rakhsh carried Rostam through every adventure of his long life.",
+        "His first task came at once. The priests told Zal that a descendant of the ancient king Feridun, a man named Kay Qobad, was living near Mount Alborz and was worthy of the crown. Zal sent Rostam to bring him. Rostam fought his way through the Turanian outposts and came to a pleasant place of trees and running water, where a company of young men were feasting beside a stream. They invited him to sit and drink. He replied that he had no time, for he was seeking Kay Qobad. The host smiled and revealed that he himself was Kay Qobad. The night before, he said, he had dreamed that two white falcons flew to him from Iran, carrying a crown as bright as the sun. The two rode for Iran without delay, and when a Turanian warrior named Qalun blocked their road with his men, Rostam scattered them. Kay Qobad was crowned king.",
+        "Then came the battle with Turan. Rostam asked his father to point out Afrasiab, and Zal showed him the black banner. Rostam charged straight for it, seized Afrasiab by the belt, and lifted him clean out of the saddle, meaning to carry him as a prisoner to Kay Qobad. But the belt could not take the weight. It snapped, Afrasiab fell to the ground, and his horsemen closed around him and carried him to safety.",
+        "The Turanian army broke all the same. Afrasiab, shaken by what he had met, urged his father to make peace, and the Oxus became the border between the two kingdoms once more. Iran had a king again, and a new champion. But Afrasiab had escaped, and he would trouble Rostam and Iran for many years to come."
+      ],
+      "video": "",
+      "quiz": [
+        {
+          "q": "What animal did the young Rostam kill in the night?",
+          "options": ["A lion", "A dragon", "A white elephant", "A wild boar"],
+          "answer": 2
+        },
+        {
+          "q": "What weapon did Rostam use against it?",
+          "options": ["The mace of his grandfather Sam", "A bow and two arrows", "His bare hands", "A lasso"],
+          "answer": 0
+        },
+        {
+          "q": "Why did the guards try to stop Rostam from going out?",
+          "options": ["They thought he was a thief", "The king had ordered a curfew", "They wanted to kill the beast themselves", "They feared what Zal would say if his son was put in danger"],
+          "answer": 3
+        },
+        {
+          "q": "Who was Afrasiab?",
+          "options": ["The king of Kabul", "The fiercest prince of Turan, Iran's rival", "A descendant of Feridun living near Mount Alborz", "The herdsman who kept Rakhsh"],
+          "answer": 1
+        },
+        {
+          "q": "How did Rostam test each horse?",
+          "options": ["He raced it against the wind", "He made it face the white elephant", "He pressed his hand down on its back", "He loaded it with his armour and mace"],
+          "answer": 2
+        },
+        {
+          "q": "How is Rakhsh's coat described?",
+          "options": ["Black as night with a white star", "Pure white like the Simurgh's feathers", "Grey like his mother", "Like rose petals scattered over saffron"],
+          "answer": 3
+        },
+        {
+          "q": "What price did the herdsman name for Rakhsh?",
+          "options": ["The land of Iran: Rostam should mount him and set the country right", "A hundred camels loaded with gold", "The mace of Sam", "A year's tribute from Kabul"],
+          "answer": 0
+        },
+        {
+          "q": "What had Kay Qobad dreamed the night before Rostam found him?",
+          "options": ["A lion bringing him a sword", "Two white falcons bringing him a crown", "The Simurgh calling him to the mountain", "A river washing away the army of Turan"],
+          "answer": 1
+        },
+        {
+          "q": "How did Rostam know where to find Afrasiab on the battlefield?",
+          "options": ["Afrasiab challenged him by name", "Rakhsh carried him there unbidden", "Zal pointed out Afrasiab's black banner", "Kay Qobad had seen it in his dream"],
+          "answer": 2
+        },
+        {
+          "q": "Why did Afrasiab escape after Rostam lifted him from the saddle?",
+          "options": ["Rakhsh stumbled", "His belt snapped and his horsemen carried him off", "Kay Qobad ordered Rostam to release him", "He wounded Rostam with a dagger"],
+          "answer": 1
+        }
+      ],
+      "sources": [
+        "Ferdowsi, Shahnameh, end of the reign of Manuchehr through the reigns of Nowzar, Zav and Garshasp to the crowning of Kay Qobad (Rostam and the white elephant; Rostam chooses Rakhsh; Rostam brings Kay Qobad from Mount Alborz)",
+        "Dick Davis, Shahnameh: The Persian Book of Kings (Penguin Classics); Warner and Warner, The Shahnama of Firdausi, vol. 1"
+      ]
+    },
+    {
+      "n": 3,
+      "id": "seven-labours",
+      "title": "The Seven Labours",
+      "teaser": "A foolish king is a prisoner in a land of demons, and only one rider takes the short, deadly road to reach him.",
+      "story": [
+        "After Kay Qobad, his son Kay Kavus became king of Iran. He was brave, but vain and reckless. One day a div, a demon, came to court disguised as a minstrel and sang of Mazandaran, a land where it was always spring. In the Shahnameh, Mazandaran is a country of demons and sorcerers. Kavus decided to conquer it. Zal rode to court to talk him out of it, in vain.",
+        "At first Kavus plundered as he pleased. Then the king of Mazandaran called on the mightiest of the demons, the White Div. In the night a black cloud settled over the Iranian camp, and by morning Kavus and most of his men were blind. They were held captive under the guard of a demon chief named Arzhang. Kavus managed to send a message to Zal. Zal told Rostam there were two roads to Mazandaran: the long, safe one the king had taken, and a short one full of lions, demons and darkness. Rostam chose the short road.",
+        "First labour. Rostam lay down to sleep in a reed bed that was in fact a lion's lair. The lion came home and sprang at Rakhsh, but the horse struck it with his hooves, sank his teeth into its back, and killed it. Rostam woke and scolded him: if Rakhsh had died, how would he carry his heavy arms to Mazandaran on foot?",
+        "Second labour. The road crossed a burning desert with no water. Rostam staggered, his tongue cracked with thirst, and he prayed. Then a well-fed ram crossed his path. Reasoning that such an animal must drink somewhere, Rostam followed it to a spring. He gave thanks and blessed the ram. Before sleeping he told Rakhsh not to fight anything alone again, but to wake him.",
+        "Third labour. The spring was the haunt of a dragon. In the night it crept close, and Rakhsh stamped to wake his master, but the dragon vanished into the dark and Rostam saw nothing. It happened a second time, and Rostam angrily threatened to cut off the horse's head if he was woken again for nothing. The third time Rakhsh, torn between fear of the dragon and fear of his master, woke him once more, and now the dragon could not hide. Rostam fought it, and when Rakhsh saw his master hard pressed he tore at the dragon's shoulder with his teeth. Rostam struck off its head.",
+        "Fourth labour. Beside a stream Rostam found a meal laid out: roast meat, bread, wine and a lute. It was a feast of sorcerers, who had fled at his approach. He sat down, took up the lute, and sang about his hard, wandering life. A witch heard him, took the form of a beautiful young woman, and sat at his side. Rostam, pouring wine, gave praise to God. At the name of God her face turned black. He caught her in his lasso and demanded her true shape, and she became a withered hag. He cut her in two.",
+        "Fifth labour. Rostam passed through a land of total darkness, giving Rakhsh the reins. Coming out into green fields, he lay down to sleep and let Rakhsh graze in the crop. The keeper of the field beat Rostam's feet with a stick, and Rostam, without a word, tore off the man's ears. The keeper ran to his lord, a young chieftain named Olad, who rode out with his men. Rostam scattered them and caught Olad in his lasso. He offered a bargain: guide me truthfully to Kavus and to the White Div, and I will make you king of Mazandaran; lie, and you die. Olad agreed.",
+        "Sixth labour. Olad led him to the camp of Arzhang. Rostam gave his battle cry, and when Arzhang rushed from his tent Rostam seized him and tore his head from his body. The other demons fled. In the city Rakhsh neighed like thunder, and the blind Kavus knew that Rostam had come. The king told him that only the blood of the White Div could cure their blindness.",
+        "Seventh labour. Olad advised him that demons sleep when the sun is hot, so Rostam waited for full day. He tied Olad to a tree and entered a cave as black as a pit. When his eyes cleared he made out a shape like a mountain, white-haired and asleep. Rostam would not strike a sleeper; he shouted to wake him. The White Div came at him with a millstone. Rostam cut off one of its legs, and even so they wrestled until the ground was mud with blood. At last Rostam lifted the demon, dashed him down, and drove in his dagger.",
+        "The blood was dripped into the eyes of Kavus and his men, and they saw again. The king of Mazandaran was defeated, and Rostam kept his word: Olad was made ruler of the land. These seven trials are known in Persian as the Haft Khan."
+      ],
+      "video": "",
+      "quiz": [
+        {
+          "q": "What made Kay Kavus decide to invade Mazandaran?",
+          "options": ["Zal advised him to", "A demon disguised as a minstrel sang of its beauty", "The king of Mazandaran had insulted him", "Afrasiab had taken refuge there"],
+          "answer": 1
+        },
+        {
+          "q": "What happened to Kavus and his army in Mazandaran?",
+          "options": ["They were turned to stone", "They were drowned in the sea", "They were struck blind and taken captive", "They were put to sleep for seven years"],
+          "answer": 2
+        },
+        {
+          "q": "Who killed the lion in the first labour?",
+          "options": ["Rakhsh, while Rostam slept", "Rostam, with his mace", "Olad", "The White Div"],
+          "answer": 0
+        },
+        {
+          "q": "How did Rostam find water in the desert?",
+          "options": ["Rakhsh dug for it with his hooves", "The Simurgh showed him", "He struck a rock with his mace", "He followed a ram to a spring"],
+          "answer": 3
+        },
+        {
+          "q": "Why was Rostam angry with Rakhsh during the dragon labour?",
+          "options": ["Rakhsh had run away", "Rakhsh had eaten the crops", "Rakhsh kept waking him and he could see nothing there", "Rakhsh refused to cross the desert"],
+          "answer": 2
+        },
+        {
+          "q": "What revealed the witch's true nature?",
+          "options": ["Rakhsh neighed at her", "Rostam praised God and her face turned black", "She could not touch the lute", "Her reflection in the stream"],
+          "answer": 1
+        },
+        {
+          "q": "What did Rostam promise Olad in return for guiding him honestly?",
+          "options": ["That he would be made king of Mazandaran", "A share of the White Div's treasure", "The hand of Kavus's daughter", "Rakhsh's first foal"],
+          "answer": 0
+        },
+        {
+          "q": "Who was Arzhang?",
+          "options": ["The keeper of the field", "The king of Mazandaran", "The witch's master", "The demon chief guarding the captive Iranians"],
+          "answer": 3
+        },
+        {
+          "q": "Why did Rostam wait for full day before entering the White Div's cave?",
+          "options": ["He needed light to see in the cave", "Rakhsh was exhausted", "Olad told him that demons sleep when the sun is hot", "Kavus had ordered him to wait"],
+          "answer": 2
+        },
+        {
+          "q": "What did Rostam do when he found the White Div asleep?",
+          "options": ["He killed it at once", "He shouted to wake it before fighting", "He bound it with his lasso", "He went back to fetch Olad"],
+          "answer": 1
+        }
+      ],
+      "sources": [
+        "Ferdowsi, Shahnameh, reign of Kay Kavus: the war in Mazandaran and the Seven Labours (Haft Khan) of Rostam",
+        "Dick Davis, Shahnameh: The Persian Book of Kings (Penguin Classics); Warner and Warner, The Shahnama of Firdausi, vol. 2"
+      ]
+    },
+    {
+      "n": 4,
+      "id": "rostam-and-sohrab",
+      "title": "Rostam and Sohrab",
+      "teaser": "A lost horse leads Rostam to a border town, and to the deepest sorrow of his life.",
+      "story": [
+        "One day Rostam went hunting alone near the border of Turan. He roasted a wild ass, ate, and fell asleep, leaving Rakhsh to graze. A band of Turanian horsemen came upon the famous horse, and after a hard struggle they caught him with their lassos and led him away. Rostam woke to find him gone. Carrying his saddle and weapons, he followed the tracks on foot to Samangan, a small kingdom on the frontier. Its king welcomed him with honour, promised that Rakhsh would be found, and gave a feast.",
+        "That night the door of Rostam's chamber opened quietly. A servant entered with a lamp, and behind came a young woman: Tahmineh, the king's daughter. She told him that she had heard the tales of his deeds and had long wished to be his wife and to bear his child. Rostam sent a priest to ask her father for her hand that same night, and the king gladly agreed.",
+        "At dawn Rostam took from his arm a jewel known to all the world as his and gave it to Tahmineh. If their child was a girl, she was to braid it in her hair. If it was a boy, she was to bind it on his arm as his father's token. Rakhsh was brought back, and Rostam rode home to Zabolestan. He told no one what had happened.",
+        "Tahmineh bore a son and named him Sohrab. By the age of ten no one in the land could wrestle him. He demanded to know who his father was, and his mother told him, warning him to keep it secret from Afrasiab, Rostam's old enemy. Sohrab formed a grand plan. He would lead an army into Iran, overthrow Kay Kavus and set Rostam on the throne, and then return to take Afrasiab's crown as well.",
+        "Afrasiab heard and was delighted. He sent troops and two commanders, Human and Barman, with secret orders that father and son must never recognise each other. Perhaps the young lion would kill the old one, and then Sohrab himself could be dealt with. Sohrab crossed the border and attacked the White Fortress. He captured its champion, Hojir. Then Gordafarid, a daughter of the fortress, hid her hair under a helmet and rode out to fight him. In the struggle her helmet came off and her hair spilled free. Sohrab was amazed. She tricked him with a promise of surrender, slipped back through the gate, and mocked him from the wall.",
+        "Kay Kavus summoned Rostam urgently. Rostam, untroubled, spent some days feasting before he came. The king flew into a rage and ordered him hanged. Rostam strode out, declaring that he was no man's slave, and only the pleading of the old noble Gudarz made peace. The army marched. Sohrab, from a hilltop, asked his captive Hojir to name the owner of each Iranian tent. Hojir, afraid for Rostam, lied and said he did not see Rostam's tent among them.",
+        "Rostam and Sohrab met alone between the two armies. They fought with spears, swords and maces until their weapons were broken and their horses exhausted. Sohrab felt strangely drawn to the old warrior and asked him directly whether he was Rostam. Rostam denied it, saying he was only a lesser man.",
+        "The next day they wrestled. Sohrab threw Rostam to the ground, sat on his chest, and drew his dagger. Rostam saved himself by cunning. Among us, he said, the custom is that a champion does not kill at the first fall, only at the second. Sohrab let him go. Human told the young man he had been a fool. Rostam washed in a stream and prayed for strength.",
+        "When they wrestled again, Rostam seized Sohrab, bent his back, and threw him. Knowing the young man would not stay down, he drew his blade at once and stabbed him in the chest. Sohrab said that he had come seeking his father, and that when Rostam learned of his death he would avenge it, even if the killer became a fish in the sea. The world went dark before Rostam's eyes. He asked for proof. Sohrab told him to open his armour, and there on his arm was the jewel Rostam had given Tahmineh.",
+        "Rostam tore his clothes and would have killed himself had the nobles not held him back. Sohrab asked only that the Turanian army be allowed to go home unharmed. Rostam sent Gudarz to Kay Kavus to beg for the nushdaru, a healing potion kept in the royal treasury. Kavus, fearing what such a father and son might do together, refused. Rostam set out to plead in person, but a messenger overtook him: Sohrab was dead. Rostam burned his own tent and carried his son's coffin home to Zabolestan."
+      ],
+      "video": "",
+      "quiz": [
+        {
+          "q": "What brought Rostam to Samangan?",
+          "options": ["He was sent as an ambassador", "He was following the tracks of his stolen horse", "He was fleeing Kay Kavus", "He was invited to a wedding"],
+          "answer": 1
+        },
+        {
+          "q": "Who was Tahmineh?",
+          "options": ["The daughter of the king of Samangan", "The daughter of Afrasiab", "A warrior of the White Fortress", "A servant in Rostam's household"],
+          "answer": 0
+        },
+        {
+          "q": "What was Tahmineh to do with Rostam's jewel if the child was a boy?",
+          "options": ["Braid it in his hair", "Send it back to Zabolestan", "Hide it until he was a man", "Bind it on his arm"],
+          "answer": 3
+        },
+        {
+          "q": "What was Sohrab's plan when he learned who his father was?",
+          "options": ["To live quietly in Samangan", "To serve Afrasiab against Iran", "To put Rostam on the throne of Iran and then take Afrasiab's crown", "To challenge Rostam for the title of champion"],
+          "answer": 2
+        },
+        {
+          "q": "What secret order did Afrasiab give his commanders?",
+          "options": ["To kill Rostam by poison", "To make sure father and son never recognised each other", "To capture Rakhsh again", "To bring Tahmineh to Turan as a hostage"],
+          "answer": 1
+        },
+        {
+          "q": "Who was Gordafarid?",
+          "options": ["Sohrab's mother", "The wife of Hojir", "A daughter of the White Fortress who rode out to fight Sohrab", "A Turanian commander"],
+          "answer": 2
+        },
+        {
+          "q": "What did Rostam answer when Sohrab asked whether he was Rostam?",
+          "options": ["He denied it", "He admitted it proudly", "He refused to answer", "He asked Sohrab his own name first"],
+          "answer": 0
+        },
+        {
+          "q": "How did Rostam escape when Sohrab had him on the ground with dagger drawn?",
+          "options": ["Rakhsh charged at Sohrab", "The Iranian army intervened", "He threw Sohrab off by sheer strength", "He claimed that custom forbade killing at the first fall"],
+          "answer": 3
+        },
+        {
+          "q": "How did Rostam finally learn that Sohrab was his son?",
+          "options": ["Hojir confessed his lie", "He saw his own jewel on Sohrab's arm", "Tahmineh arrived on the battlefield", "Human told him"],
+          "answer": 1
+        },
+        {
+          "q": "Why was Sohrab not saved by the healing potion?",
+          "options": ["It had been stolen by Afrasiab", "Rostam was too proud to ask for it", "Kay Kavus refused to give it", "It was used on Rakhsh instead"],
+          "answer": 2
+        }
+      ],
+      "sources": [
+        "Ferdowsi, Shahnameh, reign of Kay Kavus: the tale of Sohrab",
+        "Dick Davis, Shahnameh: The Persian Book of Kings (Penguin Classics); Warner and Warner, The Shahnama of Firdausi, vol. 2"
+      ]
+    },
+    {
+      "n": 5,
+      "id": "siavash",
+      "title": "The Blood of Siavash",
+      "teaser": "Rostam raises a prince who keeps his word when kings do not, and pays for it in a foreign land.",
+      "story": [
+        "Kay Kavus had a son named Siavash, a child so fine that the whole court spoke of him. Rostam came to the king and asked to bring the boy up himself. He took Siavash to Zabolestan and taught him everything a prince should know: riding, archery, the lasso, how to lead an army, how to behave at a feast, and how to judge justly. Siavash returned to his father as a young man, admired by all.",
+        "The king's wife, Sudabeh, fell in love with her stepson. She summoned him to the women's quarters and declared her desire. Siavash, loyal to his father, refused her. Afraid of being exposed, Sudabeh tore her clothes and cried out that he had attacked her. Kavus was torn between his wife and his son, and the priests advised a trial by fire.",
+        "A mountain of firewood was heaped up in two great piles with a narrow path between them, and set alight. Siavash, dressed in white and riding his black horse, galloped into the flames. The crowd wept. Then he rode out at the far end unharmed and smiling. Kavus wanted to have Sudabeh executed, but Siavash, knowing his father would later regret it, begged for her life, and she was pardoned.",
+        "Soon afterwards Afrasiab of Turan invaded again. Siavash, glad to leave the court, asked for command of the army, and Rostam went with him. They took the city of Balkh. Then Afrasiab had a terrible dream of his own ruin. Frightened, he asked for peace, sent rich gifts, and handed over a hundred of his own kinsmen as hostages. Siavash and Rostam accepted, and Siavash gave his oath.",
+        "Rostam carried the news to Kavus. The king was furious. He ordered that the hostages be sent to him for execution and that the war go on, and he accused Rostam of having grown soft. Rostam, insulted, rode home to Sistan. Siavash now faced an impossible choice. He would not break his oath or send the hostages to their deaths, and he could not go home in disobedience. He returned the hostages to Afrasiab, handed over the army, and crossed the river into Turan.",
+        "There Piran, Afrasiab's wise old commander, welcomed him like a son, and Afrasiab too came to love him. Siavash married Piran's daughter Jarireh, and later Farangis, the daughter of Afrasiab himself. He was given a province and built a beautiful city, Siavashgerd. But Afrasiab's brother Garsivaz was envious. He told the king that Siavash was plotting with Iran, and he told Siavash that the king meant him harm, until each man feared the other.",
+        "Afrasiab marched against him. Siavash, still bound by his oath, would not fight. His few Iranian companions were killed, and he was seized, dragged away, and put to death at Garsivaz's urging. It is said that where his blood fell a plant sprang up, which people called the blood of Siavash. Piran had been away and arrived too late to save him. He was just in time to save Farangis, who was carrying Siavash's child. She gave birth to a son, Kay Khosrow, and he was hidden among shepherds.",
+        "When the news reached Iran, the whole country mourned. Rostam's grief turned to fury. He rode to court and told Kavus to his face that his bad temper and his love for Sudabeh had destroyed his son. Then he strode into the women's quarters, dragged Sudabeh out, and killed her. Kavus did not stir from his throne.",
+        "Rostam led the armies of Iran into Turan, with his own son Faramarz commanding the vanguard. A son of Afrasiab named Sorkheh was captured, and on Rostam's order he was killed as Siavash had been killed. Afrasiab was beaten in battle and fled, and for some years Rostam himself sat on the throne of Turan. But vengeance could not bring Siavash back, and in the end the Iranians went home and Afrasiab returned.",
+        "Hope came from another direction. The old noble Gudarz dreamed that a prince of Iran was alive in Turan. His son Giv searched alone for seven years, found Kay Khosrow, and brought him and his mother Farangis across the Oxus to Iran. Kay Khosrow became the most just of kings. Rostam served him as champion, and among his deeds in that reign was the rescue of Giv's son Bizhan from the pit where Afrasiab had thrown him for loving Manizheh, Afrasiab's daughter. It was Kay Khosrow who finally brought the long war for Siavash to its end."
+      ],
+      "video": "",
+      "quiz": [
+        {
+          "q": "Who brought Siavash up?",
+          "options": ["Piran", "Kay Kavus himself", "Rostam, in Zabolestan", "Gudarz"],
+          "answer": 2
+        },
+        {
+          "q": "Who was Sudabeh?",
+          "options": ["The wife of Kay Kavus and stepmother of Siavash", "The daughter of Afrasiab", "The daughter of Piran", "Siavash's nurse"],
+          "answer": 0
+        },
+        {
+          "q": "How did Siavash prove his innocence?",
+          "options": ["He defeated Sudabeh's champion in combat", "He swore an oath before the priests", "He solved the riddles of the wise men", "He rode through a great fire unharmed"],
+          "answer": 3
+        },
+        {
+          "q": "What did Siavash do when Kavus wanted to execute Sudabeh?",
+          "options": ["He demanded it be done at once", "He begged for her life", "He left the court in silence", "He asked Rostam to decide"],
+          "answer": 1
+        },
+        {
+          "q": "What made Afrasiab ask for peace?",
+          "options": ["A terrible dream of his own ruin", "The death of his son in battle", "A letter from Piran", "The capture of his brother Garsivaz"],
+          "answer": 0
+        },
+        {
+          "q": "Why did Siavash go to Turan?",
+          "options": ["Afrasiab captured him in battle", "Rostam advised him to seek a throne there", "He would not break his oath or send the hostages to die, and could not go home in disobedience", "He wished to marry Farangis"],
+          "answer": 2
+        },
+        {
+          "q": "Who turned Afrasiab and Siavash against each other?",
+          "options": ["Piran", "Garsivaz, Afrasiab's brother", "Sorkheh", "Giv"],
+          "answer": 1
+        },
+        {
+          "q": "Who saved Farangis and her unborn child?",
+          "options": ["Rostam", "Faramarz", "Garsivaz", "Piran"],
+          "answer": 3
+        },
+        {
+          "q": "What did Rostam do at Kavus's court after Siavash's death?",
+          "options": ["He seized the throne", "He swore never to fight for Iran again", "He blamed the king to his face and killed Sudabeh", "He asked for the healing potion"],
+          "answer": 2
+        },
+        {
+          "q": "Who found Kay Khosrow in Turan and brought him to Iran?",
+          "options": ["Giv, after searching for seven years", "Rostam, during his rule over Turan", "Bizhan", "Gudarz himself"],
+          "answer": 0
+        }
+      ],
+      "sources": [
+        "Ferdowsi, Shahnameh, reign of Kay Kavus: the tale of Siavash, Rostam's war of vengeance, and Giv's search for Kay Khosrow; the tale of Bizhan and Manizheh (reign of Kay Khosrow)",
+        "Dick Davis, Shahnameh: The Persian Book of Kings (Penguin Classics); Warner and Warner, The Shahnama of Firdausi, vols. 2-3"
+      ]
+    },
+    {
+      "n": 6,
+      "id": "rostam-and-esfandiyar",
+      "title": "Rostam and Esfandiyar",
+      "teaser": "A king who will not give up his crown sends his own son to put the old hero in chains.",
+      "story": [
+        "Many reigns passed, for in the Shahnameh Rostam lives for centuries. A new king, Goshtasp, now sat on the throne of Iran. He had adopted the faith taught by the prophet Zoroaster, and his son Esfandiyar was its champion. Esfandiyar was the finest warrior of his generation, and it was said that no weapon could wound his body. He had won his father's wars against Turan and had rescued his own sisters from an enemy fortress. Again and again Goshtasp promised him the throne as a reward, and again and again he broke his word.",
+        "At last Esfandiyar demanded the crown outright. Goshtasp consulted his counsellor Jamasp, who could read the future, and learned that Esfandiyar was fated to die in Zabolestan at the hand of Rostam. Then the king set his son a final condition. Rostam, he said, had grown proud and no longer came to court to pay homage. Go to Zabolestan and bring him here in chains, and the crown is yours. Esfandiyar saw that the order was unjust and said so, for Rostam had served the kings of Iran all his life. But he was a prince who obeyed. His mother, Katayun, wept and begged him not to go.",
+        "On the road the lead camel of his caravan lay down and would not get up. It was an ill omen. Esfandiyar had the animal killed and marched on, but his heart was uneasy. He camped by the river Hirmand and sent his son Bahman ahead with his message. Bahman found Rostam out hunting, and from a hilltop he rolled a boulder down at him. Rostam waited until it was almost upon him, then kicked it aside with his heel. He received the young man kindly all the same.",
+        "Rostam's answer was generous. He would welcome the prince as a guest, give him treasure, and ride beside him to court to accept the king's judgement. One thing only he would never do. No one had ever seen Rostam in chains, and no one ever would. Esfandiyar was just as firmly bound by his father's command. The two men met, and each admired the other, but neither would yield.",
+        "So they fought. Rostam's arrows glanced off Esfandiyar, while Esfandiyar's arrows pierced Rostam and Rakhsh again and again. Meanwhile fighting broke out between their followers, and two of Esfandiyar's sons were killed by the men of Rostam's brother Zavareh and his son Faramarz. By evening Rostam, badly wounded, let Rakhsh go home alone and climbed a rocky height on foot. He asked for a truce until morning. Then he crossed the river and reached his house, bleeding.",
+        "Zal despaired when he saw his son and the horse. Then he remembered the Simurgh. He climbed to a high place and burned her feather, and the great bird came out of the darkness. She drew the arrowheads from Rostam and from Rakhsh and stroked their wounds with her feathers, and they were healed. But she gave Rostam a warning. Whoever sheds the blood of Esfandiyar, she said, will be hunted down by fate; he will have no peace in this world and suffering in the next. It would be best to make peace. Rostam answered that he would accept death before the shame of chains.",
+        "So that same night the Simurgh guided him to a distant shore where a tamarisk tree grew. She told him to choose a straight branch, straighten it in the fire, fit it with an arrowhead and feathers, and steep it in wine. He must aim for Esfandiyar's eyes, for only there could the prince be hurt.",
+        "In the morning Esfandiyar was astonished to see Rostam and Rakhsh whole again, and suspected the sorcery of Zal. Rostam pleaded with him one last time. He offered everything he owned and every honour except the chains, and he called on God to witness that he did not want this fight. Esfandiyar gave the same answer as before: chains or battle. Then Rostam set the tamarisk arrow to his bow and loosed it. It struck Esfandiyar in the eyes. The prince slumped forward over the mane of his black horse and fell to the ground.",
+        "Esfandiyar did not die at once. To his brother Pashutan and his son Bahman he said that it was not Rostam who had killed him, nor the Simurgh, nor the arrow. It was his father Goshtasp, who had sent him to his death in order to keep the crown. Then he asked Rostam to take Bahman into his house and bring him up as a prince should be raised, and Rostam gave his promise.",
+        "Pashutan carried his brother's coffin back to court and reproached the king before all the nobles. Rostam returned to Zabolestan with the Simurgh's warning in his ears."
+      ],
+      "video": "",
+      "quiz": [
+        {
+          "q": "Who was Esfandiyar's father?",
+          "options": ["Kay Kavus", "Goshtasp", "Jamasp", "Kay Khosrow"],
+          "answer": 1
+        },
+        {
+          "q": "What was remarkable about Esfandiyar's body?",
+          "options": ["He had white hair from birth", "He was as tall as a mountain", "He never needed sleep", "It was said that no weapon could wound it"],
+          "answer": 3
+        },
+        {
+          "q": "What did Goshtasp learn from Jamasp before sending Esfandiyar to Zabolestan?",
+          "options": ["That Esfandiyar was fated to die there at Rostam's hand", "That Rostam was plotting rebellion", "That Rostam was too old to fight", "That Esfandiyar would return in triumph"],
+          "answer": 0
+        },
+        {
+          "q": "What task did Goshtasp set Esfandiyar as the price of the crown?",
+          "options": ["To kill the Simurgh", "To conquer Turan", "To bring Rostam to court in chains", "To rescue his sisters"],
+          "answer": 2
+        },
+        {
+          "q": "What ill omen occurred on Esfandiyar's road?",
+          "options": ["An eagle dropped a snake on his tent", "The lead camel lay down and would not rise", "The river Hirmand ran red", "His black horse went lame"],
+          "answer": 1
+        },
+        {
+          "q": "What did Bahman do when he first saw Rostam?",
+          "options": ["He bowed and offered gifts", "He shot an arrow at him", "He challenged him to wrestle", "He rolled a boulder down at him"],
+          "answer": 3
+        },
+        {
+          "q": "What was the one thing Rostam refused?",
+          "options": ["To be put in chains", "To go to Goshtasp's court", "To give treasure", "To receive Esfandiyar as a guest"],
+          "answer": 0
+        },
+        {
+          "q": "What warning did the Simurgh give Rostam?",
+          "options": ["That Rakhsh would not survive another battle", "That Zal would die if he fought again", "That whoever shed Esfandiyar's blood would be pursued by misfortune", "That Goshtasp was marching on Zabolestan"],
+          "answer": 2
+        },
+        {
+          "q": "From what tree was the fatal arrow made?",
+          "options": ["Cypress", "Tamarisk", "Plane", "Willow"],
+          "answer": 1
+        },
+        {
+          "q": "Whom did the dying Esfandiyar blame for his death?",
+          "options": ["Rostam", "The Simurgh", "Zal", "His father Goshtasp"],
+          "answer": 3
+        }
+      ],
+      "sources": [
+        "Ferdowsi, Shahnameh, reign of Goshtasp: the tale of Rostam and Esfandiyar",
+        "Dick Davis, Shahnameh: The Persian Book of Kings (Penguin Classics); Warner and Warner, The Shahnama of Firdausi, vol. 5"
+      ]
+    },
+    {
+      "n": 7,
+      "id": "death-of-rostam",
+      "title": "The Death of Rostam",
+      "teaser": "No enemy ever defeated Rostam in the field; the last danger comes from inside his own family.",
+      "story": [
+        "Late in his life Zal had another son, born to a servant woman of his household. The boy was named Shaghad. When the astrologers read his stars they were dismayed: this child, they said, would bring ruin on the house of Sam. Zal grieved and prayed that it might not be so. When Shaghad was grown, Zal sent him to the king of Kabul. There he became a fine horseman, and the king gave him his daughter in marriage.",
+        "Every year Kabul paid a tribute to Rostam. The king of Kabul had hoped that, with Rostam's half-brother as his son-in-law, the tribute would be forgotten. But when the time came, Rostam's men arrived and collected it as they always had. Shaghad took this as a humiliation. He went to the king in private and said that his brother showed him no respect, and that together they should set a trap for him.",
+        "This was their plan. At a feast the king would insult Shaghad in front of everyone. Shaghad would ride to Zabolestan and complain, and Rostam would come to punish the king. Meanwhile the king would have pits dug in his hunting ground, each deep enough to swallow a horse and rider. Their floors would be planted with spears and swords, points upward, and their mouths covered over so that nothing showed.",
+        "It was done. Shaghad came to Rostam and told how the king of Kabul had mocked him and his family. Rostam was angry. He promised to cast the king down and put Shaghad on the throne of Kabul, and he began to gather an army. Shaghad told him there was no need: the king already regretted his words, and a small escort would be enough. So Rostam set out with his brother Zavareh and only a few men.",
+        "The king of Kabul came to meet them barefoot and bareheaded, begging forgiveness and blaming the wine. Rostam forgave him. A feast was spread in a green meadow, and afterwards the king spoke of a hunting ground nearby, full of deer and wild asses. Rostam had loved the hunt all his life, and he agreed to go.",
+        "The hunters scattered. Rostam, Zavareh and Shaghad rode toward the place where the pits lay hidden. Rakhsh smelled the freshly turned earth. He reared, picked his way forward carefully, and then refused to go further. Rostam's judgement was clouded that day. Impatient with his horse, he touched him lightly with the whip. Rakhsh sprang forward and fell into a pit. The blades tore the horse's body and pierced Rostam's chest and legs.",
+        "With the last of his great strength Rostam dragged himself up to the rim of the pit. He saw Shaghad standing there and understood. Shaghad told him that he had shed blood enough in his long life and that his time had come. The king of Kabul arrived, pretended to weep, and offered to send for physicians. Rostam answered that the time for physicians was past, that no one lives for ever, and that his son Faramarz would call the king to account for his blood.",
+        "Then Rostam asked his half-brother for one favour. String my bow, he said, and lay it beside me with two arrows, so that if a lion comes while I am still breathing I may defend myself. Shaghad, smiling, strung the bow and set it down. But when he saw Rostam lift it he was afraid, and he hid behind an old plane tree whose trunk was hollow. Rostam drew the bow, wounded as he was, and loosed. The arrow passed through the tree and through the man behind it, and pinned the two together. Shaghad cried out and died. Rostam gave thanks to God that he had been granted the strength to avenge himself before his own death. Then he died. Zavareh had fallen into another pit, and he died too.",
+        "One of the escort escaped and carried the news to Zal. Faramarz came with an army, raised the bodies from the pits, and laid them in coffins. Mourners passed Rostam's coffin from hand to hand all the way home to Zabolestan. Rakhsh was brought home as well and buried beside his master's tomb. Then Faramarz marched on Kabul and put its king to death. Rudabeh, Rostam's mother, grieved so deeply that for a time she lost her reason.",
+        "So ended the life of Rostam, the son of Zal, who had guarded the throne of Iran through the reigns of many kings. He is still, a thousand years after Ferdowsi wrote, the best-loved hero of the Persian-speaking world."
+      ],
+      "video": "",
+      "quiz": [
+        {
+          "q": "Who was Shaghad?",
+          "options": ["Rostam's son", "The king of Kabul", "Rostam's half-brother, a son of Zal", "A commander of Turan"],
+          "answer": 2
+        },
+        {
+          "q": "What did the astrologers foretell about Shaghad?",
+          "options": ["That he would bring ruin on the house of Sam", "That he would become king of Iran", "That he would be a greater hero than Rostam", "That he would die young"],
+          "answer": 0
+        },
+        {
+          "q": "What caused Shaghad's resentment against Rostam?",
+          "options": ["Rostam had refused him a command in the army", "Rostam's men still collected the tribute from Kabul", "Rostam had killed his mother", "Rostam had taken Rakhsh from him"],
+          "answer": 1
+        },
+        {
+          "q": "How was Rostam lured to Kabul?",
+          "options": ["By an invitation to Shaghad's wedding", "By news that Afrasiab had invaded", "By a false message from Zal", "By a staged quarrel in which the king insulted Shaghad"],
+          "answer": 3
+        },
+        {
+          "q": "Why did Rostam come with only a small escort?",
+          "options": ["His army was away at war", "Zal forbade him to take more", "Shaghad persuaded him that an army was not needed", "The king of Kabul demanded it"],
+          "answer": 2
+        },
+        {
+          "q": "What was hidden in the hunting ground?",
+          "options": ["Covered pits lined with spears and swords", "Archers in the trees", "A pride of starving lions", "Poisoned springs"],
+          "answer": 0
+        },
+        {
+          "q": "How did Rakhsh behave as they neared the trap?",
+          "options": ["He galloped ahead eagerly", "He smelled the fresh earth and refused to go on", "He threw Rostam from the saddle", "He ran back to Zabolestan"],
+          "answer": 1
+        },
+        {
+          "q": "What favour did the dying Rostam ask of Shaghad?",
+          "options": ["To carry a message to Zal", "To spare Rakhsh", "To bring him water", "To string his bow and leave it with two arrows"],
+          "answer": 3
+        },
+        {
+          "q": "How did Shaghad die?",
+          "options": ["Faramarz executed him", "Rostam's arrow passed through the tree he hid behind and killed him", "He fell into one of his own pits", "The king of Kabul betrayed him"],
+          "answer": 1
+        },
+        {
+          "q": "Who avenged Rostam on the king of Kabul?",
+          "options": ["Zal", "Bahman", "Faramarz, Rostam's son", "Zavareh"],
+          "answer": 2
+        }
+      ],
+      "sources": [
+        "Ferdowsi, Shahnameh, reign of Goshtasp: the tale of Rostam and Shaghad (the death of Rostam)",
+        "Dick Davis, Shahnameh: The Persian Book of Kings (Penguin Classics); Warner and Warner, The Shahnama of Firdausi, vol. 5"
+      ]
+    }
+  ]
+}

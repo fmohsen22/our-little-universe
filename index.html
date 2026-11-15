@@ -1,8 +1,5 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#17122B"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Universe"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="apple-touch-icon.png"><style>[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style></head><body><title>Our Little Universe</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,600&display=swap">
-<style>
-/* Layout: a single phone-width column under a night sky. Home is a grid of six game tiles; each game is one card-led screen. */
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Where is Prince Mohsey?</title><meta name="description" content="Play Esm Famil with friends, earn crowns from the Shahnameh and unlock the life of Rostam."><meta name="theme-color" content="#17122B"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Prince Mohsey"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,600&display=swap"><style>[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* Layout: a single phone-width column under a night sky. Home is your standing plus the way to a table; a table is one screen per phase. */
 :root {
   color-scheme: dark;
   --bg: #17122B; --bg-2: #211A3C; --surface: #272046; --surface-2: #322A57; --line: #463C73;
@@ -240,17 +237,60 @@ div.option { cursor: default; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); max-width: calc(100% - 32px); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-weight: 600; font-size: .92rem; z-index: 20; text-align: center; }
 #fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
-</style>
+
+/* ---------- Where is Prince Mohsey? ---------- */
+.who { text-decoration: none; display: inline-flex; align-items: center; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+h1 { font-size: clamp(1.6rem, 6vw, 2.1rem); }
+.card h2 { font-size: 1.3rem; }
+.me-name { font-size: 1.4rem; overflow-wrap: anywhere; }
+.me-card { border-color: var(--gold); }
+.code { font: 700 2.4rem var(--display); letter-spacing: .3em; text-align: center; color: var(--gold); }
+.people { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.people li { display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px 3px 4px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-weight: 600; font-size: .9rem; }
+.people li.off { opacity: .5; }
+.people small { font-weight: 500; color: var(--soft); }
+.tables { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.tables li { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--surface-2); border-radius: 14px; padding: 10px 12px; }
+.tables li span { min-width: 0; overflow-wrap: anywhere; }
+.tables small, .who-cell small, .chapter small { display: block; font-size: .8rem; font-weight: 400; color: var(--soft); }
+.scroll { overflow-x: auto; }
+.leaders td:first-child { color: var(--soft); text-align: left; width: 2rem; }
+.leaders th { text-align: left; }
+.who-cell { display: flex; gap: 8px; align-items: center; min-width: 9rem; }
+.board tr.you th, .board tr.you td { background: var(--surface-2); }
+.ans i { font-style: normal; }
+.ans.bad span { color: var(--soft); }
+.ans.bad i { text-decoration: line-through; text-decoration-thickness: 1px; }
+.ans .rej { min-height: 36px; padding: 2px 12px; font-size: .82rem; }
+.ans .rej[aria-pressed="true"] { background: var(--rose); }
+.ans b.pts { display: grid; place-items: center; cursor: default; }
+.chapters { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.chapter { display: flex; gap: 12px; padding: 14px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface); }
+.chapter > div { min-width: 0; display: flex; flex-direction: column; gap: 6px; flex: 1; align-items: flex-start; }
+.chapter .bar { width: 100%; }
+.ch-n { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font: 600 1.1rem var(--display); background: var(--surface-2); }
+.chapter.passed .ch-n { background: var(--mint); color: var(--on-accent); }
+.chapter.open { border-color: var(--gold); box-shadow: 0 0 22px -8px var(--gold); }
+.chapter.open .ch-n, .chapter.current .ch-n { background: var(--gold); color: var(--on-accent); }
+.chapter.locked { opacity: .6; }
+.chapter.final { border-style: dashed; }
+.story { gap: 16px; }
+.story p { max-width: 65ch; line-height: 1.65; }
+.story video { width: 100%; border-radius: 14px; }
+.q { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.q legend { font-weight: 700; padding: 0 0 6px; }
+.q label { display: flex; gap: 10px; align-items: flex-start; font-weight: 500; background: var(--surface-2); border-radius: 12px; padding: 12px; }
+.q input { width: 20px; height: 20px; flex: none; margin-top: 2px; accent-color: var(--gold); }
+</style></head><body>
 <div class="wrap">
   <header class="top">
-    <a class="mark" href="#home"><span class="mark-star" aria-hidden="true">✦</span> Our Little Universe</a>
+    <a class="mark" href="#home"><span class="mark-star" aria-hidden="true">✦</span> Where is Prince Mohsey?</a>
     <div class="top-right">
-      <a class="crown-link" href="#hall" aria-label="The Royal Hall">👑</a>
       <span id="sync" class="sync"></span>
-      <button id="who" class="who" type="button"></button>
+      <a id="who" class="who" href="#me" hidden></a>
     </div>
   </header>
-  <main id="app"></main>
+  <main id="app" class="stack"></main>
 </div>
 <div id="toast" class="toast" role="status" hidden></div>
 <div id="ceremony" class="ceremony" hidden></div>
@@ -265,919 +305,11 @@ div.option { cursor: default; }
 <canvas id="fx" aria-hidden="true"></canvas>
 <script src="config.js"></script>
 <script>
-/* All the words in the games. Edit freely: add questions, missions, countries, drawing words. */
-window.OLU_CONTENT = {
-  cats: { funny: 'Funny', imagination: 'What If', flirty: 'Flirty', adventure: 'Adventure', childhood: 'Childhood' },
-  questions: {
-    funny: [
-      'What is the most ridiculous thing you have ever cried about?',
-      'If you had a theme song that played every time you entered a room, what would it be?',
-      'Which of my habits would make a great sitcom running joke?',
-      'What is the worst gift you have ever pretended to love?',
-      'If animals could talk, which one would be the rudest?',
-      'What is a hill you will die on that nobody else cares about?',
-      'What was your most embarrassing fashion phase?',
-      'Which kitchen appliance best matches your personality, and why?',
-      'What is the strangest thing you believed for far too long?',
-      'If we swapped bodies for a day, what is the first thing you would do?',
-      'What would your villain name be, and what is your very petty evil plan?',
-      'What is the funniest thing you have seen a stranger do?',
-      'Which word do you always spell or say wrong?',
-      'What is your most useless talent?',
-      'If our relationship were a film, what would the terrible sequel be called?',
-      'What snack would you defend in a court of law?',
-      'What is the weirdest dream you still remember?',
-      'What is something you are confidently bad at?',
-      'Which emoji do you overuse, and what does it really mean when you send it?',
-      'What would be the title of a documentary about your morning routine?'
-    ],
-    imagination: [
-      'What if we woke up tomorrow and could speak every language? Where do we go first?',
-      'What if we had to open a shop together? What do we sell?',
-      'What if you could add one room to our home with no limits? What is in it?',
-      'What if we were both famous for something silly? What would it be?',
-      'What if you could send one message to yourself ten years ago?',
-      'What if we lived in any century for a week? Which one, and what are our jobs?',
-      'What if gravity switched off for an hour a day? How would we spend the hour?',
-      'What if you could have dinner with any three people, living or not?',
-      'What if we started a band? What is it called and who plays what?',
-      'What if you had a free year and unlimited money, but had to learn something?',
-      'What if we could keep one mythical creature as a pet?',
-      'What if we had to move to a city we have never visited? Which one do you pick?',
-      'What if every Sunday were exactly the same day forever? Design it.',
-      'What if you could be brilliant at one thing overnight?',
-      'What if we wrote a book together? What is it about?',
-      'What if our home had a secret passage? Where does it lead?',
-      'What if you could relive one ordinary day of your life?',
-      'What if we ran a tiny hotel? What is the one rule guests must follow?',
-      'What if you could ask the future one question and get a true answer?',
-      'What if we invented a holiday? What do people do on it?'
-    ],
-    flirty: [
-      'What did you notice about me first?',
-      'When did you first think this could be something real?',
-      'What is a small thing I do that you secretly love?',
-      'What would be your idea of a perfect evening with me?',
-      'Which photo of us is your favourite, and why?',
-      'What song makes you think of me?',
-      'What is something you would like us to try together this year?',
-      'When do you find me most attractive?',
-      'What is your favourite memory of us so far?',
-      'What outfit of mine do you like best?',
-      'What is one thing I do that always makes you smile?',
-      'If you had to describe me to a stranger in three words, which would you choose?',
-      'What was going through your head on our first date?',
-      'Where would you like to kiss me that we have never been? As in a place on the map.',
-      'What is a compliment you have been meaning to give me?',
-      'What is the most romantic thing someone could do for you?',
-      'What do you miss about me when we are apart?',
-      'Which little ritual of ours do you want to keep forever?',
-      'What is a surprise you would love to get from me?',
-      'What is something about us that still gives you butterflies?'
-    ],
-    adventure: [
-      'Which trip would you book tonight if we could leave tomorrow?',
-      'What is the bravest thing you have ever done?',
-      'Mountains, sea, desert or city? Plan us three days there.',
-      'What is on your list that you have never told anyone about?',
-      'What food would you travel a whole day for?',
-      'What is the most lost you have ever been?',
-      'Which skill would you like us to learn together?',
-      'Would you rather sleep under the stars or in a castle? Tell me about the night.',
-      'What is the best meal you have ever had while travelling?',
-      'What small adventure could we have within an hour of home?',
-      'What is a place from a book or film you wish you could visit?',
-      'What is something you were scared to try and ended up loving?',
-      'If we took a road trip with no plan, who drives and who picks the music?',
-      'What festival or event in the world would you love to see once?',
-      'What is your best story about a journey going wrong?',
-      'Which country’s breakfast would you like to wake up to?',
-      'What would we do with a completely free weekend and a tent?',
-      'What is a tradition from another culture you would like to experience?',
-      'Would you try a year of living abroad? Where?',
-      'What is the next thing you want to do for the very first time?'
-    ],
-    childhood: [
-      'What game did you play most as a child?',
-      'What was your favourite hiding place?',
-      'Which smell takes you straight back to being small?',
-      'What did you want to be when you grew up?',
-      'What was the first thing you remember being really proud of?',
-      'Who was your childhood best friend, and what did you do together?',
-      'What food did someone in your family make that nobody else gets right?',
-      'What were you afraid of that seems funny now?',
-      'What was your favourite cartoon or bedtime story?',
-      'What is the naughtiest thing you got away with?',
-      'What did your room look like when you were ten?',
-      'Which family tradition did you love most?',
-      'What was the best birthday you had as a child?',
-      'What did you collect?',
-      'What is a saying from your parents or grandparents you still hear in your head?',
-      'What was school lunch like for you?',
-      'What was the first film you saw in a cinema?',
-      'Which teacher do you still remember, and why?',
-      'What did summer holidays look like in your family?',
-      'What would the eight-year-old you think of your life now?'
-    ]
-  },
-  life: {
-    countries: ['Iceland', 'Japan', 'Portugal', 'New Zealand', 'Morocco', 'Norway', 'Peru', 'Italy', 'Iran', 'Canada', 'Greece', 'Vietnam', 'Scotland', 'Argentina', 'Kenya', 'Switzerland', 'Mexico', 'Georgia', 'Sri Lanka', 'Finland'],
-    jobs: ['a detective', 'a pastry chef', 'a lighthouse keeper', 'a jazz pianist', 'a beekeeper', 'a puppet maker', 'a marine biologist', 'a perfume inventor', 'a night-train conductor', 'a cheese judge', 'a cloud photographer', 'a retired stunt double', 'a florist to the royal family', 'a radio host', 'a mapmaker', 'a hot-air balloon pilot', 'a ghostwriter for a famous cat', 'a chocolate taster', 'a museum guard', 'a goat herder', 'a wedding DJ', 'an inventor of board games'],
-    homes: ['a houseboat', 'a converted windmill', 'a flat above a bakery', 'a treehouse with a slide', 'a tiny castle', 'a cabin beside a hot spring', 'an old train carriage', 'a lighthouse', 'a house with a round door', 'a rooftop greenhouse', 'a cottage with far too many clocks', 'a tower with a library staircase'],
-    pets: ['eight chickens', 'a penguin called Mr Biscuit', 'a very judgemental cat', 'two rescue donkeys', 'a parrot who only speaks in questions', 'a sleepy capybara', 'a goat who opens doors', 'three ducks in a line', 'a tortoise older than both of you', 'an owl who visits at teatime', 'a dog who is afraid of bread', 'a hedgehog with a tiny bed'],
-    events: ['your neighbour is secretly a spy', 'a film crew wants to shoot in your kitchen', 'you find a map behind the wallpaper', 'the village elects you both as mayor by mistake', 'a famous chef keeps stealing your recipes', 'a letter arrives addressed to the house, dated 1924', 'your pet wins a national competition', 'a storm leaves a small boat in your garden', 'someone leaves fresh flowers on the doorstep every Tuesday', 'you inherit a failing ice-cream van', 'a rival couple opens the same business next door', 'the town clock starts running backwards'],
-    twists: ['One of you has just become president, but the pet is secretly running the government.', 'A long-lost twin arrives with a suitcase and a very good alibi.', 'You win the lottery, but the prize is paid entirely in lemons.', 'The house turns out to be famous, and tourists start queuing outside.', 'One of you loses your memory for a day and believes you are a pirate.', 'A snowstorm traps the whole village in your living room.', 'Your secret recipe is leaked to the newspapers.', 'A mysterious buyer offers a fortune for the pet.', 'You discover a second floor nobody ever mentioned.', 'A talent scout hears one of you singing in the shower.', 'The spy next door asks for a small favour.', 'Everything you plant in the garden grows overnight to the size of a car.', 'You both swap jobs for a week and it goes suspiciously well.', 'A marching band gets lost and adopts your street.', 'The mayor challenges you to a duel. A baking duel.']
-  },
-  missions: {
-    coop: [
-      'Find something that reminds you of your partner, but do not explain why until the end of the walk.',
-      'Take a photo together where both of you are in the air.',
-      'Find the best-looking door on the street and decide who lives behind it.',
-      'Order something neither of you has ever tried, and share it.',
-      'Invent a secret handshake with at least four moves before you get home.',
-      'Find three things in three different colours and build a tiny still life.',
-      'Walk for five minutes with one person choosing every turn, then swap.',
-      'Give a stranger’s dog a full name, a job and a life story.',
-      'Find a bench and watch the world for five minutes. Narrate one passer-by each.',
-      'Recreate a photo from early in your relationship as closely as you can.',
-      'Pick a street you have never walked down and walk to the end of it.',
-      'Agree on a new nickname for this neighbourhood.',
-      'Find something free to give each other on the way.',
-      'Hum a song together until one of you remembers its name.',
-      'Leave a kind note somewhere for a stranger to find.'
-    ],
-    versus: [
-      'First to spot a yellow car, a cat and a person in a hat wins.',
-      'Each guess how many steps it is to the next corner. Closest wins.',
-      'Find the funniest shop name within ten minutes. The other one judges honestly.',
-      'Take the best photo of the same object. Swap phones to compare.',
-      'Each pick a snack for the other for under three euros. Best choice wins.',
-      'Stone skipping, or the nearest equivalent. Most bounces wins.',
-      'Describe the last film you watched as badly as possible. First to guess wins.',
-      'Who can find the oldest date written on a building?',
-      'Draw each other in thirty seconds. The subject scores the portrait out of ten.',
-      'First one to make the other laugh without touching them wins.',
-      'Each name five capital cities starting with the same letter. Fastest wins.',
-      'Balance on one leg, eyes closed. Longest wins.',
-      'Guess the time without looking at a phone. Closest wins.',
-      'Each pick a leaf. Biggest leaf wins. No trees may be harmed.',
-      'Who can spot the most dogs before you reach your destination?'
-    ]
-  },
-  dares: ['Loser makes the tea.', 'Winner picks the next film.', 'Play it in silly voices.', 'Play one round only, then go for a walk.', 'Whoever laughs first owes a compliment.', 'Loser tells a story from before you met.', 'Winner chooses dessert.', 'Play it standing up.'],
-  drawWords: ['a penguin on holiday', 'pizza', 'lighthouse', 'our first date', 'bicycle', 'a cat in a box', 'rain', 'hot-air balloon', 'sushi', 'a dancing cactus', 'moon', 'umbrella', 'a snail in a hurry', 'tent', 'volcano', 'breakfast in bed', 'giraffe', 'guitar', 'a spy', 'ice cream', 'train', 'a sleepy bear', 'pomegranate', 'kite', 'mermaid', 'traffic jam', 'a haunted house', 'teapot', 'snowman', 'octopus', 'a queen', 'rollercoaster', 'camel', 'wedding cake', 'robot', 'a goat on a roof', 'sunflower', 'pirate', 'whale', 'chess'],
-  esmCats: [
-    { id: 'name', en: 'Name', fa: 'اسم' }, { id: 'surname', en: 'Surname', fa: 'فامیل' }, { id: 'city', en: 'City', fa: 'شهر' },
-    { id: 'country', en: 'Country', fa: 'کشور' }, { id: 'animal', en: 'Animal', fa: 'حیوان' }, { id: 'food', en: 'Food', fa: 'غذا' },
-    { id: 'thing', en: 'Object', fa: 'اشیا' }, { id: 'color', en: 'Colour', fa: 'رنگ' }
-  ],
-  letters: { en: 'ABCDEFGHIJKLMNOPRSTUVW'.split(''), fa: 'ا ب پ ت ج چ خ د ر ز س ش ع ف ق ک گ ل م ن و ه ی'.split(' ') }
-};
-
-/* Two-phone play. Active only when config.js names your own room server (serverUrl) or a Supabase project.
-   Each couple plays in a room named by a long random code carried in the invite link (?room=...).
-   With your own server (server/server.js) moves are posted to it and pushed to the other phone over
-   Server-Sent Events. With Supabase they travel over a Realtime broadcast channel and are saved
-   through three database functions (supabase/schema.sql). The object returned looks like the store app.js expects:
-   doc(path) with set, update and onSnapshot. */
+/* Original badge illustrations: one medallion frame and one glyph per badge, drawn as inline SVG.
+   window.WPM_ART(name, metal, size, label, locked) returns the SVG markup. */
 (function () {
   'use strict';
-  var cfg = window.OLU_CONFIG || {};
-  var useServer = !!cfg.serverUrl, useSupabase = !!(cfg.supabaseUrl && cfg.supabaseAnonKey);
-  if (!useServer && !useSupabase) return;
-  function lsGet(k) { try { var v = window.localStorage.getItem('olu:' + k); return v == null ? null : JSON.parse(v); } catch (e) { return null; } }
-  function lsSet(k, v) { try { window.localStorage.setItem('olu:' + k, JSON.stringify(v)); } catch (e) { /* fine */ } }
-  function code(n) { var a = new Uint8Array(n), s = '', abc = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; window.crypto.getRandomValues(a); for (var i = 0; i < n; i++) s += abc[a[i] % abc.length]; return s; }
-  function merge(t, p) { Object.keys(p || {}).forEach(function (k) { var v = p[k]; if (v && typeof v === 'object' && !Array.isArray(v)) { if (!t[k] || typeof t[k] !== 'object' || Array.isArray(t[k])) t[k] = {}; merge(t[k], v); } else t[k] = v; }); return t; }
-
-  var ok = /^[A-Za-z0-9_-]{12,64}$/, fromLink = new URLSearchParams(window.location.search).get('room');
-  var invited = !!fromLink && ok.test(fromLink) && fromLink !== lsGet('room');
-  var room = (fromLink && ok.test(fromLink)) ? fromLink : (lsGet('room') || code(20));
-  if (invited && lsGet('me') === null) lsSet('me', 1);   // the person who receives the link is player two
-  lsSet('room', room);
-  try { window.history.replaceState(null, '', window.location.pathname + '?room=' + room + window.location.hash); } catch (e) { /* keep the address as is */ }
-  window.OLU_ROOM = { id: room, link: window.location.origin + window.location.pathname + '?room=' + room };
-
-  function loadScript(src) { return new Promise(function (res, rej) { if (window.supabase && window.supabase.createClient) return res(); var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
-
-  // Your own server: plain fetch plus an EventSource that reconnects by itself.
-  function serverBackend(opts) {
-    var base = String(cfg.serverUrl).replace(/\/+$/, '') + '/rooms/' + room, me = code(8);
-    var cache = {}, subs = {}, fails = [], loaded = false;
-    var snap = function (name) { var d = cache[name]; return { exists: d !== undefined, data: function () { return d; }, metadata: {} }; };
-    var emit = function (name) { (subs[name] || []).forEach(function (f) { f(snap(name)); }); };
-    var fail = function (e) { fails.forEach(function (f) { if (f) f(e); }); };
-    function load() {
-      return fetch(base, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('server ' + r.status); return r.json(); })
-        .then(function (j) { cache = j.docs || {}; loaded = true; Object.keys(subs).forEach(emit); });
-    }
-    function post(name, kind, body) {
-      return fetch(base + '/' + name, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: kind, body: body, from: me }) })
-        .then(function (r) { if (!r.ok) throw new Error('server ' + r.status); });
-    }
-    var es = new EventSource(base + '/events');
-    es.onopen = function () { load().catch(fail); };          // also runs after every reconnect, so nothing is missed
-    es.onerror = function () { if (!loaded) fail(new Error('unreachable')); };
-    es.addEventListener('op', function (e) {
-      var p; try { p = JSON.parse(e.data); } catch (x) { return; }
-      if (!p || !p.name || p.from === me) return;
-      cache[p.name] = p.kind === 'set' ? p.body : merge(cache[p.name] || {}, p.body); emit(p.name);
-    });
-    es.addEventListener('peers', function (e) { if (opts && opts.onPeers) opts.onPeers(+e.data || 0); });
-    return Promise.resolve({
-      doc: function (path) {
-        var name = path.split('/').pop();
-        return {
-          set: function (body) { cache[name] = body; return post(name, 'set', body); },
-          update: function (body) { cache[name] = merge(cache[name] || {}, JSON.parse(JSON.stringify(body))); return post(name, 'patch', body); },
-          onSnapshot: function (next, err) { (subs[name] = subs[name] || []).push(next); fails.push(err); if (loaded) next(snap(name)); return function () {}; }
-        };
-      }
-    });
-  }
-
-  window.OLU_BACKEND = function (opts) {
-    if (useServer) return serverBackend(opts);
-    return loadScript('vendor/supabase.js').then(function () {
-      var sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, { auth: { persistSession: false, autoRefreshToken: false } });
-      var cache = {}, subs = {}, fails = [], loaded = false, me = code(8);
-      var snap = function (name) { var d = cache[name]; return { exists: d !== undefined, data: function () { return d; }, metadata: {} }; };
-      var emit = function (name) { (subs[name] || []).forEach(function (f) { f(snap(name)); }); };
-      var fail = function (e) { fails.forEach(function (f) { if (f) f(e); }); };
-      var check = function (r) { if (r && r.error) throw r.error; };
-      var ch = sb.channel('olu-' + room, { config: { broadcast: { self: false }, presence: { key: me } } });
-      function load() {
-        return sb.rpc('olu_load', { p_room: room }).then(function (r) {
-          check(r); (r.data || []).forEach(function (d) { cache[d.name] = d.data; });
-          loaded = true; Object.keys(subs).forEach(emit);
-        });
-      }
-      ch.on('broadcast', { event: 'op' }, function (m) {
-        var p = m && m.payload; if (!p || !p.name) return;
-        cache[p.name] = p.kind === 'set' ? p.body : merge(cache[p.name] || {}, p.body); emit(p.name);
-      });
-      ch.on('presence', { event: 'sync' }, function () { if (opts && opts.onPeers) opts.onPeers(Object.keys(ch.presenceState()).length); });
-      ch.subscribe(function (status) { if (status === 'SUBSCRIBED') { ch.track({ at: Date.now() }); load().catch(fail); } });
-      document.addEventListener('visibilitychange', function () { if (!document.hidden && loaded) load().catch(function () { /* keep what we have */ }); });
-      var send = function (name, kind, body) { try { ch.send({ type: 'broadcast', event: 'op', payload: { name: name, kind: kind, body: body } }); } catch (e) { /* saved below anyway */ } };
-      return {
-        doc: function (path) {
-          var name = path.split('/').pop();
-          return {
-            set: function (body) { cache[name] = body; send(name, 'set', body); return sb.rpc('olu_save', { p_room: room, p_name: name, p_data: body }).then(check); },
-            update: function (body) { cache[name] = merge(cache[name] || {}, JSON.parse(JSON.stringify(body))); send(name, 'patch', body); return sb.rpc('olu_patch', { p_room: room, p_name: name, p_part: body }).then(check); },
-            onSnapshot: function (next, err) { (subs[name] = subs[name] || []).push(next); fails.push(err); if (loaded) next(snap(name)); return function () {}; }
-          };
-        }
-      };
-    }).catch(function () { return null; });
-  };
-})();
-
-/* The Crowns of Shahnameh: achievement engine.
-   Pure and deterministic. It turns the room's log of completed game events into ranks, achievements,
-   statistics and history. Nothing here is stored as a total: every number is recomputed from the
-   events, so a refreshed page, a reconnect or a replayed message can never count a win twice.
-   Runs in the browser (window.OLU_ROYAL) and in Node (the room server and the tests). */
-(function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(); else root.OLU_ROYAL = factory();
-})(typeof self !== 'undefined' ? self : this, function () {
-  'use strict';
-
-  var GAMES = ['questions', 'life', 'truths', 'missions', 'draw', 'esm'];
-  // Only these have a defined winner. Question Cards, Imaginary Life, Draw & Guess and shared missions are cooperative.
-  var COMPETITIVE = ['truths', 'missions', 'esm'];
-  var COMEBACK_GAP = 20;   // Esm Famil: points behind in the running series before the round that turns it
-
-  /* ----- configuration: ranks ----- */
-  var RANKS = [
-    { id: 'hero', wins: 1, title: 'Young Hero', badge: 'Bronze Shield', art: 'shield', metal: 'bronze', story: 'rostam', cheer: 'Every legend starts with one small, slightly lucky victory.' },
-    { id: 'zabol', wins: 3, title: 'Guardian of Zabol', badge: 'Bronze Lion', art: 'lion', metal: 'bronze', story: 'sistan', cheer: 'The gates of Zabol are safe. The biscuits are not.' },
-    { id: 'sistan', wins: 7, title: '{royal} of Sistan', badge: 'Silver Crown', art: 'crown', metal: 'silver', story: 'sistan', cheer: 'Sistan bows. Please try to look modest.' },
-    { id: 'champion', wins: 15, title: 'Champion of Rostam', badge: 'Golden Mace', art: 'mace', metal: 'gold', story: 'rostam', cheer: 'Rakhsh is saddled. Your rival is nervous.' },
-    { id: 'heir', wins: 25, title: 'Royal Heir', badge: 'Ruby Crown', art: 'rubycrown', metal: 'ruby', story: 'khosrow', cheer: 'The throne is being dusted for you.' },
-    { id: 'crown', wins: 40, title: 'Crown of {kingdom}', badge: 'Royal Crown', art: 'royalcrown', metal: 'gold', story: 'irantu', cheer: 'A whole kingdom now does what you say. In theory.' },
-    { id: 'simurgh', wins: 60, title: 'Chosen of the Simurgh', badge: 'Legendary Feather', art: 'feather', metal: 'emerald', story: 'simurgh', legendary: true, cheer: 'A feather drifts down from Mount Alborz with your name on it.' },
-    { id: 'shahanshah', wins: 100, title: 'Shahanshah of Legends', badge: 'Imperial Crown', art: 'imperial', metal: 'gold', story: 'khosrow', legendary: true, cheer: 'One hundred victories. Poets are sharpening their pens.' }
-  ];
-
-  /* ----- configuration: achievements. value(state, player) is the progress, goal the target. ----- */
-  var ACHIEVEMENTS = [
-    { id: 'rostam', scope: 'individual', name: 'Unstoppable Rostam', icon: '🔥', art: 'flame', metal: 'gold', legendary: true, story: 'rostam', goal: 5,
-      desc: 'Win five competitive games in a row.', value: function (s, p) { return s.players[p].best; } },
-    { id: 'simurgh', scope: 'individual', name: 'Blessing of the Simurgh', icon: '🪽', art: 'feather', metal: 'emerald', legendary: true, story: 'simurgh', goal: 1,
-      desc: 'Win an Esm Famil round that brings you back from ' + COMEBACK_GAP + ' or more points behind in the series to level or ahead.', value: function (s, p) { return s.players[p].comebacks; } },
-    { id: 'artist', scope: 'individual', name: 'Royal Artist', icon: '🎨', art: 'palette', metal: 'sapphire', story: 'miniature', goal: 20,
-      desc: 'Have 20 of your drawings guessed in Draw & Guess.', value: function (s, p) { return s.players[p].drawn; } },
-    { id: 'words', scope: 'individual', name: 'Master of Words', icon: '🧠', art: 'book', metal: 'silver', story: 'ferdowsi', goal: 15,
-      desc: 'Win 15 rounds of Esm Famil.', value: function (s, p) { return s.players[p].esmWins; } },
-    { id: 'trickster', scope: 'individual', name: 'The Great Trickster', icon: '🎭', art: 'mask', metal: 'ruby', story: 'afrasiab', goal: 10,
-      desc: 'Fool your partner ten times in Two Truths & One Lie.', value: function (s, p) { return s.players[p].fooled; } },
-    { id: 'zal', scope: 'shared', name: 'Zal & Rudabeh', icon: '💞', art: 'hearts', metal: 'ruby', legendary: true, story: 'zal', goal: 20,
-      desc: 'Complete 20 cooperative activities together: shared missions, finished adventures and guessed drawings.', value: function (s) { return s.shared.coop; } },
-    { id: 'sevenlands', scope: 'shared', name: 'Rulers of Seven Lands', icon: '🗺️', art: 'globe', metal: 'emerald', story: 'irantu', goal: 7,
-      desc: 'Finish imaginary-life adventures in seven different countries.', value: function (s) { return s.shared.countries.length; } },
-    { id: 'rivalry', scope: 'shared', name: 'The Great Rivalry', icon: '⚔️', art: 'swords', metal: 'silver', story: 'irantu', goal: 50,
-      desc: 'Complete 50 competitive matches against each other.', value: function (s) { return s.shared.matches; } },
-    { id: 'universe', scope: 'shared', name: 'Our Little Universe', icon: '❤️', art: 'planet', metal: 'gold', legendary: true, story: null, goal: 100,
-      desc: 'Complete 100 shared activities across the website.', value: function (s) { return s.shared.activities; } },
-    { id: 'cup', scope: 'shared', hidden: true, name: 'The Cup of Kay Khosrow', icon: '🏆', art: 'cup', metal: 'gold', legendary: true, story: 'khosrow', goal: 6,
-      desc: 'See the whole world: complete at least one activity in all six games.', value: function (s) { return Object.keys(s.shared.played).length; } }
-  ];
-
-  /* ----- events ----- */
-  var TYPES = { match: 1, coop: 1, adventure: 1, draw: 1, question: 1 };
-  var isP = function (v) { return v === 0 || v === 1; };
-  // The only shapes the engine accepts. Anything else is ignored, here and on the server.
-  function validEvent(id, e) {
-    if (typeof id !== 'string' || !/^[a-z0-9:_-]{3,80}$/i.test(id) || !e || typeof e !== 'object') return false;
-    if (!TYPES[e.t] || typeof e.at !== 'number' || !isFinite(e.at) || e.at <= 0) return false;
-    if (e.t === 'match') {
-      if (COMPETITIVE.indexOf(e.g) < 0 || !(isP(e.w) || e.w === -1)) return false;
-      if (e.g === 'esm' && !(Array.isArray(e.sums) && e.sums.length === 2 && e.sums.every(function (n) { return typeof n === 'number' && n >= 0 && n <= 1000; }))) return false;
-      if (e.g === 'esm' && (e.w === -1) !== (e.sums[0] === e.sums[1])) return false;
-      if (e.g === 'esm' && e.w !== -1 && e.sums[e.w] < e.sums[1 - e.w]) return false;
-      if (e.g === 'truths' && !(isP(e.author) && isP(e.w))) return false;
-      if (e.g === 'missions' && !isP(e.w)) return false;
-      return true;
-    }
-    if (e.t === 'coop') return e.g === 'missions';
-    if (e.t === 'adventure') return e.g === 'life' && typeof e.country === 'string' && e.country.length > 0 && e.country.length <= 40;
-    if (e.t === 'draw') return e.g === 'draw' && isP(e.drawer);
-    return e.g === 'questions';
-  }
-
-  function blankPlayer() { return { wins: 0, losses: 0, ties: 0, streak: 0, best: 0, fooled: 0, drawn: 0, esmWins: 0, comebacks: 0, ranks: {}, ach: {} }; }
-
-  /* Fold the event log into the full royal state. `byId` is the stored map of event id -> event. */
-  function compute(byId) {
-    var s = {
-      players: [blankPlayer(), blankPlayer()],
-      shared: { activities: 0, coop: 0, matches: 0, countries: [], played: {}, ach: {} },
-      h2h: { wins: [0, 0], ties: 0, byGame: {} }, esm: [0, 0],
-      unlocks: [], history: [], count: 0
-    };
-    COMPETITIVE.forEach(function (g) { s.h2h.byGame[g] = { wins: [0, 0], ties: 0 }; });
-    var ids = Object.keys(byId || {}).filter(function (id) { return validEvent(id, byId[id]); });
-    ids.sort(function (a, b) { return byId[a].at - byId[b].at || (a < b ? -1 : a > b ? 1 : 0); });
-
-    ids.forEach(function (id) {
-      var e = byId[id];
-      s.count += 1; s.shared.activities += 1; s.shared.played[e.g] = true;
-      var entry = { id: id, at: e.at, t: e.t, g: e.g };
-      if (e.t === 'match') {
-        s.shared.matches += 1; var hg = s.h2h.byGame[e.g];
-        entry.w = e.w; if (e.sums) entry.sums = e.sums;
-        if (e.w === -1) { s.players[0].ties += 1; s.players[1].ties += 1; s.h2h.ties += 1; hg.ties += 1; }
-        else {
-          var W = s.players[e.w], L = s.players[1 - e.w];
-          W.wins += 1; W.streak += 1; if (W.streak > W.best) W.best = W.streak;
-          L.losses += 1; L.streak = 0; s.h2h.wins[e.w] += 1; hg.wins[e.w] += 1;
-          if (e.g === 'truths' && e.w === e.author) { W.fooled += 1; entry.fooled = true; }
-          if (e.g === 'esm') W.esmWins += 1;
-        }
-        if (e.g === 'esm') {
-          var before = e.w === -1 ? 0 : s.esm[e.w] - s.esm[1 - e.w];
-          s.esm = [s.esm[0] + e.sums[0], s.esm[1] + e.sums[1]];
-          if (e.w !== -1 && before <= -COMEBACK_GAP && s.esm[e.w] - s.esm[1 - e.w] >= 0) { s.players[e.w].comebacks += 1; entry.comeback = true; }
-        }
-      } else if (e.t === 'coop') { s.shared.coop += 1; }
-      else if (e.t === 'adventure') { s.shared.coop += 1; entry.country = e.country; if (s.shared.countries.indexOf(e.country) < 0) s.shared.countries.push(e.country); }
-      else if (e.t === 'draw') { s.shared.coop += 1; s.players[e.drawer].drawn += 1; entry.drawer = e.drawer; }
-      s.history.push(entry);
-
-      // unlocks earned by this event keep this event's time, so they are stable and never revoked
-      [0, 1].forEach(function (p) {
-        RANKS.forEach(function (r) { if (!s.players[p].ranks[r.id] && s.players[p].wins >= r.wins) { s.players[p].ranks[r.id] = e.at; unlock('rank', r.id, p, e.at, id); } });
-        ACHIEVEMENTS.forEach(function (a) { if (a.scope === 'individual' && !s.players[p].ach[a.id] && a.value(s, p) >= a.goal) { s.players[p].ach[a.id] = e.at; unlock('ach', a.id, p, e.at, id); } });
-      });
-      ACHIEVEMENTS.forEach(function (a) { if (a.scope === 'shared' && !s.shared.ach[a.id] && a.value(s, 0) >= a.goal) { s.shared.ach[a.id] = e.at; unlock('ach', a.id, -1, e.at, id); } });
-    });
-    function unlock(kind, id, p, at, ev) { var u = { key: kind + ':' + id + ':' + p, kind: kind, id: id, p: p, at: at, ev: ev }; s.unlocks.push(u); s.history.push({ id: u.key, at: at, t: 'unlock', u: u }); }
-
-    s.leader = s.h2h.wins[0] === s.h2h.wins[1] ? -1 : (s.h2h.wins[0] > s.h2h.wins[1] ? 0 : 1);   // the temporary Crown Holder
-    return s;
-  }
-
-  function rankOf(player) { var cur = null; RANKS.forEach(function (r) { if (player.ranks[r.id]) cur = r; }); return cur; }
-  function nextRank(player) { for (var i = 0; i < RANKS.length; i++) if (!player.ranks[RANKS[i].id]) return RANKS[i]; return null; }
-  // profile: { royal: 'Prince' | 'Princess' | 'Champion', kingdom: 'iran' | 'turan' }
-  function rankTitle(rank, profile) {
-    return rank.title.replace('{royal}', (profile && profile.royal) || 'Champion').replace('{kingdom}', profile && profile.kingdom === 'turan' ? 'Turan' : 'Iran');
-  }
-  function find(list, id) { for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]; return null; }
-
-  return {
-    GAMES: GAMES, COMPETITIVE: COMPETITIVE, COMEBACK_GAP: COMEBACK_GAP, RANKS: RANKS, ACHIEVEMENTS: ACHIEVEMENTS,
-    validEvent: validEvent, compute: compute, rankOf: rankOf, nextRank: nextRank, rankTitle: rankTitle,
-    rank: function (id) { return find(RANKS, id); }, achievement: function (id) { return find(ACHIEVEMENTS, id); }
-  };
-});
-
-/* Our Little Universe: shared state store, router and six games.
-   State lives in eight small documents. With a shared store (the Artifact `db` capability) both
-   devices see the same documents live; without one, everything runs on this device from localStorage. */
-(function () {
-  'use strict';
-  var C = window.OLU_CONTENT;
-  var $ = function (s, r) { return (r || document).querySelector(s); };
-  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
-  var clone = function (o) { return JSON.parse(JSON.stringify(o)); };
-  var rand = function (a) { return a[Math.floor(Math.random() * a.length)]; };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
-  var norm = function (s) { return String(s || '').trim().toLowerCase().replace(/^(a|an|the)\s+/, '').replace(/[^\p{L}\p{N}]+/gu, ''); };
-  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
-  function merge(t, p) {
-    Object.keys(p || {}).forEach(function (k) {
-      var v = p[k];
-      if (v && typeof v === 'object' && !Array.isArray(v)) { if (!t[k] || typeof t[k] !== 'object' || Array.isArray(t[k])) t[k] = {}; merge(t[k], v); }
-      else t[k] = v;
-    });
-    return t;
-  }
-  function lsGet(k, d) { try { var v = window.localStorage.getItem('olu:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
-  function lsSet(k, v) { try { window.localStorage.setItem('olu:' + k, JSON.stringify(v)); } catch (e) { /* fine without it */ } }
-
-  /* ---------- store ---------- */
-  var DEFAULTS = {
-    players: { names: ['Mohsey', 'Sufi'], kingdoms: ['iran', 'turan'], royals: ['Prince', 'Princess'] },
-    questions: { cat: 'all', order: [], pos: 0, turn: 0, deck: '' },
-    life: { scene: null, lines: [], aid: '', done: false },
-    truths: { phase: 'write', author: 0, items: [], lie: 0, guess: -1, score: [0, 0], rid: '' },
-    missions: { mode: 'coop', current: '', mid: '', done: 0, wins: [0, 0] },
-    draw: { phase: 'idle', drawer: 0, word: '', endsAt: 0, strokes: [], guesses: [], solved: false, score: [0, 0], rid: '' },
-    esm: { phase: 'setup', lang: 'en', cats: ['name', 'surname', 'city', 'country', 'animal', 'food'], secs: 90, letter: '', endsAt: 0, answers: { p0: {}, p1: {} }, marks: { p0: {}, p1: {} }, total: [0, 0], round: 0, last: null, rid: '' },
-    book: { items: [] },
-    events: { byId: {} },                                   // the log the Crowns of Shahnameh are computed from
-    challenge: { id: '', from: 0, game: '', rematch: false, at: 0, state: '' }
-  };
-  var S = {}, db = null, chains = {}, syncState = 'local', peers = 0;
-  Object.keys(DEFAULTS).forEach(function (k) { S[k] = merge(clone(DEFAULTS[k]), lsGet('doc:' + k, {})); });
-
-  function push(name, op) {
-    if (!db) return;
-    var ref = db.doc('universe/' + name);
-    chains[name] = (chains[name] || Promise.resolve()).then(function () { return op(ref); }).catch(function () { setSync('error'); });
-  }
-  function save(name, val, quiet) {
-    S[name] = val; lsSet('doc:' + name, val);
-    var body = clone(val); push(name, function (ref) { return ref.set(body); });
-    if (!quiet) refresh(name);
-  }
-  function patch(name, part, quiet) {
-    merge(S[name], clone(part)); lsSet('doc:' + name, S[name]);
-    var body = clone(part);
-    push(name, function (ref) { return ref.update(body).catch(function () { return ref.set(clone(S[name])); }); });
-    if (!quiet) refresh(name);
-  }
-  function setSync(s) {
-    syncState = s; var el = $('#sync'); if (!el) return;
-    el.dataset.s = s;
-    el.textContent = s === 'live' ? (peers >= 2 ? 'Synced · both online' : 'Synced') : s === 'error' ? 'Not syncing' : 'This device';
-    el.title = s === 'live' ? 'Both of you see the same game.' : s === 'error' ? 'This device could not save to the shared room, so changes stay here.' : 'Games are saved on this device only.';
-  }
-  function connect() {
-    // Supabase room first (your own site), otherwise the Artifact's shared store, otherwise this device only.
-    var first = window.OLU_BACKEND ? window.OLU_BACKEND({ onPeers: function (n) { peers = n; setSync(syncState); } }) : Promise.resolve(null);
-    first.then(function (d) { return d || (window.claude && window.claude.use ? window.claude.use('db') : null); }).then(function (d) {
-      if (!d) return;
-      db = d; var answered = false;
-      var slow = setTimeout(function () { if (!answered) setSync('error'); }, 10000);
-      Object.keys(DEFAULTS).forEach(function (name) {
-        d.doc('universe/' + name).onSnapshot(function (snap) {
-          if (!answered) { answered = true; clearTimeout(slow); setSync('live'); }
-          if (!snap.exists) return;
-          var next = merge(clone(DEFAULTS[name]), clone(snap.data()));
-          if (JSON.stringify(next) === JSON.stringify(S[name])) return;
-          S[name] = next; lsSet('doc:' + name, next); refresh(name);
-        }, function () { clearTimeout(slow); setSync('error'); });
-      });
-    }).catch(function () { /* stay local */ });
-  }
-
-  /* ---------- shell ---------- */
-  var app, me = lsGet('me', 0) === 1 ? 1 : 0, current = null, toastTimer = 0, surprise = null;
-  var N = function (i) { return S.players.names[i] || (i ? 'Player two' : 'Player one'); };
-  var other = function () { return 1 - me; };
-  var left = function (t) { return Math.max(0, Math.ceil((t - Date.now()) / 1000)); };
-
-  function toast(msg) {
-    var t = $('#toast'); t.textContent = msg; t.hidden = false;
-    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 2600);
-  }
-  function addMemory(kind, text) {
-    var items = S.book.items.concat([{ id: Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36), kind: kind, text: String(text).slice(0, 4000), at: Date.now() }]).slice(-200);
-    save('book', { items: items }); toast('Saved to the Memory Book');
-  }
-  var uid = function () { return Date.now().toString(36) + Math.floor(Math.random() * 1e9).toString(36); };
-  /* A completed activity becomes one event under a stable id (the round's own id), so recording
-     the same round again, from either phone or after a refresh, changes nothing. */
-  function record(id, ev) { if (!id || S.events.byId[id]) return; ev.at = Date.now(); var p = {}; p[id] = ev; patch('events', { byId: p }); }
-  var royalCache = null, royalKey = '';
-  function royal() { var k = JSON.stringify(S.events.byId); if (k !== royalKey || !royalCache) { royalKey = k; royalCache = window.OLU_ROYAL.compute(S.events.byId); } return royalCache; }
-  var T = function (i) { return (S.players.royals[i] && S.players.royals[i] !== 'Champion' ? S.players.royals[i] + ' ' : '') + N(i); };
-  var rematch = function (g) { return window.OLU && window.OLU.rematchRow ? window.OLU.rematchRow(g) : ''; };
-  function celebrate() {
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    var c = $('#fx'), g = c.getContext('2d'), w = c.width = window.innerWidth, h = c.height = window.innerHeight;
-    var cs = getComputedStyle(document.documentElement), cols = ['--rose', '--gold', '--mint', '--sky', '--lilac'].map(function (n) { return cs.getPropertyValue(n).trim(); });
-    var ps = [], t0 = performance.now();
-    for (var i = 0; i < 70; i++) ps.push({ x: w / 2, y: h * .45, vx: (Math.random() - .5) * 11, vy: -Math.random() * 11 - 2, r: 3 + Math.random() * 4, c: rand(cols) });
-    (function step(t) {
-      var age = (t - t0) / 1400; g.clearRect(0, 0, w, h); if (age >= 1) return;
-      ps.forEach(function (p) { p.x += p.vx; p.y += p.vy; p.vy += .32; g.globalAlpha = 1 - age; g.fillStyle = p.c; g.beginPath(); g.arc(p.x, p.y, p.r, 0, 7); g.fill(); });
-      requestAnimationFrame(step);
-    })(t0);
-  }
-  var seen = {};
-  function once(key, fn) { if (seen[key]) return; seen[key] = 1; fn(); }
-
-  function shell(v, inner) {
-    return '<a class="back" href="#home">← All games</a>' +
-      '<div class="ghead"><span class="tile-emoji" aria-hidden="true">' + v.emoji + '</span><div><h1>' + v.title + '</h1><p class="soft">' + v.how + '</p></div></div>' + inner;
-  }
-  function scoreRow(sc) { var lead = royal().leader, c = function (i) { return lead === i ? ' <span title="Crown Holder">👑</span>' : ''; }; return '<div class="score"><span>' + esc(N(0)) + c(0) + ' <b>' + sc[0] + '</b></span><span>' + esc(N(1)) + c(1) + ' <b>' + sc[1] + '</b></span></div>'; }
-
-  function render() {
-    if (!current) return;
-    var keep = {}, focus = document.activeElement && document.activeElement.id, sel = null;
-    $$('input[id], textarea[id]', app).forEach(function (el) { keep[el.id] = (el.type === 'radio' || el.type === 'checkbox') ? { c: el.checked } : { v: el.value }; });
-    if (focus && document.activeElement.selectionStart != null) { try { sel = [document.activeElement.selectionStart, document.activeElement.selectionEnd]; } catch (e) { sel = null; } }
-    app.className = 'stack'; app.style.setProperty('--accent', 'var(--' + (current.accent || 'gold') + ')');
-    current.render(app);
-    var old = document.getElementById('banner'); if (old) old.remove();
-    var ban = OLU.banner ? OLU.banner() : ''; if (ban) app.insertAdjacentHTML('afterbegin', ban);
-    Object.keys(keep).forEach(function (id) {
-      var el = document.getElementById(id); if (!el || el.dataset.fresh) return;
-      if ('c' in keep[id]) { if (!el.dataset.bound) el.checked = keep[id].c; } else if (el.value === '') el.value = keep[id].v;
-    });
-    if (focus) { var f = document.getElementById(focus); if (f && f !== document.activeElement) { f.focus({ preventScroll: true }); if (sel) { try { f.setSelectionRange(sel[0], sel[1]); } catch (e) { /* not a text field */ } } } }
-    var who = $('#who'); who.innerHTML = 'Playing as <b></b>'; who.querySelector('b').textContent = N(me);
-    who.setAttribute('aria-label', 'Playing as ' + N(me) + '. Tap to switch to ' + N(other()) + '.');
-  }
-  function refresh(name) { if (OLU.onDoc) OLU.onDoc(name); if (current && (name === 'players' || name === 'challenge' || name === 'events' || current.deps.indexOf(name) >= 0)) render(); }
-  function route() {
-    var id = (window.location.hash || '').replace(/^#/, '');
-    current = views[id] || views.home;
-    app.textContent = ''; delete app.dataset.key;
-    document.title = current === views.home ? 'Our Little Universe' : current.title + ' · Our Little Universe';
-    render(); window.scrollTo(0, 0);
-  }
-
-  /* ---------- views ---------- */
-  var views = {};
-  var GAMES = ['questions', 'life', 'truths', 'missions', 'draw', 'esm'];
-
-  views.home = {
-    deps: ['book'],
-    render: function (root) {
-      var tiles = GAMES.map(function (id) {
-        var v = views[id];
-        return '<li><a class="tile" href="#' + id + '" style="--accent: var(--' + v.accent + ')"><span class="tile-emoji" aria-hidden="true">' + v.emoji + '</span><h2>' + v.title + '</h2><p>' + v.sub + '</p></a></li>';
-      }).join('');
-      var sp = '';
-      if (surprise) {
-        var v = views[surprise.game];
-        sp = '<div class="surprise" style="--accent: var(--' + v.accent + ')"><span class="tile-emoji" aria-hidden="true">' + v.emoji + '</span><p class="eyebrow">Tonight you play</p><h2>' + v.title + '</h2><p class="soft">' + esc(surprise.dare) + '</p><a class="btn" href="#' + surprise.game + '">Let’s play</a></div>';
-      }
-      root.innerHTML = '<section class="hero"><p class="eyebrow">Our Little Universe</p><h1>What shall we play <em>tonight?</em></h1><p class="soft">A little adventure for two ✨</p></section>' +
-        '<ul class="tiles">' + tiles + '</ul>' + sp +
-        '<button type="button" class="btn big" data-act="surprise">🎲 Surprise Us!</button>' +
-        '<a class="book-link hall-link" href="#hall"><span><b>👑 The Royal Hall</b><br><span class="note">' + (royal().count ? esc(T(0)) + ' ' + royal().players[0].wins + ' · ' + esc(T(1)) + ' ' + royal().players[1].wins + ' victories' : 'Win rounds, earn crowns, write your legend') + '</span></span><span aria-hidden="true">→</span></a>' +
-        (window.OLU_ROOM ? '<div class="card"><p><b>Play from two phones</b></p><p class="note">Send this private link to ' + esc(N(1)) + '. Whoever opens it joins your room, and every game stays in step.</p><div class="inline"><label class="sr" for="invite">Invite link</label><input id="invite" data-fresh="1" type="text" readonly value="' + esc(window.OLU_ROOM.link) + '"><button type="button" class="btn small" data-act="copy">Copy</button></div></div>' : '') +
-        '<a class="book-link" href="#book"><span><b>📖 Memory Book</b><br><span class="note">' + (S.book.items.length ? S.book.items.length + ' saved so far' : 'Favourite questions, stories and missions land here') + '</span></span><span aria-hidden="true">→</span></a>' +
-        '<details class="setup"><summary>Names and how playing together works</summary><form class="stack" data-form="names">' +
-        '<div class="inline"><div class="field"><label for="n0">Player one</label><input id="n0" type="text" maxlength="20" value="' + esc(S.players.names[0]) + '"></div>' +
-        '<div class="field"><label for="n1">Player two</label><input id="n1" type="text" maxlength="20" value="' + esc(S.players.names[1]) + '"></div></div>' +
-        '<button class="btn small ghost" type="submit">Save names</button>' +
-        '<p class="note">On one phone: tap “Playing as” at the top to hand over to the other person. On two devices: each of you picks who you are once, and the games stay in step while the status at the top says Synced.</p></form></details>';
-    },
-    acts: {
-      surprise: function () { surprise = { game: rand(GAMES), dare: rand(C.dares) }; render(); },
-      copy: function () {
-        var i = $('#invite'), done = function () { toast('Link copied. Send it to ' + N(1) + '.'); }, manual = function () { i.focus(); i.select(); toast('Select the link and copy it'); };
-        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(i.value).then(done, manual); else manual();
-      }
-    },
-    forms: { names: function () { save('players', merge(clone(S.players), { names: [$('#n0').value.trim() || 'Player one', $('#n1').value.trim() || 'Player two'] })); toast('Names saved'); } }
-  };
-
-  /* 1. Question Cards */
-  function qIds(cat) { var out = []; Object.keys(C.questions).forEach(function (c) { if (cat === 'all' || cat === c) C.questions[c].forEach(function (q, i) { out.push(c + ':' + i); }); }); return out; }
-  function qText(id) { var p = id.split(':'); return { cat: p[0], text: (C.questions[p[0]] || [])[+p[1]] || '' }; }
-  views.questions = {
-    emoji: '💌', title: 'Question Cards', sub: 'Surprise me', accent: 'rose', deps: ['questions'],
-    how: 'Flip a card, answer honestly, then pass the turn.',
-    render: function (root) {
-      var st = S.questions, chips = '<button class="chip" data-act="cat" data-cat="all" aria-pressed="' + (st.cat === 'all') + '">All</button>' +
-        Object.keys(C.cats).map(function (c) { return '<button class="chip" data-act="cat" data-cat="' + c + '" aria-pressed="' + (st.cat === c) + '">' + C.cats[c] + '</button>'; }).join('');
-      var card;
-      if (!st.order.length) card = '<div class="card feature"><p class="big-text">One hundred questions, face down.</p><p class="soft">Pick a category above or play them all.</p><div class="row mid"><button class="btn" data-act="deal">Flip the first card</button></div></div>';
-      else {
-        var q = qText(st.order[st.pos]), flip = root.dataset.key !== st.order[st.pos]; root.dataset.key = st.order[st.pos];
-        card = '<div class="card feature' + (flip ? ' flip' : '') + '"><span class="tag">' + C.cats[q.cat] + '</span><p class="big-text" id="q-text">' + esc(q.text) + '</p>' +
-          '<p class="turn">' + esc(N(st.turn)) + ' answers first</p><p class="note">Card ' + (st.pos + 1) + ' of ' + st.order.length + '</p></div>' +
-          '<div class="row mid"><button class="btn ghost" data-act="prev"' + (st.pos ? '' : ' disabled') + '>Previous</button><button class="btn ghost" data-act="skip">Skip</button><button class="btn" data-act="next">Answered, next card</button></div>' +
-          '<div class="row mid"><button class="btn small ghost" data-act="keep">♡ Keep this question</button></div>';
-      }
-      root.innerHTML = shell(this, '<div class="row mid" role="group" aria-label="Category">' + chips + '</div>' + card);
-    },
-    acts: {
-      cat: function (el) { save('questions', merge(clone(S.questions), { cat: el.dataset.cat, order: shuffle(qIds(el.dataset.cat)), pos: 0, deck: uid() })); },
-      deal: function () { save('questions', merge(clone(S.questions), { order: shuffle(qIds(S.questions.cat)), pos: 0, deck: uid() })); },
-      next: function () { var q = S.questions; record('q:' + q.deck + ':' + q.pos, { t: 'question', g: 'questions' }); move(1, true); }, skip: function () { move(1, false); }, prev: function () { move(-1, true); },
-      keep: function () { addMemory('Question', qText(S.questions.order[S.questions.pos]).text); }
-    }
-  };
-  function move(d, swap) {
-    var st = clone(S.questions); st.pos += d;
-    if (st.pos >= st.order.length) { st.order = shuffle(qIds(st.cat)); st.pos = 0; st.deck = uid(); toast('That was the whole deck. Reshuffled.'); }
-    if (st.pos < 0) st.pos = 0;
-    if (swap) st.turn = 1 - st.turn;
-    save('questions', st);
-  }
-
-  /* 2. Imaginary Life */
-  function newScene() { var j = shuffle(C.life.jobs); return { country: rand(C.life.countries), jobs: [j[0], j[1]], home: rand(C.life.homes), pet: rand(C.life.pets), event: rand(C.life.events) }; }
-  function sceneText(s) { return 'You live in ' + s.country + ', in ' + s.home + '. ' + N(0) + ' is ' + s.jobs[0] + ' and ' + N(1) + ' is ' + s.jobs[1] + '. You have ' + s.pet + '. And then ' + s.event + '.'; }
-  function lifeReady() { var n = [0, 0]; S.life.lines.forEach(function (l) { if (!l.twist) n[l.by] += 1; }); return n[0] >= 2 && n[1] >= 2; }
-  views.life = {
-    emoji: '🌍', title: 'Imaginary Life', sub: 'Build our story', accent: 'mint', deps: ['life'],
-    how: 'Roll a life, then take turns adding what happens next.',
-    render: function (root) {
-      var st = S.life, s = st.scene, m = function (t) { return '<mark>' + esc(t) + '</mark>'; };
-      if (!s) { root.innerHTML = shell(this, '<div class="card feature"><p class="big-text">Somewhere, another version of you two is living a very different life.</p><div class="row mid"><button class="btn" data-act="roll">Roll our life</button></div></div>'); return; }
-      var lines = st.lines.map(function (l) { return l.twist ? '<li class="twist"><b>Plot twist</b>' + esc(l.text) + '</li>' : '<li><b>' + esc(N(l.by)) + '</b>' + esc(l.text) + '</li>'; }).join('');
-      root.innerHTML = shell(this, '<div class="card"><p class="scene">You live in ' + m(s.country) + ', in ' + m(s.home) + '. ' + esc(N(0)) + ' is ' + m(s.jobs[0]) + ' and ' + esc(N(1)) + ' is ' + m(s.jobs[1]) + '. You have ' + m(s.pet) + '. And then ' + m(s.event) + '.</p></div>' +
-        (lines ? '<ol class="story">' + lines + '</ol>' : '<p class="note center">No story yet. Someone has to say what happens first.</p>') +
-        '<form class="stack" data-form="line"><div class="field"><label for="l-text">' + esc(N(me)) + ', what happens next?</label><textarea id="l-text" maxlength="400" placeholder="One or two sentences"></textarea></div>' +
-        '<div class="row"><button class="btn" type="submit">Add to the story</button><button class="btn ghost" type="button" data-act="twist">⚡ Plot twist</button></div></form>' +
-        (st.done ? '<p class="turn center">Adventure finished. It counts toward your shared glory.</p>' : '<div class="row mid"><button class="btn" data-act="finish"' + (lifeReady() ? '' : ' disabled') + '>Finish this adventure</button></div><p class="note center">An adventure is finished once each of you has added at least two lines.</p>') +
-        '<div class="row split"><button class="btn small ghost" data-act="keep">♡ Save this story</button><button class="btn small ghost" data-act="roll">Roll a new life</button></div>');
-    },
-    acts: {
-      roll: function () { save('life', merge(clone(S.life), { scene: newScene(), lines: [], aid: uid(), done: false })); },
-      finish: function () { var st = S.life; if (st.done || !lifeReady()) return; record('adv:' + st.aid, { t: 'adventure', g: 'life', country: st.scene.country }); save('life', merge(clone(st), { done: true })); celebrate(); },
-      twist: function () { save('life', merge(clone(S.life), { lines: S.life.lines.concat([{ twist: true, text: rand(C.life.twists) }]).slice(-60) })); },
-      keep: function () { addMemory('Imaginary life', sceneText(S.life.scene) + S.life.lines.map(function (l) { return '\n' + (l.twist ? 'Plot twist: ' : N(l.by) + ': ') + l.text; }).join('')); }
-    },
-    forms: { line: function () {
-      var t = $('#l-text'), v = t.value.trim(); if (!v) { toast('Write a sentence first'); return; }
-      t.value = ''; save('life', merge(clone(S.life), { lines: S.life.lines.concat([{ by: me, text: v }]).slice(-60) }));
-    } }
-  };
-
-  /* 3. Two Truths & One Lie */
-  views.truths = {
-    emoji: '🎭', title: 'Two Truths & One Lie', sub: 'Guess the lie', accent: 'lilac', deps: ['truths'],
-    how: 'One of you writes three statements. The other finds the false one.',
-    render: function (root) {
-      var st = S.truths, a = st.author, mine = me === a, body;
-      if (st.phase === 'write') {
-        body = mine ? '<form class="card" data-form="send"><p class="turn">' + esc(N(a)) + ', write two truths and one lie. Keep the screen to yourself.</p>' +
-          [0, 1, 2].map(function (i) { return '<div class="field"><label for="t' + i + '">Statement ' + (i + 1) + '</label><input id="t' + i + '" type="text" maxlength="160" autocomplete="off"><label class="lie-pick"><input type="radio" name="lie" id="lie' + i + '" value="' + i + '"' + (i === 0 ? ' checked' : '') + '> This one is the lie</label></div>'; }).join('') +
-          '<button class="btn" type="submit">Hand over to ' + esc(N(1 - a)) + '</button></form>'
-          : '<div class="card feature"><p class="big-text">' + esc(N(a)) + ' is writing three statements.</p><p class="soft">No peeking. They will appear here when ready.</p></div>';
-      } else if (st.phase === 'guess') {
-        body = mine ? '<div class="card feature"><p class="big-text">' + esc(N(1 - a)) + ' is studying your face.</p><p class="soft">Stay calm. Say nothing.</p></div>'
-          : '<div class="card"><p class="turn">' + esc(N(1 - a)) + ', which one is the lie?</p><div class="options">' + st.items.map(function (t, i) { return '<button class="option" data-act="guess" data-i="' + i + '">' + esc(t) + '</button>'; }).join('') + '</div></div>';
-      } else {
-        var right = st.guess === st.lie;
-        if (right) once('truths' + st.items.join('|'), celebrate);
-        body = '<div class="card"><p class="turn center">' + (right ? esc(N(1 - a)) + ' found the lie!' : esc(N(a)) + ' fooled ' + esc(N(1 - a)) + '!') + '</p><div class="options">' +
-          st.items.map(function (t, i) { var lie = i === st.lie; return '<div class="option ' + (lie ? 'lie' : 'truth') + '">' + esc(t) + '<small>' + (lie ? 'The lie' : 'True') + (i === st.guess ? ' · guessed' : '') + '</small></div>'; }).join('') +
-          '</div><p class="soft center">' + esc(N(a)) + ', now tell the real story behind the surprising one.</p><div class="row mid"><button class="btn" data-act="swap">Switch turns</button></div>' + rematch('truths') + '</div>';
-      }
-      root.innerHTML = shell(this, scoreRow(st.score) + body);
-    },
-    acts: {
-      guess: function (el) { var st = clone(S.truths), g = +el.dataset.i; st.guess = g; st.phase = 'reveal'; var w = g === st.lie ? 1 - st.author : st.author; st.score[w] += 1; save('truths', st); record('truths:' + st.rid, { t: 'match', g: 'truths', w: w, author: st.author }); },
-      swap: function () { save('truths', { phase: 'write', author: 1 - S.truths.author, items: [], lie: 0, guess: -1, score: S.truths.score }); }
-    },
-    forms: { send: function () {
-      var items = [0, 1, 2].map(function (i) { return $('#t' + i).value.trim(); });
-      if (items.some(function (t) { return !t; })) { toast('Fill in all three statements'); return; }
-      var lie = +($('input[name="lie"]:checked') || { value: 0 }).value;
-      [0, 1, 2].forEach(function (i) { $('#t' + i).value = ''; });
-      save('truths', { phase: 'guess', author: S.truths.author, items: items, lie: lie, guess: -1, score: S.truths.score, rid: uid() });
-    } }
-  };
-
-  /* 4. Secret Missions */
-  views.missions = {
-    emoji: '🕵️', title: 'Secret Missions', sub: 'Go exploring', accent: 'gold', deps: ['missions'],
-    how: 'A small challenge for a walk or a date. No tracking, just the two of you.',
-    render: function (root) {
-      var st = S.missions, coop = st.mode === 'coop';
-      var card = st.current ? '<div class="card feature flip"><span class="tag">' + (coop ? 'Together' : 'Against each other') + '</span><p class="big-text">' + esc(st.current) + '</p></div>' +
-        (coop ? '<div class="row mid"><button class="btn" data-act="done">We did it</button><button class="btn ghost" data-act="deal">Another one</button></div>'
-          : '<p class="center soft">Who won?</p><div class="row mid"><button class="btn" data-act="win" data-i="0">' + esc(N(0)) + '</button><button class="btn" data-act="win" data-i="1">' + esc(N(1)) + '</button><button class="btn ghost" data-act="deal">Another one</button></div>')
-        : '<div class="card feature"><p class="big-text">Your mission, should you both choose to accept it.</p><div class="row mid"><button class="btn" data-act="deal">Give us a mission</button></div></div>';
-      root.innerHTML = shell(this, '<div class="row mid" role="group" aria-label="Mission type"><button class="chip" data-act="mode" data-m="coop" aria-pressed="' + coop + '">Together</button><button class="chip" data-act="mode" data-m="versus" aria-pressed="' + !coop + '">Against each other</button></div>' +
-        card + '<div class="score"><span>Done together <b>' + st.done + '</b></span><span>' + esc(N(0)) + ' <b>' + st.wins[0] + '</b></span><span>' + esc(N(1)) + ' <b>' + st.wins[1] + '</b></span></div>');
-    },
-    acts: {
-      mode: function (el) { var st = clone(S.missions); st.mode = el.dataset.m; st.current = ''; save('missions', st); },
-      deal: function () { var st = clone(S.missions), pool = C.missions[st.mode].filter(function (m) { return m !== st.current; }); st.current = rand(pool); st.mid = uid(); save('missions', st); },
-      done: function () { var st = clone(S.missions), text = st.current; st.done += 1; st.current = ''; save('missions', st); record('coop:' + st.mid, { t: 'coop', g: 'missions' }); celebrate(); addMemory('Mission completed', text); },
-      win: function (el) { var st = clone(S.missions), i = +el.dataset.i, text = st.current; st.wins[i] += 1; st.current = ''; save('missions', st); record('mission:' + st.mid, { t: 'match', g: 'missions', w: i }); celebrate(); addMemory('Mission won by ' + N(i), text); }
-    }
-  };
-
-  /* 5. Draw & Guess */
-  var INKS = ['#23183A', '#E5484D', '#F2A33A', '#2F9E77', '#3E7BE0', '#B05AD9'], ink = INKS[0], stroke = null;
-  function paintDraw() {
-    var c = $('#d-canvas'); if (!c) return;
-    var g = c.getContext('2d'), w = c.width;
-    g.fillStyle = '#FFFDF8'; g.fillRect(0, 0, w, w); g.lineCap = 'round'; g.lineJoin = 'round';
-    S.draw.strokes.concat(stroke ? [stroke] : []).forEach(function (s) {
-      g.strokeStyle = s.c; g.lineWidth = s.w * w / 1000; g.beginPath();
-      for (var i = 0; i < s.p.length; i += 2) { var x = s.p[i] * w / 1000, y = s.p[i + 1] * w / 1000; if (i) g.lineTo(x, y); else g.moveTo(x, y); }
-      if (s.p.length === 2) g.lineTo(s.p[0] * w / 1000 + .01, s.p[1] * w / 1000);
-      g.stroke();
-    });
-  }
-  function guessList() { var l = $('#d-guesses'); if (l) l.innerHTML = S.draw.guesses.map(function (x) { return '<li>' + esc(x.text) + '</li>'; }).join(''); }
-  function bindCanvas(c) {
-    var at = function (e) { var r = c.getBoundingClientRect(); return [Math.round((e.clientX - r.left) / r.width * 1000), Math.round((e.clientY - r.top) / r.height * 1000)]; };
-    c.addEventListener('pointerdown', function (e) {
-      if (S.draw.strokes.reduce(function (n, s) { return n + s.p.length; }, 0) > 12000) { toast('The page is full. Clear it to keep drawing.'); return; }
-      e.preventDefault(); try { c.setPointerCapture(e.pointerId); } catch (x) { /* ok */ }
-      stroke = { c: ink, w: ink === '#FFFDF8' ? 46 : 9, p: at(e) }; paintDraw();
-    });
-    c.addEventListener('pointermove', function (e) {
-      if (!stroke) return; var p = at(e), n = stroke.p.length;
-      if (Math.abs(p[0] - stroke.p[n - 2]) + Math.abs(p[1] - stroke.p[n - 1]) < 5) return;
-      stroke.p.push(p[0], p[1]); paintDraw();
-    });
-    var end = function () { if (!stroke) return; var s = stroke; stroke = null; patch('draw', { strokes: S.draw.strokes.concat([s]) }, true); paintDraw(); };
-    c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
-  }
-  views.draw = {
-    emoji: '🎨', title: 'Draw & Guess', sub: 'Creative chaos', accent: 'peach', deps: ['draw'],
-    how: 'Sixty seconds. One of you draws, the other guesses.',
-    render: function (root) {
-      var st = S.draw, d = st.drawer, iDraw = me === d, live = st.phase === 'draw' && Date.now() < st.endsAt, over = st.phase === 'done' || (st.phase === 'draw' && !live);
-      var key = ['draw', st.phase, over, d, me].join('|');
-      if (root.dataset.key === key && $('#d-canvas')) { paintDraw(); guessList(); return; }
-      root.dataset.key = key; stroke = null;
-      var body, pad = '<div class="pad"><canvas id="d-canvas" aria-label="Drawing"></canvas></div>';
-      if (st.phase === 'idle') {
-        body = iDraw ? '<div class="card feature"><p class="turn">' + esc(N(d)) + ', you are drawing. Keep the screen to yourself.</p>' +
-          (st.word ? '<p class="secret" id="d-word">' + esc(st.word) + '</p><div class="row mid"><button class="btn" data-act="start">Start 60 seconds</button><button class="btn ghost" data-act="word">Different word</button></div>'
-            : '<div class="row mid"><button class="btn" data-act="word">Show me a word</button></div>') + '</div>'
-          : '<div class="card feature"><p class="big-text">' + esc(N(d)) + ' is choosing what to draw.</p><p class="soft">Get your guessing face on.</p></div>';
-      } else if (live) {
-        body = '<p class="timer" id="d-time">' + left(st.endsAt) + '</p>' + pad + (iDraw
-          ? '<p class="center">Draw: <b>' + esc(st.word) + '</b></p><div class="swatches">' + INKS.map(function (c) { return '<button class="swatch" data-act="ink" data-c="' + c + '" style="background:' + c + '" aria-label="Colour" aria-pressed="' + (c === ink) + '"></button>'; }).join('') +
-            '<button class="chip" data-act="ink" data-c="#FFFDF8" aria-pressed="' + (ink === '#FFFDF8') + '">Eraser</button><button class="chip" data-act="undo">Undo</button><button class="chip" data-act="clear">Clear</button></div>'
-          : '<form class="inline" data-form="guess"><label class="sr" for="d-guess">Your guess</label><input id="d-guess" type="text" maxlength="60" autocomplete="off" placeholder="What is it?"><button class="btn" type="submit">Guess</button></form>') +
-          '<ul class="guesses" id="d-guesses" aria-label="Guesses so far"></ul>';
-      } else {
-        if (st.solved) once('draw' + st.endsAt, celebrate);
-        body = '<div class="card center"><p class="turn">' + (st.solved ? esc(N(1 - d)) + ' got it!' : 'Time is up.') + '</p><p class="secret">' + esc(st.word) + '</p></div>' + pad +
-          '<div class="row mid"><button class="btn" data-act="again">Next round, ' + esc(N(1 - d)) + ' draws</button><button class="btn small ghost" data-act="keep">♡ Keep the word</button></div>';
-      }
-      root.innerHTML = shell(this, scoreRow(st.score) + body);
-      var c = $('#d-canvas');
-      if (c) { var dpr = Math.min(window.devicePixelRatio || 1, 2); c.width = c.height = Math.max(200, Math.round(c.clientWidth * dpr)); paintDraw(); guessList(); if (iDraw && live) bindCanvas(c); }
-    },
-    tick: function () {
-      var st = S.draw, t = $('#d-time'); if (st.phase !== 'draw') return;
-      if (Date.now() >= st.endsAt) { if (t) render(); return; }
-      if (t) { var s = left(st.endsAt); t.textContent = s; t.classList.toggle('low', s <= 10); }
-    },
-    acts: {
-      word: function () { patch('draw', { word: rand(C.drawWords.filter(function (w) { return w !== S.draw.word; })) }); },
-      start: function () { patch('draw', { phase: 'draw', endsAt: Date.now() + 60000, strokes: [], guesses: [], solved: false, rid: uid() }); },
-      ink: function (el) { ink = el.dataset.c; $$('[data-act="ink"]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.c === ink); }); },
-      undo: function () { patch('draw', { strokes: S.draw.strokes.slice(0, -1) }, true); paintDraw(); },
-      clear: function () { patch('draw', { strokes: [] }, true); paintDraw(); },
-      again: function () { save('draw', merge(clone(DEFAULTS.draw), { drawer: 1 - S.draw.drawer, score: S.draw.score })); },
-      keep: function () { addMemory('Drawing', N(S.draw.drawer) + ' drew “' + S.draw.word + '”' + (S.draw.solved ? ' and ' + N(1 - S.draw.drawer) + ' guessed it.' : ' and nobody guessed it.')); }
-    },
-    forms: { guess: function () {
-      var i = $('#d-guess'), v = i.value.trim(), st = S.draw; if (!v) return; i.value = '';
-      var ok = norm(v) === norm(st.word), p = { guesses: st.guesses.concat([{ by: me, text: v }]).slice(-12) };
-      if (ok) { var sc = st.score.slice(); sc[me] += 2; sc[st.drawer] += 1; p.solved = true; p.phase = 'done'; p.score = sc; }
-      patch('draw', p);
-      if (ok) record('draw:' + st.rid, { t: 'draw', g: 'draw', drawer: st.drawer });
-    } }
-  };
-
-  /* 6. Esm Famil */
-  function esmCat(id) { return C.esmCats.filter(function (c) { return c.id === id; })[0]; }
-  function esmAnswer(p, cat) { return ((S.esm.answers['p' + p] || {})[cat] || '').trim(); }
-  function esmMark(p, cat) {
-    var m = (S.esm.marks['p' + p] || {})[cat]; if (typeof m === 'number') return m;
-    var a = esmAnswer(p, cat), b = esmAnswer(1 - p, cat);
-    return !a ? 0 : (norm(a) === norm(b) ? 5 : 10);
-  }
-  function esmCollect() { var out = {}; $$('input[data-cat]').forEach(function (el) { out[el.dataset.cat] = el.value.slice(0, 60); }); return out; }
-  var esmTimer = 0;
-  views.esm = {
-    emoji: '🔤', title: 'Esm Famil', sub: 'Word battle', accent: 'sky', deps: ['esm'],
-    how: 'اسم فامیل. One letter, a handful of categories, and a clock.',
-    render: function (root) {
-      var st = S.esm, live = st.phase === 'play' && Date.now() < st.endsAt, review = st.phase === 'review' || (st.phase === 'play' && !live), body;
-      if (!live && $('input[data-cat]')) { var mineNow = esmCollect(); if (JSON.stringify(mineNow) !== JSON.stringify(st.answers['p' + me] || {})) { var a0 = {}; a0['p' + me] = mineNow; patch('esm', { answers: a0 }, true); } }
-      if (live) {
-        body = '<p class="letter" lang="' + st.lang + '">' + esc(st.letter) + '</p><p class="timer" id="e-time">' + left(st.endsAt) + '</p>' +
-          '<div class="card">' + st.cats.map(function (id) { var c = esmCat(id); return '<div class="field"><label for="e-' + id + '">' + c.en + ' <span class="soft" lang="fa">' + c.fa + '</span></label><input id="e-' + id + '" data-cat="' + id + '" type="text" dir="auto" maxlength="60" autocomplete="off" value="' + esc((st.answers['p' + me] || {})[id] || '') + '"></div>'; }).join('') +
-          '<button class="btn" data-act="stop">Stop! I am done</button><p class="note center">Stopping ends the round for both of you.</p></div>';
-      } else if (review) {
-        body = '<p class="letter" lang="' + st.lang + '">' + esc(st.letter) + '</p><p class="center soft">Check each other’s answers. Tap a score to change it: 10 for a good one, 5 if you wrote the same, 0 if it does not count.</p><div class="review">' +
-          st.cats.map(function (id) { var c = esmCat(id);
-            return '<div class="review-row"><h3>' + c.en + ' · <span lang="fa">' + c.fa + '</span></h3>' + [0, 1].map(function (p) { var m = esmMark(p, id);
-              return '<div class="ans"><span dir="auto"><small>' + esc(N(p)) + '</small>' + (esc(esmAnswer(p, id)) || '<span class="soft">nothing</span>') + '</span><button class="pts" data-act="mark" data-p="' + p + '" data-cat="' + id + '" data-v="' + m + '" aria-label="' + esc(N(p)) + ', ' + c.en + ': ' + m + ' points. Tap to change.">' + m + '</button></div>'; }).join('') + '</div>'; }).join('') +
-          '</div><div class="row mid"><button class="btn" data-act="finish">Add up the points</button></div>';
-      } else {
-        body = (st.last ? '<p class="center turn">Round ' + st.round + ', letter ' + esc(st.last.letter) + ': ' + esc(N(0)) + ' ' + st.last.sums[0] + ', ' + esc(N(1)) + ' ' + st.last.sums[1] + '</p>' : '') +
-          '<div class="card"><div class="row" role="group" aria-label="Alphabet"><button class="chip" data-act="lang" data-l="en" aria-pressed="' + (st.lang === 'en') + '">English letters</button><button class="chip" data-act="lang" data-l="fa" aria-pressed="' + (st.lang === 'fa') + '">حروف فارسی</button></div>' +
-          '<div class="checks">' + C.esmCats.map(function (c) { return '<label><input type="checkbox" id="c-' + c.id + '" data-bound="1" data-act="cat" data-id="' + c.id + '"' + (st.cats.indexOf(c.id) >= 0 ? ' checked' : '') + '> ' + c.en + ' <span class="soft" lang="fa">' + c.fa + '</span></label>'; }).join('') + '</div>' +
-          '<div class="row" role="group" aria-label="Time">' + [60, 90, 120].map(function (s) { return '<button class="chip" data-act="secs" data-s="' + s + '" aria-pressed="' + (st.secs === s) + '">' + s + ' seconds</button>'; }).join('') + '</div>' +
-          '<button class="btn" data-act="start">Pick a letter and start</button><p class="note center">Answers in English or Persian both work.</p></div>' +
-          rematch('esm') + (st.round ? '<div class="row mid"><button class="linkbtn" data-act="reset">Start a new series</button></div>' : '');
-      }
-      root.innerHTML = shell(this, scoreRow(st.total) + body);
-    },
-    tick: function () {
-      var st = S.esm, t = $('#e-time'); if (st.phase !== 'play') return;
-      if (Date.now() >= st.endsAt) { if (t) render(); return; }
-      if (t) { var s = left(st.endsAt); t.textContent = s; t.classList.toggle('low', s <= 10); }
-    },
-    // On a shared phone, save the current player's answers before the other one takes over.
-    handover: function () { clearTimeout(esmTimer); if (S.esm.phase === 'play' && $('input[data-cat]')) { var a = {}; a['p' + me] = esmCollect(); patch('esm', { answers: a }, true); } },
-    input: function (el) {
-      if (!el.dataset.cat) return;
-      clearTimeout(esmTimer); esmTimer = setTimeout(function () { if (S.esm.phase !== 'play' || !$('input[data-cat]')) return; var a = {}; a['p' + me] = esmCollect(); patch('esm', { answers: a }, true); }, 700);
-    },
-    acts: {
-      lang: function (el) { patch('esm', { lang: el.dataset.l }); },
-      secs: function (el) { patch('esm', { secs: +el.dataset.s }); },
-      cat: function (el) { var cats = C.esmCats.map(function (c) { return c.id; }).filter(function (id) { return id === el.dataset.id ? el.checked : S.esm.cats.indexOf(id) >= 0; }); if (cats.length < 2) { el.checked = true; toast('Keep at least two categories'); return; } patch('esm', { cats: cats }); },
-      start: function () { var st = clone(S.esm); st.phase = 'play'; st.letter = rand(C.letters[st.lang].filter(function (l) { return l !== st.letter; })); st.endsAt = Date.now() + st.secs * 1000; st.answers = { p0: {}, p1: {} }; st.marks = { p0: {}, p1: {} }; st.rid = uid(); save('esm', st); },
-      stop: function () { clearTimeout(esmTimer); var a = {}; a['p' + me] = esmCollect(); patch('esm', { phase: 'review', answers: a }); },
-      mark: function (el) { var m = {}, p = {}; p[el.dataset.cat] = { 10: 5, 5: 0, 0: 10 }[el.dataset.v]; m['p' + el.dataset.p] = p; patch('esm', { marks: m }); },
-      finish: function () {
-        var st = clone(S.esm), sums = [0, 1].map(function (p) { return st.cats.reduce(function (n, id) { return n + esmMark(p, id); }, 0); });
-        st.total = [st.total[0] + sums[0], st.total[1] + sums[1]]; st.round += 1; st.phase = 'setup'; st.last = { letter: st.letter, sums: sums }; save('esm', st);
-        record('esm:' + st.rid, { t: 'match', g: 'esm', w: sums[0] === sums[1] ? -1 : (sums[0] > sums[1] ? 0 : 1), sums: sums });
-        if (sums[0] !== sums[1]) celebrate();
-        toast(sums[0] === sums[1] ? 'A tie!' : N(sums[0] > sums[1] ? 0 : 1) + ' wins the round');
-      },
-      reset: function () { var st = clone(S.esm); st.total = [0, 0]; st.round = 0; st.last = null; save('esm', st); }
-    }
-  };
-
-  /* Memory Book */
-  views.book = {
-    emoji: '📖', title: 'Memory Book', sub: '', accent: 'rose', deps: ['book'],
-    how: 'The questions, stories and missions you chose to keep.',
-    render: function (root) {
-      var items = S.book.items.slice().reverse();
-      root.innerHTML = shell(this, items.length ? '<ul class="memories">' + items.map(function (m) {
-        return '<li><div class="meta"><span>' + esc(m.kind) + ' · ' + new Date(m.at).toLocaleDateString() + '</span><button class="linkbtn" data-act="remove" data-id="' + esc(m.id) + '">Remove</button></div><pre>' + esc(m.text) + '</pre></li>';
-      }).join('') + '</ul>' : '<div class="card feature"><p class="big-text">Nothing saved yet.</p><p class="soft">Tap ♡ on a question, a story or a drawing, or finish a mission, and it lands here.</p><div class="row mid"><a class="btn" href="#home">Find a game</a></div></div>');
-    },
-    acts: { remove: function (el) { save('book', { items: S.book.items.filter(function (m) { return m.id !== el.dataset.id; }) }); toast('Removed'); } }
-  };
-
-  /* ---------- boot ---------- */
-  function start() {
-    app = $('#app'); setSync('local');
-    app.addEventListener('click', function (e) {
-      var el = e.target.closest('[data-act]'); if (!el || el.disabled || el.type === 'checkbox') return;
-      var fn = (current.acts && current.acts[el.dataset.act]) || (OLU.acts && OLU.acts[el.dataset.act]); if (fn) fn(el);
-    });
-    app.addEventListener('change', function (e) { var el = e.target; if (el.type === 'checkbox' && el.dataset.act && current.acts[el.dataset.act]) current.acts[el.dataset.act](el); });
-    app.addEventListener('input', function (e) { if (current.input) current.input(e.target); });
-    app.addEventListener('submit', function (e) {
-      e.preventDefault(); var f = e.target.closest('[data-form]'), fn = f && current.forms && current.forms[f.dataset.form]; if (fn) fn(f);
-    });
-    $('#who').addEventListener('click', function () {
-      if (current.handover) current.handover();
-      me = 1 - me; lsSet('me', me); app.textContent = ''; delete app.dataset.key; render(); toast('Now playing as ' + N(me));
-    });
-    window.addEventListener('hashchange', route);
-    window.addEventListener('resize', function () { if (current === views.draw) { delete app.dataset.key; render(); } });
-    setInterval(function () { if (current && current.tick) current.tick(); }, 250);
-    route(); connect(); if (OLU.boot) OLU.boot();
-  }
-  // What hall.js builds on. start() is called once every script has loaded.
-  var OLU = window.OLU = {
-    S: S, N: N, T: T, esc: esc, $: $, views: views, GAMES: GAMES, save: save, patch: patch, render: render, toast: toast, celebrate: celebrate,
-    shell: shell, royal: royal, uid: uid, lsGet: lsGet, lsSet: lsSet, me: function () { return me; }, start: start
-  };
-})();
-
-/* The Crowns of Shahnameh: badge art, the Royal Hall, the promotion ceremony and royal challenges.
-   All numbers come from the engine in royal.js; this file only draws them. */
-(function () {
-  'use strict';
-  var O = window.OLU, R = window.OLU_ROYAL, S = O.S, esc = O.esc, N = O.N, T = O.T, $ = O.$;
-
-  /* ---------- original badge illustrations (inline SVG, one medallion frame, one glyph each) ---------- */
   function star(cx, cy, n, r1, r2, rot) { var p = []; for (var i = 0; i < n * 2; i++) { var a = Math.PI * i / n + (rot || 0), r = i % 2 ? r2 : r1; p.push((cx + r * Math.sin(a)).toFixed(1) + ',' + (cy - r * Math.cos(a)).toFixed(1)); } return p.join(' '); }
   var D = '#2B1B12', CROWN = '<path d="M36 80 32 48l14 13 14-23 14 23 14-13-4 32z"/><rect x="36" y="80" width="48" height="7" rx="2"/>';
   var heart = function (x, y, k, fill) { return '<path transform="translate(' + x + ' ' + y + ') scale(' + k + ')" d="M0 10c-9-7-14-12-14-18 0-5 4-8 8-8 3 0 5 2 6 4 1-2 3-4 6-4 4 0 8 3 8 8 0 6-5 11-14 18z"' + (fill ? ' fill="' + fill + '"' : '') + '/>'; };
@@ -1209,153 +341,276 @@ window.OLU_CONTENT = {
       '<circle cx="60" cy="60" r="38" fill="none" stroke="' + F + '" stroke-width="1.6" stroke-dasharray="0.100 6.530" stroke-linecap="round"/>' +
       '<g fill="' + F + '" stroke="' + D + '" stroke-width="1.6" stroke-linejoin="round" transform="translate(60 60) scale(.86) translate(-60 -60)">' + (typeof g === 'function' ? g() : g) + '</g></svg>';
   }
+  window.WPM_ART = art;
+})();
 
-  /* ---------- short stories. "book" is what the Shahnameh tells; "game" is what we invented. ---------- */
-  var STORIES = {
-    rostam: { title: 'Rostam', book: 'The greatest hero of the Shahnameh, son of Zal and Rudabeh, from Sistan. He rides the horse Rakhsh, wears a tiger-skin coat and carries an ox-headed mace. He survives seven deadly trials to rescue his king, and in the poem’s most famous tragedy he kills his own son Sohrab in battle without knowing who he is.', game: 'The mace badge and the five-in-a-row streak are our own invention in his honour.' },
-    zal: { title: 'Zal', book: 'Zal is born with snow-white hair. His father Sam, ashamed, leaves the baby on Mount Alborz, where the Simurgh finds him and raises him in her nest. Sam later repents and brings him home, and Zal grows into the wise ruler of Zabolestan.', game: 'Our couple’s badge borrows his name for everything you finish together.' },
-    rudabeh: { title: 'Rudabeh', book: 'A princess of Kabul, daughter of King Mehrab. She and Zal fall in love by reputation before they ever meet. When he comes to her tower at night she lets down her long hair for him to climb; he refuses to hurt her and throws up a rope instead. Their son is Rostam.', game: 'Zal & Rudabeh is one of the great love stories of the poem, which is why the cooperative badge carries both names.' },
-    simurgh: { title: 'The Simurgh', book: 'A vast, wise and kind bird who nests on Mount Alborz. She raises the abandoned Zal and gives him feathers to burn if he ever needs her. She comes at Rostam’s difficult birth, and again, many years later, to heal Rostam and Rakhsh and tell him how his rival Esfandiyar can be defeated.', game: 'Her feather marks our rarest moments: a comeback, and sixty victories.' },
-    khosrow: { title: 'Kay Khosrow', book: 'Son of the murdered prince Siavash and of Farangis, daughter of Afrasiab, so he carries the blood of both Iran and Turan. Raised in hiding in Turan and brought to Iran by the hero Giv, he becomes the poem’s model of a just king. He owns a cup in which the whole world can be seen, and at the height of his power he gives up the throne and vanishes into a mountain snowstorm.', game: 'The hidden cup badge and the royal heir ranks are our own nod to him.' },
-    afrasiab: { title: 'Afrasiab', book: 'King of Turan and the great adversary of Iran through much of the poem: powerful, clever and ruthless. He has his own son-in-law Siavash put to death, which starts the long war of revenge that ends when Kay Khosrow finally captures him.', game: 'We borrowed his cunning for the Trickster badge. No in-laws were harmed.' },
-    irantu: { title: 'Iran and Turan', book: 'King Fereydun divides the world between his three sons: Salm receives the west, Tur the lands of the east beyond the river Oxus, and Iraj, the youngest, Iran. Out of envy Salm and Tur murder Iraj. From that crime grows the feud between Iran and Turan that fills the heroic part of the Shahnameh.', game: 'In our game the two kingdoms are equal, and the rivalry is settled with word games.' },
-    sistan: { title: 'Sistan and Zabol', book: 'Sistan, also called Zabolestan in the poem, lies in the south-east around the Helmand river. It is the home of Sam, Zal and Rostam: a family of champions who rule their own land and ride out, again and again, to save the kings of Iran.', game: 'Guardian of Zabol and Prince or Princess of Sistan are titles we made up for the game.' },
-    ferdowsi: { title: 'Ferdowsi and the Shahnameh', book: 'Abolqasem Ferdowsi of Tus finished the Shahnameh, the Book of Kings, around the year 1010 after some thirty years of work. It runs to roughly fifty thousand couplets, from the first king of the world to the Arab conquest of Iran, and it did more than any other book to keep the Persian language alive.', game: 'A fitting patron for whoever wins the most Esm Famil.' },
-    miniature: { title: 'Painting the Book of Kings', book: 'For centuries rulers commissioned lavishly illustrated copies of the Shahnameh. The most famous, made for Shah Tahmasp in the sixteenth century, held 258 paintings by the best artists of the royal workshop.', game: 'Our badges are original drawings in that spirit, not copies of any manuscript.' }
+/* Where is Prince Mohsey? — the website. Everything that matters (letters, clocks, scores, points,
+   levels, badges) is decided by the game server; this file shows it and sends your answers and votes. */
+(function () {
+  'use strict';
+  var API = String((window.WPM_CONFIG || {}).serverUrl || '').replace(/\/+$/, '');
+  var art = window.WPM_ART;
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var num = function (n) { return Number(n || 0).toLocaleString('en'); };
+  function lsGet(k) { try { return window.localStorage.getItem('wpm:' + k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { if (v == null) window.localStorage.removeItem('wpm:' + k); else window.localStorage.setItem('wpm:' + k, v); } catch (e) { /* fine */ } }
+
+  var app, key = lsGet('key'), me = null, meta = null, toastTimer = 0;
+  var table = null, es = null, offset = 0, mine = {}, sendTimer = 0, lastResults = '', armed = '';
+
+  /* ---------- server ---------- */
+  function api(method, path, body) {
+    var h = {}; if (key) h.Authorization = 'Bearer ' + key; if (body) h['Content-Type'] = 'application/json';
+    return fetch(API + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) { var e = new Error(j.error || 'The server said no (' + r.status + ').'); e.status = r.status; throw e; } return j; });
+    }, function () { throw new Error('The game server cannot be reached. Check your connection and try again.'); });
+  }
+  function fail(e) { toast(e.message || 'Something went wrong.'); }
+  function setMe(m) { me = m; var w = $('#who'); w.hidden = !me; if (me) { w.textContent = ''; w.appendChild(document.createTextNode(me.name)); } }
+  function refreshMe() { return api('GET', '/api/me').then(function (j) { setMe(j.me); return j.me; }); }
+  function sync(s) { var el = $('#sync'); el.dataset.s = s; el.textContent = s === 'live' ? 'Online' : s === 'error' ? 'Offline' : ''; }
+
+  /* ---------- small ui ---------- */
+  function toast(msg) { var t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 3200); }
+  function celebrate() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var c = $('#fx'), g = c.getContext('2d'), w = c.width = window.innerWidth, h = c.height = window.innerHeight, cols = ['#F58FA9', '#F3C56E', '#7FD8C4', '#93BBFF', '#BDA3FF'], ps = [], t0 = performance.now();
+    for (var i = 0; i < 80; i++) ps.push({ x: w / 2, y: h * .42, vx: (Math.random() - .5) * 12, vy: -Math.random() * 12 - 2, r: 3 + Math.random() * 4, c: cols[i % cols.length] });
+    (function step(t) { var age = (t - t0) / 1500; g.clearRect(0, 0, w, h); if (age >= 1) return; ps.forEach(function (p) { p.x += p.vx; p.y += p.vy; p.vy += .32; g.globalAlpha = 1 - age; g.fillStyle = p.c; g.beginPath(); g.arc(p.x, p.y, p.r, 0, 7); g.fill(); }); requestAnimationFrame(step); })(t0);
+  }
+  var royalName = function (p) { return (p.royal && p.royal !== 'Champion' ? p.royal + ' ' : '') + p.name; };
+  var rankDef = function (id) { return meta.ranks.filter(function (r) { return r.id === id; })[0]; };
+  var achDef = function (id) { return meta.achievements.filter(function (a) { return a.id === id; })[0]; };
+  var rankTitle = function (r, p) { return r.title.replace('{royal}', p.royal && p.royal !== 'Champion' ? p.royal : 'Champion').replace('{kingdom}', p.kingdom === 'turan' ? 'Turan' : 'Iran'); };
+  var medal = function (p, size) { var r = p.rank && rankDef(p.rank); return r ? art(r.art, r.metal, size, r.badge) : art('lock', 'bronze', size, 'No crown yet', true); };
+  var bar = function (v, goal) { return '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + goal + '" aria-valuenow="' + Math.min(v, goal) + '"><i style="width:' + (goal ? Math.min(100, Math.round(v / goal * 100)) : 100) + '%"></i></div>'; };
+  var levelOf = function (n) { return meta.levels[n - 1]; };
+  var catOf = function (id) { return meta.categories.filter(function (c) { return c.id === id; })[0]; };
+  var back = '<a class="back" href="#home">← Home</a>';
+  function levelLine(p) {
+    if (p.level >= meta.levels.length) return '<p class="turn">All seven chapters are open. The last one is still being written.</p>';
+    var L = levelOf(p.level + 1);
+    return bar(p.levelPoints, p.need) + '<p class="note">' + (p.quizReady ? 'Chapter ' + L.n + ' is open. Read the story, then pass the quiz.' : num(p.levelPoints) + ' of ' + num(p.need) + ' points to chapter ' + L.n + ': ' + esc(L.title)) + '</p>';
+  }
+
+  /* ---------- ceremony for new ranks and badges ---------- */
+  var queue = [];
+  function ceremony(list) { (list || []).forEach(function (u) { queue.push(u); }); if ($('#ceremony').hidden) nextCeremony(); }
+  function nextCeremony() {
+    var u = queue.shift(), box = $('#ceremony'); if (!u) { box.hidden = true; box.textContent = ''; return; }
+    var d = u.kind === 'rank' ? rankDef(u.id) : u.kind === 'ach' ? achDef(u.id) : null, title, eyebrow, line, a;
+    if (u.kind === 'level') { title = 'Chapter ' + u.n + ': ' + levelOf(u.n).title; eyebrow = '📜 A chapter is yours'; line = 'You passed the quiz. The story stays open to you from now on.'; a = art('book', 'gold', 150, title); }
+    else { title = u.kind === 'rank' ? rankTitle(d, me) : d.name; eyebrow = u.kind === 'rank' ? '👑 A new ruler rises' : '✨ A legend is written'; line = u.kind === 'rank' ? d.wins + (d.wins === 1 ? ' victory' : ' victories') + ' achieved!' : d.desc; a = art(d.art, d.metal, 150, title); }
+    box.innerHTML = '<div class="cer-box' + (d && d.legendary ? ' legendary' : '') + '" role="dialog" aria-modal="true" aria-labelledby="cer-title"><p class="eyebrow">' + eyebrow + '</p><div class="cer-art">' + a + '</div><p class="cer-name">' + esc(royalName(me)) + '</p><h2 id="cer-title">' + esc(title) + '</h2><p>' + esc(line) + '</p>' +
+      '<div class="row mid"><a class="btn" href="#me" data-cer="close">See my badges</a><button class="btn ghost" data-cer="close">Continue</button></div></div>';
+    box.hidden = false; celebrate(); var b = box.querySelector('button'); if (b) b.focus();
+  }
+
+  /* ---------- views ---------- */
+  var views = {};
+
+  views.welcome = function () {
+    app.innerHTML = '<section class="hero"><p class="eyebrow">A word game from the Book of Kings</p><h1>Where is <em>Prince Mohsey?</em></h1><p class="soft">Play Esm Famil with friends, earn crowns from the Shahnameh, and unlock the life of Rostam chapter by chapter.</p></section>' +
+      '<form class="card" data-form="register"><div class="field"><label for="w-name">Your name in the kingdom</label><input id="w-name" type="text" maxlength="20" autocomplete="nickname" placeholder="For example: Sufi"></div>' +
+      '<div class="row" role="group" aria-label="Kingdom"><button type="button" class="chip" data-act="pick" data-f="kingdom" data-v="iran" aria-pressed="true">Kingdom of Iran</button><button type="button" class="chip" data-act="pick" data-f="kingdom" data-v="turan" aria-pressed="false">Kingdom of Turan</button></div>' +
+      '<div class="row" role="group" aria-label="Title">' + ['Champion', 'Prince', 'Princess'].map(function (t, i) { return '<button type="button" class="chip" data-act="pick" data-f="royal" data-v="' + t + '" aria-pressed="' + (i === 0) + '">' + t + '</button>'; }).join('') + '</div>' +
+      '<button class="btn big" type="submit">Enter the kingdom</button><p class="note">No email, no password. This device remembers you.</p></form>' +
+      '<details class="setup"><summary>I already have a player key</summary><form class="stack" data-form="signin"><div class="field"><label for="w-key">Player key</label><input id="w-key" type="text" autocomplete="off" placeholder="Paste the key from your other device"></div><button class="btn small ghost" type="submit">Sign in</button></form></details>';
   };
-  function story(key) { var s = STORIES[key]; return s ? '<details class="lore"><summary>The story behind it</summary><p><b>' + s.title + ', in the Shahnameh.</b> ' + s.book + '</p><p class="note"><b>In our game.</b> ' + s.game + '</p></details>' : ''; }
 
-  /* ---------- helpers ---------- */
-  var KINGDOM = { iran: { name: 'Kingdom of Iran', art: 'lion', metal: 'gold' }, turan: { name: 'Kingdom of Turan', art: 'crown', metal: 'silver' } };
-  var prof = function (i) { return { royal: S.players.royals[i], kingdom: S.players.kingdoms[i] === 'turan' ? 'turan' : 'iran' }; };
-  var day = function (t) { return new Date(t).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' }); };
-  var when = function (t) { return new Date(t).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
-  var gameName = function (g) { return (O.views[g] || {}).title || g; };
-  var bar = function (v, goal) { return '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + goal + '" aria-valuenow="' + Math.min(v, goal) + '"><i style="width:' + Math.min(100, Math.round(v / goal * 100)) + '%"></i></div>'; };
-  function unlockName(u) { return u.kind === 'rank' ? R.rankTitle(R.rank(u.id), prof(u.p)) : R.achievement(u.id).name; }
-  function describe(h) {
-    if (h.t === 'unlock') return h.u.p < 0 ? 'Together you unlocked ' + unlockName(h.u) : T(h.u.p) + (h.u.kind === 'rank' ? ' rose to ' : ' earned ') + unlockName(h.u);
-    if (h.t === 'match') return h.w < 0 ? gameName(h.g) + ' ended in a tie' + (h.sums ? ', ' + h.sums[0] + ' all' : '') : T(h.w) + ' won ' + gameName(h.g) + (h.sums ? ' ' + h.sums[h.w] + ' to ' + h.sums[1 - h.w] : '') + (h.fooled ? ' with a perfect lie' : '') + (h.comeback ? ' in a comeback' : '');
-    if (h.t === 'coop') return 'You completed a secret mission together';
-    if (h.t === 'adventure') return 'You finished an imaginary life in ' + h.country;
-    if (h.t === 'draw') return T(h.drawer) + '’s drawing was guessed';
-    return 'You answered a question card';
+  views.home = function () {
+    app.innerHTML = '<section class="card me-card"><div class="row split"><div class="row">' + medal(me, 64) + '<div><h1 class="me-name">' + esc(royalName(me)) + '</h1><p class="soft">' + esc(me.title || 'Not yet crowned') + ' · chapter ' + me.level + ' of ' + meta.levels.length + '</p></div></div><a class="btn small ghost" href="#me">Profile</a></div>' +
+      levelLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') +
+      '<dl class="stats4"><div><dt>Points</dt><dd>' + num(me.total) + '</dd></div><div><dt>Victories</dt><dd>' + me.wins + '</dd></div><div><dt>Rounds</dt><dd>' + me.rounds + '</dd></div><div><dt>Best streak</dt><dd>' + me.best + '</dd></div></dl></section>' +
+      '<section class="card"><h2>Play Esm Famil</h2><p class="soft">One letter, a handful of categories, and a clock. Unique answers score ' + meta.points.unique + ', shared answers ' + meta.points.shared + '.</p><button class="btn big" data-act="create">Start a table</button>' +
+      '<form class="inline" data-form="join"><label class="sr" for="h-code">Table code</label><input id="h-code" type="text" maxlength="5" autocapitalize="characters" autocomplete="off" placeholder="Table code"><button class="btn ghost" type="submit">Join</button></form>' +
+      '<div id="h-tables"><p class="note">Looking for open tables…</p></div></section>' +
+      '<section class="card"><div class="row split"><h2>Leaderboard</h2><a class="btn small ghost" href="#leaders">See everyone</a></div><div id="h-leaders"><p class="note">Loading…</p></div></section>' +
+      '<a class="book-link hall-link" href="#journey"><span><b>📜 The life of Rostam</b><br><span class="note">Seven chapters to unlock, and one still to come</span></span><span aria-hidden="true">→</span></a>';
+    api('GET', '/api/rooms').then(function (j) {
+      var box = $('#h-tables'); if (!box) return;
+      box.innerHTML = j.tables.length ? '<p class="note">Open tables</p><ul class="tables">' + j.tables.map(function (t) { return '<li><span><b>' + esc(t.players.join(', ')) + '</b><small>' + (t.phase === 'lobby' ? 'Waiting to start' : 'Playing now') + '</small></span><a class="btn small" href="#table-' + t.code + '">Join</a></li>'; }).join('') + '</ul>' : '<p class="note">No open tables right now. Start one and share the link.</p>';
+    }).catch(function () { var b = $('#h-tables'); if (b) b.textContent = ''; });
+    api('GET', '/api/leaderboard').then(function (j) { var box = $('#h-leaders'); if (box) box.innerHTML = board(j.players.slice(0, 5)); }).catch(function () { /* shown elsewhere */ });
+  };
+
+  function board(list) {
+    if (!list.length) return '<p class="note">Nobody yet. Be the first name in the book.</p>';
+    return '<div class="scroll"><table class="board leaders"><thead><tr><th scope="col">#</th><th scope="col">Player</th><th scope="col">Chapter</th><th scope="col">Points</th><th scope="col">Wins</th></tr></thead><tbody>' +
+      list.map(function (p, i) { return '<tr' + (me && p.id === me.id ? ' class="you"' : '') + '><td>' + (i + 1) + '</td><th scope="row"><span class="who-cell">' + medal(p, 30) + '<span>' + esc(royalName(p)) + '<small>' + esc(p.title || 'Not yet crowned') + ' · ' + (p.kingdom === 'turan' ? 'Turan' : 'Iran') + '</small></span></span></th><td>' + p.level + '</td><td>' + num(p.total) + '</td><td>' + p.wins + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  views.leaders = function () {
+    app.innerHTML = back + '<h1>Leaderboard</h1><p class="soft">Ranked by chapter reached, then lifetime points, then victories.</p><div class="card" id="l-box"><p class="note">Loading…</p></div>';
+    api('GET', '/api/leaderboard').then(function (j) { var b = $('#l-box'); if (b) b.innerHTML = board(j.players); }).catch(fail);
+  };
+
+  views.journey = function () {
+    app.innerHTML = back + '<h1>The life of Rostam</h1><p class="soft">Earn the points for a chapter, read its story, then pass a quiz of ' + meta.quiz.size + ' questions (' + meta.quiz.pass + ' right) to keep it. Fail the quiz and the points for that chapter are lost.</p><ol class="chapters">' +
+      meta.levels.map(function (L) {
+        var passed = L.n <= me.level, open = L.n === me.level + 1 && me.quizReady, current = L.n === me.level + 1;
+        return '<li class="chapter' + (passed ? ' passed' : open ? ' open' : current ? ' current' : ' locked') + '"><span class="ch-n">' + (passed ? '✓' : L.n) + '</span><div><b>' + esc(L.title) + '</b><small>' + esc(L.teaser) + '</small>' +
+          (passed ? '<a class="btn small ghost" href="#level-' + L.n + '">Read again</a>' : open ? '<a class="btn small" href="#level-' + L.n + '">Read the story and take the quiz</a>' : current ? bar(me.levelPoints, me.need) + '<small>' + num(me.levelPoints) + ' of ' + num(L.points) + ' points</small>' : '<small>Needs ' + num(L.points) + ' points after chapter ' + (L.n - 1) + '</small>') + '</div></li>';
+      }).join('') + '<li class="chapter locked final"><span class="ch-n">8</span><div><b>Where is Prince Mohsey?</b><small>The last chapter is still being written.</small></div></li></ol>';
+  };
+
+  var quiz = null;
+  views.level = function (n) {
+    app.innerHTML = '<a class="back" href="#journey">← All chapters</a><div class="card"><p class="note">Opening the chapter…</p></div>'; quiz = null;
+    api('GET', '/api/story/' + n).then(function (s) {
+      if (location.hash !== '#level-' + n) return;
+      app.innerHTML = '<a class="back" href="#journey">← All chapters</a><article class="card story"><p class="eyebrow">Chapter ' + s.n + '</p><h1>' + esc(s.title) + '</h1>' +
+        (s.video ? '<video controls preload="metadata" src="' + esc(s.video) + '"></video>' : '') + s.story.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') +
+        (s.sources.length ? '<p class="note">Retold from the Shahnameh of Ferdowsi. ' + s.sources.map(esc).join(' · ') + '</p>' : '') + '</article>' +
+        (s.passed ? '<p class="turn center">You have passed this chapter.</p>' : '<div class="card center" id="q-box"><h2>Ready for the quiz?</h2><p class="soft">' + meta.quiz.size + ' questions about this story. You need ' + meta.quiz.pass + ' right. If you fall short, the points you gathered for this chapter are lost and you earn them again.</p><div class="row mid"><button class="btn" data-act="quiz">Take the quiz</button></div></div>');
+    }).catch(function (e) { app.innerHTML = '<a class="back" href="#journey">← All chapters</a><div class="card feature"><p class="big-text">' + esc(e.message) + '</p></div>'; });
+  };
+  function showQuiz(q) {
+    quiz = q;
+    $('#q-box').outerHTML = '<form class="card" id="q-box" data-form="quiz"><h2>Chapter ' + q.level + ' quiz</h2>' + q.questions.map(function (x, i) {
+      return '<fieldset class="q"><legend>' + (i + 1) + '. ' + esc(x.q) + '</legend>' + x.options.map(function (o, k) { return '<label><input type="radio" name="q' + i + '" id="q' + i + '-' + k + '" value="' + k + '"> ' + esc(o) + '</label>'; }).join('') + '</fieldset>';
+    }).join('') + '<button class="btn" type="submit">Hand in my answers</button></form>';
+    $('#q-box').scrollIntoView({ block: 'start' });
   }
 
-  /* ---------- the Royal Hall ---------- */
-  var tab = 'hall', TABS = [['hall', 'Royal Hall'], ['glory', 'My Achievements'], ['shared', 'Shared Glory'], ['history', 'Royal History'], ['legends', 'Legends']];
+  views.me = function () {
+    var earnedR = meta.ranks.filter(function (r) { return me.ranks[r.id]; }).length;
+    app.innerHTML = back + '<section class="profile k-' + me.kingdom + '"><div class="p-head">' + art(me.kingdom === 'turan' ? 'crown' : 'lion', me.kingdom === 'turan' ? 'silver' : 'gold', 46, 'Kingdom') + '<div><p class="p-kingdom">Kingdom of ' + (me.kingdom === 'turan' ? 'Turan' : 'Iran') + '</p><h2>' + esc(royalName(me)) + '</h2></div></div>' +
+      '<div class="p-rank">' + medal(me, 104) + '<p class="p-title">' + esc(me.title || 'Not yet crowned') + '</p></div>' +
+      '<dl class="stats4"><div><dt>Victories</dt><dd>' + me.wins + '</dd></div><div><dt>Rounds</dt><dd>' + me.rounds + '</dd></div><div><dt>Win streak</dt><dd>' + me.streak + '</dd></div><div><dt>Best streak</dt><dd>' + me.best + '</dd></div></dl>' +
+      '<div class="p-edit"><div class="row" role="group" aria-label="Kingdom"><button class="chip" data-act="profile" data-f="kingdom" data-v="iran" aria-pressed="' + (me.kingdom === 'iran') + '">Iran</button><button class="chip" data-act="profile" data-f="kingdom" data-v="turan" aria-pressed="' + (me.kingdom === 'turan') + '">Turan</button></div>' +
+      '<div class="row" role="group" aria-label="Title">' + ['Champion', 'Prince', 'Princess'].map(function (t) { return '<button class="chip" data-act="profile" data-f="royal" data-v="' + t + '" aria-pressed="' + (me.royal === t) + '">' + t + '</button>'; }).join('') + '</div></div></section>' +
+      '<div class="card"><p><b>Royal ranks</b> <span class="note">' + earnedR + ' of ' + meta.ranks.length + ', earned by victories</span></p><ul class="medals">' + meta.ranks.map(function (r) { var at = me.ranks[r.id]; return '<li class="medal-card' + (at ? ' earned' : '') + (at && r.legendary ? ' legendary' : '') + '">' + art(r.art, r.metal, 64, r.badge, !at) + '<div><b>' + esc(rankTitle(r, me)) + '</b><small>' + r.badge + ' · ' + r.wins + (r.wins === 1 ? ' victory' : ' victories') + '</small>' + (at ? '<small class="got">Unlocked ' + new Date(at).toLocaleDateString() + '</small>' : bar(me.wins, r.wins)) + '</div></li>'; }).join('') + '</ul>' +
+      '<p><b>Achievements</b></p><ul class="medals">' + meta.achievements.map(function (a) { var at = me.ach[a.id], hid = a.hidden && !at; return '<li class="medal-card' + (at ? ' earned' : '') + (at && a.legendary ? ' legendary' : '') + '">' + (hid ? art('lock', 'bronze', 64, 'Hidden', true) : art(a.art, a.metal, 64, a.name, !at)) + '<div><b>' + (hid ? 'A hidden achievement' : esc(a.name)) + '</b><small>' + (hid ? 'Keep playing. It is earned at the table, not by luck.' : esc(a.desc)) + '</small>' + (at ? '<small class="got">Unlocked ' + new Date(at).toLocaleDateString() + '</small>' : bar(me.progress[a.id], a.goal) + '<small>' + me.progress[a.id] + ' of ' + a.goal + '</small>') + '</div></li>'; }).join('') + '</ul></div>' +
+      '<form class="card" data-form="rename"><div class="field"><label for="p-name">Name</label><div class="inline"><input id="p-name" type="text" maxlength="20" value="' + esc(me.name) + '"><button class="btn small ghost" type="submit">Save</button></div></div></form>' +
+      '<div class="card"><p><b>Play on another device</b></p><p class="note">Your player key signs you in elsewhere. Anyone who has it can play as you, so keep it to yourself.</p><div class="inline"><label class="sr" for="p-key">Player key</label><input id="p-key" type="text" readonly value="' + esc(key) + '"><button class="btn small" data-act="copykey">Copy</button></div>' +
+      '<div class="row"><button class="linkbtn" data-act="signout">' + (armed === 'signout' ? 'Tap again to sign out. Copy your key first, or this player is lost.' : 'Sign out on this device') + '</button></div></div>';
+  };
 
-  function profile(i, s) {
-    var p = s.players[i], pr = prof(i), k = KINGDOM[pr.kingdom], rank = R.rankOf(p), next = R.nextRank(p), mine = i === O.me();
-    var earned = s.unlocks.filter(function (u) { return u.p === i || u.p < 0; });
-    return '<section class="profile k-' + pr.kingdom + '" aria-label="' + esc(T(i)) + '"><div class="p-head">' + art(k.art, k.metal, 46, k.name) +
-      '<div><p class="p-kingdom">' + k.name + '</p><h2>' + esc(T(i)) + (s.leader === i ? ' <span class="holder" title="Crown Holder: leading the head-to-head">👑</span>' : '') + '</h2></div></div>' +
-      '<div class="p-rank">' + (rank ? art(rank.art, rank.metal, 104, rank.badge) : art('lock', 'bronze', 104, 'No crown yet', true)) +
-      '<p class="p-title">' + (rank ? esc(R.rankTitle(rank, pr)) : 'Not yet crowned') + '</p><p class="p-sub">' + (rank ? rank.badge : 'Win a competitive round to earn the Bronze Shield') + '</p></div>' +
-      '<dl class="stats4"><div><dt>Victories</dt><dd>' + p.wins + '</dd></div><div><dt>Losses</dt><dd>' + p.losses + '</dd></div><div><dt>Win streak</dt><dd>' + p.streak + '</dd></div><div><dt>Best streak</dt><dd>' + p.best + '</dd></div></dl>' +
-      (next ? bar(p.wins, next.wins) + '<p class="p-sub">' + (next.wins - p.wins) + ' more ' + (next.wins - p.wins === 1 ? 'victory' : 'victories') + ' to ' + esc(R.rankTitle(next, pr)) + '</p>' : '<p class="p-sub">Every crown is won. The poets take over from here.</p>') +
-      '<p class="p-sub">' + earned.length + ' ' + (earned.length === 1 ? 'badge' : 'badges') + ' unlocked</p><div class="thumbs">' + earned.slice(-8).map(function (u) { var d = u.kind === 'rank' ? R.rank(u.id) : R.achievement(u.id); return art(d.art, d.metal, 34, unlockName(u)); }).join('') + '</div>' +
-      (mine ? '<div class="p-edit"><div class="row" role="group" aria-label="Your kingdom"><button class="chip" data-act="kingdom" data-k="iran" aria-pressed="' + (pr.kingdom === 'iran') + '">Iran</button><button class="chip" data-act="kingdom" data-k="turan" aria-pressed="' + (pr.kingdom === 'turan') + '">Turan</button></div>' +
-        '<div class="row" role="group" aria-label="Your title">' + ['Prince', 'Princess', 'Champion'].map(function (t) { return '<button class="chip" data-act="royal" data-r="' + t + '" aria-pressed="' + (pr.royal === t) + '">' + t + '</button>'; }).join('') + '</div></div>' : '') + '</section>';
+  /* ---------- the table ---------- */
+  function leaveTable() { if (es) { es.close(); es = null; } table = null; mine = {}; clearTimeout(sendTimer); }
+  function openTable(code) {
+    leaveTable(); app.innerHTML = back + '<div class="card"><p class="note">Finding the table…</p></div>';
+    es = new EventSource(API + '/api/rooms/' + encodeURIComponent(code) + '/events?k=' + encodeURIComponent(key));
+    es.addEventListener('state', function (e) { var first = !table; table = JSON.parse(e.data); offset = table.now - Date.now(); sync('live'); onState(first); });
+    es.onerror = function () { if (!table) { leaveTable(); app.innerHTML = back + '<div class="card feature"><p class="big-text">That table has closed or is full.</p><div class="row mid"><a class="btn" href="#home">Back home</a></div></div>'; } else sync('error'); };
   }
-  function medalCard(def, at, value, goal, title, extra) {
-    var hid = def.hidden && !at;
-    return '<li class="medal-card' + (at ? ' earned' : '') + (def.legendary && at ? ' legendary' : '') + '">' + (hid ? art('lock', 'bronze', 64, 'Hidden achievement', true) : art(def.art, def.metal, 64, title, !at)) +
-      '<div><b>' + (hid ? 'A hidden achievement' : esc(title)) + '</b><small>' + (hid ? 'Keep playing together. It unlocks by doing something real, not by luck.' : esc(extra)) + '</small>' +
-      (at ? '<small class="got">Unlocked ' + day(at) + '</small>' : bar(value, goal) + '<small>' + Math.min(value, goal) + ' of ' + goal + '</small>') + (hid ? '' : story(def.story)) + '</div></li>';
+  var T = function (path, body) { return api('POST', '/api/rooms/' + table.code + '/' + path, body || {}); };
+  var seat = function () { return table.players.filter(function (p) { return p.id === me.id; })[0] || {}; };
+  var left = function (t) { return Math.max(0, Math.ceil((t - (Date.now() + offset)) / 1000)); };
+  function collect() { var a = {}; $$('input[data-cat]').forEach(function (el) { a[el.dataset.cat] = el.value; }); if (Object.keys(a).length) mine = a; return mine; }
+  function onState() {
+    if (table.phase === 'collect' && $('input[data-cat]')) { clearTimeout(sendTimer); T('answers', { answers: collect() }).catch(function () { /* the round closed first */ }); }
+    if (table.phase === 'results') { var id = table.code + ':' + table.round; if (id !== lastResults) { lastResults = id; var got = (table.unlocks || {})[me.id]; refreshMe().then(function () { if (got) ceremony(got); renderTable(); }).catch(function () { /* keep the table */ }); if (table.scores.winner === me.id) celebrate(); } }
+    renderTable();
   }
-  function glory(i, s) {
-    var p = s.players[i], pr = prof(i);
-    return '<div class="card"><p><b>' + esc(T(i)) + '</b> <span class="note">royal ranks</span></p><ul class="medals">' + R.RANKS.map(function (r) { return medalCard(r, p.ranks[r.id], p.wins, r.wins, R.rankTitle(r, pr), r.badge + ' · ' + r.wins + (r.wins === 1 ? ' victory' : ' victories')); }).join('') + '</ul>' +
-      '<p><b>Individual glory</b></p><ul class="medals">' + R.ACHIEVEMENTS.filter(function (a) { return a.scope === 'individual'; }).map(function (a) { return medalCard(a, p.ach[a.id], a.value(s, i), a.goal, a.name, a.desc); }).join('') + '</ul></div>';
+  function people() { return '<ul class="people" id="t-people">' + table.players.map(function (p) { return '<li class="' + (p.online ? '' : 'off') + '">' + medal(p, 28) + '<span>' + esc(p.name) + (p.id === table.host ? ' <small>host</small>' : '') + (table.phase === 'play' && p.inRound ? ' <small>' + p.filled + '/' + table.settings.cats.length + '</small>' : '') + (table.phase === 'review' && p.ready ? ' <small>done</small>' : '') + (p.online ? '' : ' <small>away</small>') + '</span></li>'; }).join('') + '</ul>'; }
+  function renderTable() {
+    if (!table) return;
+    var st = table, s = st.settings, me2 = seat(), host = st.host === me.id || !st.players.some(function (p) { return p.id === st.host && p.online; }), k = [st.code, st.phase, st.round].join('|'), body;
+    if (app.dataset.key === k && st.phase === 'play' && $('#t-people')) { $('#t-people').outerHTML = people(); return; }
+    app.dataset.key = k;
+    var link = location.origin + location.pathname + '#table-' + st.code;
+    if (st.phase === 'lobby') {
+      body = '<div class="card"><p><b>Invite players</b> <span class="note">up to ' + meta.maxPlayers + ' at a table</span></p><p class="code">' + st.code + '</p><div class="inline"><label class="sr" for="t-link">Invite link</label><input id="t-link" type="text" readonly value="' + esc(link) + '"><button class="btn small" data-act="copylink">Copy</button></div></div>' +
+        (host ? '<div class="card"><p><b>Table rules</b></p><div class="row" role="group" aria-label="Alphabet"><button class="chip" data-act="set" data-f="lang" data-v="en" aria-pressed="' + (s.lang === 'en') + '">English letters</button><button class="chip" data-act="set" data-f="lang" data-v="fa" aria-pressed="' + (s.lang === 'fa') + '">حروف فارسی</button></div>' +
+          '<div class="checks">' + meta.categories.map(function (c) { return '<label><input type="checkbox" id="c-' + c.id + '" data-act="cat" data-id="' + c.id + '"' + (s.cats.indexOf(c.id) >= 0 ? ' checked' : '') + '> ' + c.en + ' <span class="soft" lang="fa">' + c.fa + '</span></label>'; }).join('') + '</div>' +
+          '<div class="row" role="group" aria-label="Time">' + [60, 90, 120].map(function (x) { return '<button class="chip" data-act="set" data-f="secs" data-v="' + x + '" aria-pressed="' + (s.secs === x) + '">' + x + ' seconds</button>'; }).join('') + '</div>' +
+          '<div class="row" role="group" aria-label="Who can join"><button class="chip" data-act="set" data-f="open" data-v="1" aria-pressed="' + st.open + '">Listed for everyone</button><button class="chip" data-act="set" data-f="open" data-v="" aria-pressed="' + !st.open + '">Invite link only</button></div>' +
+          '<button class="btn big" data-act="start">Start the round</button>' + (st.players.filter(function (p) { return p.online; }).length < meta.minScored ? '<p class="note center">Alone, a round is only practice. Points, victories and chapters need at least ' + meta.minScored + ' players.</p>' : '') + '</div>'
+          : '<div class="card feature"><p class="big-text">Waiting for the host to start.</p><p class="soft">' + s.secs + ' seconds · ' + s.cats.map(function (c) { return catOf(c).en; }).join(', ') + '</p></div>');
+    } else if (st.phase === 'play' || st.phase === 'collect') {
+      body = '<p class="letter" lang="' + s.lang + '">' + esc(st.letter) + '</p><p class="timer" id="t-time">' + (st.phase === 'play' ? left(st.endsAt) : 0) + '</p>' +
+        (st.phase === 'collect' ? '<div class="card feature"><p class="big-text">Pens down!</p></div>' : !me2.inRound ? '<div class="card feature"><p class="big-text">A round is running.</p><p class="soft">You join the next one.</p></div>' :
+          '<div class="card">' + s.cats.map(function (id) { var c = catOf(id); return '<div class="field"><label for="e-' + id + '">' + c.en + ' <span class="soft" lang="fa">' + c.fa + '</span></label><input id="e-' + id + '" data-cat="' + id + '" type="text" dir="auto" maxlength="40" autocomplete="off" value="' + esc(mine[id] || '') + '"></div>'; }).join('') +
+          '<button class="btn" data-act="stop">Stop! I am done</button><p class="note center">Stop ends the round for everyone. Every box must be filled.</p></div>');
+    } else {
+      var final = st.phase === 'results', sc = st.scores, mineSc = sc.players[me.id];
+      body = (final ? '<div class="card feature"><p class="big-text">' + (sc.winner ? esc(st.players.filter(function (p) { return p.id === sc.winner; }).map(royalName)[0] || 'Someone') + ' wins the round' : 'No winner this round') + '</p>' +
+          (mineSc ? '<p class="turn">You scored ' + mineSc.total + (sc.scored ? '' : '. Practice round: nothing was added to your record') + '</p>' + (sc.scored ? levelLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') : '') : '') + '</div>'
+        : '<p class="letter" lang="' + s.lang + '">' + esc(st.letter) + '</p><p class="timer" id="t-time">' + left(st.reviewEndsAt) + '</p><p class="center soft">Check the answers. Reject one that does not count; it falls if more than half of the other players agree.</p>') +
+        '<div class="review">' + s.cats.map(function (id) { var c = catOf(id);
+          return '<div class="review-row"><h3>' + c.en + ' · <span lang="fa">' + c.fa + '</span></h3>' + sc.order.map(function (pid) {
+            var p = st.players.filter(function (x) { return x.id === pid; })[0] || { name: '?' }, a = sc.players[pid].cats[id], votes = ((st.rejects[pid] || {})[id] || []), mineVote = votes.indexOf(me.id) >= 0;
+            var why = a.status === 'empty' ? 'nothing' : a.status === 'letter' ? 'wrong letter' : a.status === 'rejected' ? 'rejected' : a.shared ? 'shared' : '';
+            return '<div class="ans' + (a.status === 'ok' ? '' : ' bad') + '"><span dir="auto"><small>' + esc(p.name) + (why ? ' · ' + why : '') + (votes.length && a.status !== 'rejected' ? ' · ' + votes.length + ' against' : '') + '</small><i>' + (esc(a.text) || '—') + '</i></span>' +
+              (!final && pid !== me.id && me2.inRound && (a.status === 'ok' || a.status === 'rejected') ? '<button class="chip rej" data-act="vote" data-p="' + pid + '" data-cat="' + id + '" aria-pressed="' + mineVote + '">' + (mineVote ? 'Rejected' : 'Reject') + '</button>' : '') + '<b class="pts" data-v="' + a.pts + '">' + a.pts + '</b></div>'; }).join('') + '</div>'; }).join('') + '</div>' +
+        '<div class="card"><table class="board"><thead><tr><th scope="col">Player</th><th scope="col">Round</th><th scope="col">Table total</th></tr></thead><tbody>' + sc.order.map(function (pid) { var p = st.players.filter(function (x) { return x.id === pid; })[0] || { name: '?', session: 0 }; return '<tr' + (pid === me.id ? ' class="you"' : '') + '><th scope="row">' + esc(p.name) + (final && sc.winner === pid ? ' 👑' : '') + '</th><td>' + sc.players[pid].total + '</td><td>' + p.session + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+        (final ? (host ? '<button class="btn big" data-act="start">Next round</button>' : '<p class="center soft">Waiting for the host to start the next round.</p>') : me2.inRound ? '<button class="btn big" data-act="ready"' + (me2.ready ? ' disabled' : '') + '>' + (me2.ready ? 'Waiting for the others…' : 'Done checking') + '</button>' : '');
+    }
+    app.innerHTML = back + '<div class="row split"><h1>Table ' + st.code + '</h1><button class="linkbtn" data-act="leave">Leave table</button></div>' + people() + body;
   }
 
-  O.views.hall = {
-    emoji: '👑', title: 'The Royal Hall', sub: '', accent: 'gold', deps: ['events', 'players', 'challenge'],
-    how: 'The Crowns of Shahnameh: two rival kingdoms, one long and friendly war.',
-    render: function (root) {
-      var s = O.royal(), me = O.me(), body;
-      var tabs = '<div class="tabs" role="tablist">' + TABS.map(function (t) { return '<button role="tab" class="tab" data-act="tab" data-t="' + t[0] + '" aria-selected="' + (tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
-      if (tab === 'glory') body = glory(me, s) + glory(1 - me, s);
-      else if (tab === 'shared') body = '<div class="card"><p><b>Shared glory</b> <span class="note">earned together, unlocked for both of you</span></p><dl class="stats4"><div><dt>Adventures together</dt><dd>' + s.shared.activities + '</dd></div><div><dt>Cooperative</dt><dd>' + s.shared.coop + '</dd></div><div><dt>Matches</dt><dd>' + s.shared.matches + '</dd></div><div><dt>Countries</dt><dd>' + s.shared.countries.length + '</dd></div></dl><ul class="medals">' +
-        R.ACHIEVEMENTS.filter(function (a) { return a.scope === 'shared'; }).map(function (a) { return medalCard(a, s.shared.ach[a.id], a.value(s, 0), a.goal, a.name, a.desc); }).join('') + '</ul></div>';
-      else if (tab === 'history') { var h = s.history.slice(-80).reverse(); body = '<div class="card">' + (h.length ? '<ol class="chron">' + h.map(function (x) { return '<li class="' + (x.t === 'unlock' ? 'unlock' : '') + '"><span>' + esc(describe(x)) + '</span><small>' + when(x.at) + '</small></li>'; }).join('') + '</ol>' : '<p class="soft center">The chronicle is empty. Play a round and the scribes will start writing.</p>') + '</div>'; }
-      else if (tab === 'legends') body = '<p class="note center">Short introductions to the people and places behind the badges. The stories are from Ferdowsi’s Shahnameh; the ranks, badges and rules are fiction made for this game.</p>' + ['irantu', 'sistan', 'zal', 'rudabeh', 'simurgh', 'rostam', 'khosrow', 'afrasiab', 'ferdowsi', 'miniature'].map(function (k) { var x = STORIES[k]; return '<div class="card legend"><h2>' + x.title + '</h2><p>' + x.book + '</p><p class="note"><b>In our game.</b> ' + x.game + '</p></div>'; }).join('');
-      else {
-        var wins = s.history.filter(function (x) { return x.t === 'match' && x.w >= 0; }).slice(-5).reverse(), ul = s.unlocks.slice(-5).reverse();
-        body = '<div class="profiles">' + profile(0, s) + profile(1, s) + '</div>' +
-          '<div class="card"><p><b>Head to head</b> <span class="note">' + (s.leader < 0 ? (s.shared.matches ? 'Level. The crown waits.' : 'No battles yet') : esc(T(s.leader)) + ' holds the crown') + '</span></p><table class="board"><thead><tr><th scope="col">Battle</th><th scope="col">' + esc(N(0)) + '</th><th scope="col">' + esc(N(1)) + '</th><th scope="col">Ties</th></tr></thead><tbody>' +
-          R.COMPETITIVE.map(function (g) { var b = s.h2h.byGame[g]; return '<tr><th scope="row">' + O.views[g].emoji + ' ' + gameName(g) + '</th><td>' + b.wins[0] + '</td><td>' + b.wins[1] + '</td><td>' + b.ties + '</td></tr>'; }).join('') +
-          '<tr class="total"><th scope="row">All battles</th><td>' + s.h2h.wins[0] + '</td><td>' + s.h2h.wins[1] + '</td><td>' + s.h2h.ties + '</td></tr></tbody></table>' +
-          '<p class="note">Issue a royal challenge:</p><div class="row">' + R.COMPETITIVE.map(function (g) { return '<button class="btn small ghost" data-act="challenge" data-g="' + g + '">' + O.views[g].emoji + ' ' + gameName(g) + '</button>'; }).join('') + '</div></div>' +
-          '<div class="card"><p><b>Together</b></p><dl class="stats4"><div><dt>Adventures together</dt><dd>' + s.shared.activities + '</dd></div><div><dt>Cooperative</dt><dd>' + s.shared.coop + '</dd></div><div><dt>Shared badges</dt><dd>' + Object.keys(s.shared.ach).length + '</dd></div><div><dt>Countries</dt><dd>' + s.shared.countries.length + '</dd></div></dl></div>' +
-          '<div class="card"><p><b>Recent victories</b></p>' + (wins.length ? '<ol class="chron">' + wins.map(function (x) { return '<li><span>' + esc(describe(x)) + '</span><small>' + when(x.at) + '</small></li>'; }).join('') + '</ol>' : '<p class="soft">None yet. Two Truths, versus Missions and Esm Famil count.</p>') +
-          '<p><b>Recent badges</b></p>' + (ul.length ? '<ul class="trophies">' + ul.map(function (u) { var d = u.kind === 'rank' ? R.rank(u.id) : R.achievement(u.id); return '<li>' + art(d.art, d.metal, 56, unlockName(u)) + '<span>' + esc(unlockName(u)) + '<small>' + (u.p < 0 ? 'Both of you' : esc(N(u.p))) + ' · ' + day(u.at) + '</small></span></li>'; }).join('') + '</ul>' : '<p class="soft">Your trophy shelf is still empty.</p>') + '</div>';
-      }
-      root.innerHTML = O.shell(this, tabs + body);
+  /* ---------- actions ---------- */
+  var acts = {
+    pick: function (el) { $$('[data-f="' + el.dataset.f + '"]').forEach(function (b) { b.setAttribute('aria-pressed', b === el); }); },
+    create: function () { api('POST', '/api/rooms', {}).then(function (j) { location.hash = 'table-' + j.code; }).catch(fail); },
+    copylink: function () { copy($('#t-link'), 'Link copied. Send it to your friends.'); },
+    copykey: function () { copy($('#p-key'), 'Key copied. Keep it private.'); },
+    signout: function () { if (armed !== 'signout') { armed = 'signout'; route(); setTimeout(function () { armed = ''; }, 5000); return; } armed = ''; key = null; lsSet('key', null); setMe(null); location.hash = 'home'; route(); },
+    profile: function (el) { var b = {}; b[el.dataset.f] = el.dataset.v; api('POST', '/api/profile', b).then(function (j) { setMe(j.me); route(); }).catch(fail); },
+    quiz: function () { api('POST', '/api/quiz/start').then(showQuiz).catch(fail); },
+    leave: function () { var t = table; leaveTable(); if (t) api('POST', '/api/rooms/' + t.code + '/leave', {}).catch(function () { /* already gone */ }); location.hash = 'home'; },
+    set: function (el) { var b = {}, f = el.dataset.f; b[f] = f === 'secs' ? +el.dataset.v : f === 'open' ? !!el.dataset.v : el.dataset.v; T('settings', b).catch(fail); },
+    cat: function () { T('settings', { cats: $$('[data-act="cat"]').filter(function (c) { return c.checked; }).map(function (c) { return c.dataset.id; }) }).catch(fail); },
+    start: function () { mine = {}; T('start').catch(fail); },
+    stop: function () { T('stop', { answers: collect() }).catch(fail); },
+    vote: function (el) { T('vote', { player: el.dataset.p, cat: el.dataset.cat, reject: el.getAttribute('aria-pressed') !== 'true' }).catch(fail); },
+    ready: function () { T('ready').catch(fail); }
+  };
+  function copy(input, msg) { var manual = function () { input.focus(); input.select(); toast('Select the text and copy it'); }; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(input.value).then(function () { toast(msg); }, manual); else manual(); }
+  var forms = {
+    register: function () {
+      var b = { name: $('#w-name').value, kingdom: ($('[data-f="kingdom"][aria-pressed="true"]') || {}).dataset.v, royal: ($('[data-f="royal"][aria-pressed="true"]') || {}).dataset.v };
+      api('POST', '/api/register', b).then(function (j) { key = j.key; lsSet('key', key); setMe(j.me); route(); }).catch(fail);
     },
-    acts: {
-      tab: function (el) { tab = el.dataset.t; O.render(); },
-      kingdom: function (el) { var k = S.players.kingdoms.slice(); k[O.me()] = el.dataset.k; O.patch('players', { kingdoms: k }); },
-      royal: function (el) { var r = S.players.royals.slice(); r[O.me()] = el.dataset.r; O.patch('players', { royals: r }); }
+    signin: function () { var k = $('#w-key').value.trim(), old = key; key = k; refreshMe().then(function () { lsSet('key', key); route(); }).catch(function () { key = old; toast('That key was not recognised.'); }); },
+    join: function () { var c = $('#h-code').value.trim().toUpperCase(); if (c) location.hash = 'table-' + c; },
+    rename: function () { api('POST', '/api/profile', { name: $('#p-name').value }).then(function (j) { setMe(j.me); toast('Name saved'); route(); }).catch(fail); },
+    quiz: function () {
+      var a = quiz.questions.map(function (x, i) { var c = $('input[name="q' + i + '"]:checked'); return c ? +c.value : -1; });
+      if (a.indexOf(-1) >= 0) { toast('Answer every question first'); return; }
+      api('POST', '/api/quiz/answer', { answers: a }).then(function (r) {
+        setMe(r.me); quiz = null;
+        $('#q-box').outerHTML = '<div class="card feature" id="q-box"><p class="big-text">' + (r.passed ? 'Chapter ' + r.level + ' is yours.' : r.correct + ' of ' + r.of + '. Not this time.') + '</p><p class="soft">' + (r.passed ? 'You got ' + r.correct + ' of ' + r.of + '. The next chapter needs ' + num(r.me.need) + ' points.' : 'The points for this chapter are gone. Win them back at the table and the story will open again.') + '</p><div class="row mid"><a class="btn" href="#' + (r.passed ? 'journey' : 'home') + '">' + (r.passed ? 'See the journey' : 'Back to the table') + '</a></div></div>';
+        if (r.passed) ceremony([{ kind: 'level', n: r.level }].concat(r.unlocks || [])); else if (r.unlocks && r.unlocks.length) ceremony(r.unlocks);
+      }).catch(fail);
     }
   };
 
-  /* ---------- the Royal Promotion Ceremony ---------- */
-  var queue = [], showing = false, cur = null, RECENT = 10 * 60 * 1000;
-  function checkUnlocks() {
-    var s = O.royal(), seen = O.lsGet('seen', null), first = !seen, map = {};
-    (seen || []).forEach(function (k) { map[k] = 1; });
-    s.unlocks.forEach(function (u) { if (map[u.key]) return; map[u.key] = 1; if (!first && Date.now() - u.at < RECENT) queue.push(u); });
-    O.lsSet('seen', Object.keys(map)); if (!showing) nextCeremony();
+  /* ---------- routing and boot ---------- */
+  function route() {
+    var h = (location.hash || '').replace(/^#/, ''), m;
+    delete app.dataset.key;
+    if (!(m = /^table-([A-Za-z]{5})$/.exec(h))) leaveTable();
+    if (!meta) return;
+    if (!me) { views.welcome(); return; }
+    if (m) { if (!table || table.code !== m[1].toUpperCase()) openTable(m[1].toUpperCase()); else renderTable(); }
+    else if ((m = /^level-([1-7])$/.exec(h))) views.level(+m[1]);
+    else (views[h] && h !== 'welcome' && h !== 'level' ? views[h] : views.home)();
+    window.scrollTo(0, 0);
   }
-  function nextCeremony() {
-    var u = queue.shift(), box = $('#ceremony'); if (!u) { showing = false; box.hidden = true; box.textContent = ''; return; }
-    showing = true; cur = u;
-    var rank = u.kind === 'rank', d = rank ? R.rank(u.id) : R.achievement(u.id), me = O.me();
-    var eyebrow = u.p < 0 ? '💞 Shared glory' : u.p !== me ? 'News from the rival kingdom' : rank ? '👑 A new ruler rises' : '✨ A legend is written';
-    var line = rank ? d.wins + (d.wins === 1 ? ' victory' : ' victories') + ' achieved!' : d.desc;
-    var cheer = rank ? d.cheer : u.p < 0 ? 'Both kingdoms celebrate. For one evening, there is peace.' : 'The scribes have added a new page to your legend.';
-    box.innerHTML = '<div class="cer-box' + (d.legendary ? ' legendary' : '') + '" role="dialog" aria-modal="true" aria-labelledby="cer-title"><p class="eyebrow">' + eyebrow + '</p><div class="cer-art">' + art(d.art, d.metal, 150, unlockName(u)) + '</div>' +
-      '<p class="cer-name">' + (u.p < 0 ? esc(N(0)) + ' & ' + esc(N(1)) : esc(T(u.p))) + '</p><h2 id="cer-title">' + esc(unlockName(u)) + '</h2><p>' + esc(line) + '</p><p class="soft">' + esc(u.p >= 0 && u.p !== me ? T(u.p) + ' will be unbearable about this.' : cheer) + '</p>' +
-      '<div class="row mid"><button class="btn" data-cer="view">View in the Royal Hall</button><button class="btn ghost" data-cer="close">Continue playing</button></div></div>';
-    box.hidden = false; if (u.p === me || u.p < 0) O.celebrate();
-    var b = box.querySelector('[data-cer="close"]'); if (b) b.focus();
+  function boot() {
+    app.innerHTML = '<div class="card feature"><p class="big-text">Opening the gates…</p></div>';
+    if (!API) { app.innerHTML = '<div class="card feature"><p class="big-text">No game server is configured.</p><p class="soft">Set serverUrl in config.js.</p></div>'; return; }
+    api('GET', '/api/meta').then(function (m) { meta = m; sync('live'); return key ? refreshMe().catch(function (e) { if (e.status === 401) { key = null; lsSet('key', null); } else throw e; }) : null; })
+      .then(route).catch(function (e) { sync('error'); app.innerHTML = '<div class="card feature"><p class="big-text">' + esc(e.message) + '</p><div class="row mid"><button class="btn" data-act="retry">Try again</button></div></div>'; });
   }
-  function closeCeremony(view) { if (view) { tab = view; queue.length = 0; if (window.location.hash === '#hall') O.render(); else window.location.hash = 'hall'; } nextCeremony(); }
-
-  /* ---------- royal challenges and rematches ---------- */
-  var OPEN = 15 * 60 * 1000;
-  O.banner = function () {
-    var c = S.challenge, me = O.me(); if (!c || !c.id || Date.now() - c.at > OPEN || !O.views[c.game]) return '';
-    var g = O.views[c.game].emoji + ' ' + gameName(c.game), inner = '';
-    if (c.state === 'open' && c.from !== me) inner = '<p><b>' + (c.rematch ? '“Your Majesty, your kingdom demands revenge!” ' + esc(T(c.from)) + ' wants a rematch.' : esc(T(c.from)) + ' challenges ' + esc(T(me)) + ' to a battle for the crown!') + '</b></p><p class="note">' + g + '</p><div class="row"><button class="btn small" data-act="accept">Accept the challenge</button><button class="btn small ghost" data-act="decline">Not now</button></div>';
-    else if (c.state === 'open') inner = '<p><b>Your challenge has been sent to ' + esc(T(1 - me)) + '.</b></p><p class="note">' + g + ' · waiting for an answer</p><div class="row"><button class="btn small ghost" data-act="withdraw">Withdraw</button></div>';
-    else if (c.state === 'accepted' && c.from === me) inner = '<p><b>' + esc(T(1 - me)) + ' accepts your challenge!</b></p><div class="row"><a class="btn small" href="#' + c.game + '" data-act="withdraw">To the battlefield</a></div>';
-    else if (c.state === 'declined' && c.from === me) inner = '<p><b>' + esc(T(1 - me)) + ' declines, for now.</b></p><div class="row"><button class="btn small ghost" data-act="withdraw">Very well</button></div>';
-    return inner ? '<div id="banner" class="banner" role="status">' + inner + '</div>' : '';
-  };
-  O.rematchRow = function (game) {
-    var s = O.royal(), last = null, c = S.challenge;
-    s.history.forEach(function (h) { if (h.t === 'match' && h.g === game) last = h; });
-    if (!last || last.w !== 1 - O.me() || (c.id && c.state === 'open' && Date.now() - c.at < OPEN)) return '';
-    return '<div class="revenge"><p>“Your Majesty, your kingdom demands revenge!”</p><button class="btn small" data-act="challenge" data-g="' + game + '" data-rematch="1">Demand a rematch</button></div>';
-  };
-  O.acts = {
-    challenge: function (el) { O.save('challenge', { id: O.uid(), from: O.me(), game: el.dataset.g, rematch: !!el.dataset.rematch, at: Date.now(), state: 'open' }); O.toast('Challenge sent to ' + T(1 - O.me())); },
-    accept: function () { var g = S.challenge.game; O.patch('challenge', { state: 'accepted' }); window.location.hash = g; },
-    decline: function () { O.patch('challenge', { state: 'declined' }); },
-    withdraw: function () { O.patch('challenge', { state: '' }); }
-  };
-
-  O.onDoc = function (name) { if (name === 'events') checkUnlocks(); };
-  O.boot = function () {
-    $('#ceremony').addEventListener('click', function (e) { var b = e.target.closest('[data-cer]'); if (b) closeCeremony(b.dataset.cer === 'view' ? (cur && cur.p < 0 ? 'shared' : 'glory') : null); else if (e.target.id === 'ceremony') closeCeremony(null); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && showing) closeCeremony(null); });
-    checkUnlocks();
-  };
-  O.art = art;
+  acts.retry = boot;
+  function start() {
+    app = $('#app');
+    app.addEventListener('click', function (e) { var el = e.target.closest('[data-act]'); if (!el || el.disabled || el.type === 'checkbox') return; var fn = acts[el.dataset.act]; if (fn) fn(el); });
+    app.addEventListener('change', function (e) { var el = e.target; if (el.type === 'checkbox' && acts[el.dataset.act]) acts[el.dataset.act](el); });
+    app.addEventListener('input', function (e) { if (!e.target.dataset.cat || !table || table.phase !== 'play') return; collect(); clearTimeout(sendTimer); sendTimer = setTimeout(function () { if (table && table.phase === 'play') T('answers', { answers: mine }).catch(function () { /* next keystroke retries */ }); }, 500); });
+    app.addEventListener('submit', function (e) { e.preventDefault(); var f = e.target.closest('[data-form]'), fn = f && forms[f.dataset.form]; if (fn) fn(f); });
+    $('#ceremony').addEventListener('click', function (e) { if (e.target.closest('[data-cer]') || e.target.id === 'ceremony') nextCeremony(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('#ceremony').hidden) nextCeremony(); });
+    window.addEventListener('hashchange', route);
+    setInterval(function () { var t = $('#t-time'); if (!t || !table) return; var s = table.phase === 'play' ? left(table.endsAt) : table.phase === 'review' ? left(table.reviewEndsAt) : 0; t.textContent = s; t.classList.toggle('low', s <= 10); }, 250);
+    boot();
+  }
+  start();
 })();
-
-window.OLU.start();</script>
+</script>
 </body></html>
