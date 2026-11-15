@@ -85,7 +85,7 @@ const ok = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log('  o
     await fetch(apiUrl + '/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'My test', password: 'testing-1' }) });
     await b.goto(site + '#home'); await b.waitForSelector('.me-card'); ok(await b.locator('a[href="#admin"]').count() === 0, 'other players have no Admin link');
     await b.goto(site + '#admin'); await b.waitForSelector('.me-card'); ok(true, 'and opening the admin address just takes them home');
-    await a.goto(site + '#home'); await a.waitForSelector('a[href="#admin"]'); await a.locator('a[href="#admin"]').tap(); await a.waitForSelector('.adm-list');
+    await a.goto(site + '#home'); await a.waitForSelector('.me-card a[href="#admin"]'); await a.locator('.me-card a[href="#admin"]').tap(); await a.waitForSelector('.adm-list');
     ok(await a.locator('.adm').count() === 5 && /1\. Mohsey/.test(await a.textContent('.adm-list li:first-child')) && /admin/.test(await a.textContent('.adm-list li:first-child')) && /last seen/.test(await a.textContent('#a-box')), 'the admin page lists all five accounts in leaderboard order, with stats and when each was last seen');
     await a.fill('#a-find', 'my te'); await a.waitForFunction(() => document.querySelectorAll('.adm').length === 1); ok(/My test/.test(await a.textContent('.adm')), 'the admin finds the test account by name');
     await fits(a, 'admin'); await shot(a, 'admin');
