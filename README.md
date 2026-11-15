@@ -79,9 +79,17 @@ That installs a systemd service on port 8787. A Cloudflare Tunnel public hostnam
 cd ~/our-little-universe && git pull && bash server/install-service.sh
 ```
 
+**Admin:** to make yourself admin, run the installer once with your player name (it is remembered for later updates):
+
+```
+cd ~/our-little-universe && ADMINS="YourPlayerName" bash server/install-service.sh
+```
+
+Then sign in on the website: the home page shows **🛡️ Admin**. There you see every account in leaderboard order (points, wins, rounds, rounds refereed, when they joined and were last seen), can search, give a player a new password, and remove an account (two taps; it cannot be undone). Several admins: `ADMINS="Name1,Name2"`. An admin's name cannot be changed on the website, and nobody can take a name listed as admin. Removals are written to the server log (`journalctl -u our-little-universe`).
+
 Players are stored in `players.json` in the data folder (`~/our-little-universe-data` by default). Back it up. Tables live in memory and end when the server restarts.
 
-Settings (environment): `PORT`, `HOST` (default `127.0.0.1`), `DATA_DIR`, `ALLOWED_ORIGINS`, and the pace limits `MIN_PLAY_MS`, `REVIEW_MS` (how long the referee has, default 5 minutes), `ROUNDS_PER_HOUR`.
+Settings (environment): `ADMINS`, `PORT`, `HOST` (default `127.0.0.1`), `DATA_DIR`, `ALLOWED_ORIGINS`, and the pace limits `MIN_PLAY_MS`, `REVIEW_MS` (how long the referee has, default 5 minutes), `ROUNDS_PER_HOUR`.
 
 If `players.json` cannot be read at start, the server refuses to start instead of overwriting it; the previous good save is `players.json.bak`.
 

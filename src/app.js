@@ -107,6 +107,7 @@
       '<p>Jealous of their brother’s share, Salm and Tur murder Iraj, and from that crime grows the long war between Iran and Turan that fills the age of heroes, and the life of Rostam.</p>' +
       '<p class="note">You belong to the Kingdom of ' + kingdom(me.kingdom).name + ', the realm of ' + kingdom(me.kingdom).heir + '.</p>' +
       '<details class="map-more"><summary>Show the map</summary>' + window.WPM_MAP() + '</details></section>' +
+      (me.admin ? '<a class="book-link hall-link" href="#admin"><span><b>🛡️ Admin</b><br><span class="note">Accounts and the leaderboard</span></span><span aria-hidden="true">→</span></a>' : '') +
       '<a class="book-link hall-link" href="#journey"><span><b>📜 The life of Rostam</b><br><span class="note">Seven chapters to unlock, and one still to come</span></span><span aria-hidden="true">→</span></a>';
     api('GET', '/api/rooms').then(function (j) {
       var box = $('#h-tables'); if (!box) return;
@@ -273,7 +274,46 @@
   }
 
   /* ---------- actions ---------- */
+  /* ---------- admin: only for players named in ADMINS on the server ---------- */
+  var adminTimer = 0, adminList = [];
+  var ago = function (t) { if (!t) return '—'; var m = Math.round((Date.now() - t) / 60000); return m < 2 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' days ago'; };
+  var day = function (t) { return t ? new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; };
+  function adminRow(p) {
+    var armedHere = armed === 'rm:' + p.id;
+    return '<li class="adm" data-id="' + p.id + '"><div class="row split"><span><b>' + p.place + '. ' + esc(p.name) + '</b>' + (p.admin ? ' <small class="tag">admin</small>' : '') + (p.online ? ' <small class="tag on">at a table</small>' : '') +
+      '<small>' + kingdom(p.kingdom).name + ' · chapter ' + p.level + ' · ' + esc(p.title || 'not yet crowned') + '</small></span></div>' +
+      '<dl class="adm-stats"><div><dt>Points</dt><dd>' + num(p.total) + '</dd></div><div><dt>Wins</dt><dd>' + p.wins + '</dd></div><div><dt>Rounds</dt><dd>' + p.rounds + '</dd></div><div><dt>Refereed</dt><dd>' + p.refereed + '</dd></div></dl>' +
+      '<p class="note">Joined ' + day(p.createdAt) + ' · last seen ' + ago(p.lastSeen) + ' · signed in on ' + p.devices + (p.devices === 1 ? ' device' : ' devices') + '</p>' +
+      (p.admin ? '' : '<div class="row"><button class="btn small ghost" data-act="admpw" data-id="' + p.id + '">New password</button><button class="btn small ' + (armedHere ? 'danger' : 'ghost') + '" data-act="admrm" data-id="' + p.id + '">' + (armedHere ? 'Tap again to remove ' + esc(p.name) : 'Remove account') + '</button></div>') + '</li>';
+  }
+  function adminLoad() {
+    var q = ($('#a-find') || {}).value || '';
+    api('GET', '/api/admin/players' + (q.trim() ? '?q=' + encodeURIComponent(q.trim()) : '')).then(function (j) {
+      adminList = j.players; var b = $('#a-box'); if (!b) return;
+      b.innerHTML = '<p class="note">' + (q.trim() ? j.players.length + ' of ' + j.total + ' players match' : j.total + (j.total === 1 ? ' player' : ' players') + ', in leaderboard order') + '</p>' + (j.players.length ? '<ul class="adm-list">' + j.players.map(adminRow).join('') + '</ul>' : '');
+    }).catch(fail);
+  }
+  views.admin = function () {
+    if (!me.admin) { location.hash = 'home'; return; }
+    app.innerHTML = back + '<h1>Admin</h1><p class="soft">Every account, in leaderboard order. Removing an account deletes its points and badges for good.</p>' +
+      '<div class="field"><label for="a-find">Find a player</label><input id="a-find" type="search" maxlength="20" autocomplete="off" placeholder="Type a name"></div>' +
+      '<div id="a-box"><p class="note">Loading…</p></div>';
+    $('#a-find').addEventListener('input', function () { clearTimeout(adminTimer); adminTimer = setTimeout(adminLoad, 250); });
+    adminLoad();
+  };
+
   var acts = {
+    admrm: function (el) {
+      var id = el.dataset.id, p = adminList.filter(function (x) { return x.id === id; })[0]; if (!p) return;
+      if (armed !== 'rm:' + id) { armed = 'rm:' + id; el.closest('li').outerHTML = adminRow(p); setTimeout(function () { if (armed === 'rm:' + id) { armed = ''; var li = $('li[data-id="' + id + '"]'); if (li) li.outerHTML = adminRow(p); } }, 5000); return; }
+      armed = ''; api('POST', '/api/admin/remove', { id: id }).then(function (j) { toast(j.removed + ' was removed'); adminLoad(); }).catch(fail);
+    },
+    admpw: function (el) {
+      var p = adminList.filter(function (x) { return x.id === el.dataset.id; })[0]; if (!p) return;
+      var pw = window.prompt('New password for ' + p.name + ' (at least 6 characters). Tell them yourself; they will be signed out everywhere.');
+      if (pw === null) return;
+      api('POST', '/api/admin/password', { id: p.id, password: pw }).then(function () { toast('New password set for ' + p.name); }).catch(fail);
+    },
     pick: function (el) { $$('[data-f="' + el.dataset.f + '"]').forEach(function (b) { b.setAttribute('aria-pressed', b === el); }); },
     create: function () { api('POST', '/api/rooms', {}).then(function (j) { location.hash = 'table-' + j.code; }).catch(fail); },
     copylink: function () { copy($('#t-link'), 'Link copied. Send it to your friends.'); },

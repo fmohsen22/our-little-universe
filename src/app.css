@@ -321,3 +321,15 @@ input[type="search"], input[type="password"] { width: 100%; min-width: 0; font: 
 .ok-t { color: #2E8B57; } .no-t { color: var(--rose); }
 .verdict-bar { position: sticky; bottom: 0; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--bg) 35%); z-index: 5; }
 .verdict-bar .btn { width: 100%; }
+
+/* admin */
+.adm-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.adm { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.adm small { display: block; color: var(--soft); }
+.adm small.tag { display: inline-block; font-size: .72rem; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink); }
+.adm small.tag.on { background: #2E8B57; color: #fff; }
+.adm-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 0; }
+.adm-stats div { background: var(--surface-2); border-radius: 10px; padding: 6px; text-align: center; }
+.adm-stats dt { font-size: .7rem; color: var(--soft); text-transform: uppercase; letter-spacing: .06em; }
+.adm-stats dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.btn.danger { background: var(--rose); color: #fff; border-color: transparent; }

@@ -36,6 +36,12 @@ catch (e) {
   // Only a missing file means a first run. Anything else must not be papered over, or the next save would wipe every player.
   if (e.code !== 'ENOENT') { console.error('players.json exists but cannot be read (' + e.message + '). Fix or move it; a copy of the last good save is players.json.bak.'); process.exit(1); }
 }
+// Admins are named in the ADMINS setting on the server (comma-separated player names). Nobody can make themselves one
+// from the website. The list is applied at every start, so removing a name there takes the rights away.
+const ADMINS = (process.env.ADMINS || '').split(',').map(n => G.key(n)).filter(Boolean);
+Object.values(players).forEach(p => { if (ADMINS.includes(G.key(p.name))) p.admin = true; else delete p.admin; });
+const isAdmin = p => !!(p && p.admin === true && ADMINS.length);
+ADMINS.filter(k => !Object.values(players).some(p => G.key(p.name) === k)).forEach(k => console.log('ADMINS lists "' + k + '", but no player has that name yet. Register it on the website straight away.'));
 let saveTimer = null, saving = false, dirty = false, boardCache = null;
 function savePlayers() { boardCache = null; clearTimeout(saveTimer); saveTimer = setTimeout(writePlayers, 200); }   // any change also refreshes the leaderboard
 function writePlayers() {
@@ -73,7 +79,7 @@ function nameTaken(name, except) { const k = G.key(name); return Object.values(p
 function pub(p) { const r = G.rankOf(p); return { id: p.id, name: p.name, kingdom: p.kingdom, royal: p.royal, level: p.level, total: p.total, wins: p.wins, rounds: p.rounds, streak: p.streak, best: p.best, rank: r ? r.id : null, title: r ? G.rankTitle(r, p) : '' }; }
 function priv(p) {
   const prog = {}; G.ACHIEVEMENTS.forEach(a => { prog[a.id] = Math.min(a.goal, a.value(p)); });
-  return Object.assign(pub(p), { refereed: p.refereed || 0, news: p.news || [], levelPoints: p.levelPoints, need: G.nextLevelNeed(p), quizReady: G.quizReady(p), quizPending: !!p.quiz, quizFails: p.quizFails, hasPassword: !!p.pw, ranks: p.ranks, ach: p.ach, progress: prog });
+  return Object.assign(pub(p), { refereed: p.refereed || 0, news: p.news || [], levelPoints: p.levelPoints, need: G.nextLevelNeed(p), quizReady: G.quizReady(p), quizPending: !!p.quiz, quizFails: p.quizFails, hasPassword: !!p.pw, admin: isAdmin(p), ranks: p.ranks, ach: p.ach, progress: prog });
 }
 function meta() {
   return {
@@ -255,7 +261,7 @@ function handle(req, res) {
       if (err) return oops(res, err);
       if (nameTaken(name)) return send(res, 409, { error: 'That name is taken. If it is yours, sign in instead.' });
       const id = 'p' + rid(6), p = G.newPlayer(id, name, Date.now());
-      p.pw = pw; p.sessions = []; if (typeof b.kingdom === 'string' && Object.prototype.hasOwnProperty.call(G.KINGDOMS, b.kingdom)) p.kingdom = b.kingdom; if (['Prince', 'Princess', 'Champion'].includes(b.royal)) p.royal = b.royal;
+      p.pw = pw; p.sessions = []; if (ADMINS.includes(G.key(name))) p.admin = true; if (typeof b.kingdom === 'string' && Object.prototype.hasOwnProperty.call(G.KINGDOMS, b.kingdom)) p.kingdom = b.kingdom; if (['Prince', 'Princess', 'Champion'].includes(b.royal)) p.royal = b.royal;
       players[id] = p; send(res, 200, { key: signIn(p), me: priv(p) });
     } catch (e) { oops(res, e); } });
   });
@@ -282,11 +288,40 @@ function handle(req, res) {
     checkPw(typeof b.current === 'string' ? b.current.slice(0, 100) : '', me.pw, good => { try { if (!good) return send(res, 401, { error: 'The current password is not right.' }); set(); } catch (e) { oops(res, e); } });
   });
   if (POST && what === 'profile') return readBody(req, res, b => {
-    if (b.name !== undefined) { const name = cleanName(b.name); if (G.key(name).length < 2) return send(res, 400, { error: 'Choose a name with at least two letters.' }); if (nameTaken(name, me.id)) return send(res, 409, { error: 'That name is taken. Choose another.' }); me.name = name; }
+    if (b.name !== undefined) { const name = cleanName(b.name); if (G.key(name).length < 2) return send(res, 400, { error: 'Choose a name with at least two letters.' }); if (nameTaken(name, me.id)) return send(res, 409, { error: 'That name is taken. Choose another.' });
+      if (G.key(name) !== G.key(me.name) && (isAdmin(me) || ADMINS.includes(G.key(name)))) return send(res, 409, { error: isAdmin(me) ? 'An admin’s name is set on the server and cannot be changed here.' : 'That name is taken. Choose another.' });   // admin rights follow the name
+      me.name = name; }
     if (typeof b.kingdom === 'string' && Object.prototype.hasOwnProperty.call(G.KINGDOMS, b.kingdom)) me.kingdom = b.kingdom;
     if (['Prince', 'Princess', 'Champion'].includes(b.royal)) me.royal = b.royal;
     savePlayers(); rooms.forEach(r => { if (r.members.has(me.id)) tell(r); }); send(res, 200, { me: priv(me) });
   });
+
+  /* admin: look after accounts and check the leaderboard */
+  if (what === 'admin') {
+    if (!isAdmin(me)) return send(res, 403, { error: 'Only an admin can do that.' });
+    const target = id => has(id) ? players[id] : null, seated = id => Array.from(rooms.values()).some(r => { const m = r.members.get(id); return m && online(m); });
+    if (GET && parts[2] === 'players') {
+      const k = G.key(String(url.searchParams.get('q') || '').slice(0, 40)), all = ranked();
+      const list = all.filter(p => !k || G.key(p.name).includes(k)).slice(0, 500).map(x => { const p = players[x.id]; return Object.assign({}, x, { refereed: p.refereed || 0, levelPoints: p.levelPoints, createdAt: p.createdAt, lastSeen: p.lastSeen, devices: sessionsOf(p).length, online: seated(p.id), admin: isAdmin(p) }); });
+      return send(res, 200, { total: all.length, players: list });
+    }
+    if (POST && parts[2] === 'remove') return readBody(req, res, b => {
+      const p = target(b.id);
+      if (!p) return send(res, 404, { error: 'There is no such player.' });
+      if (isAdmin(p)) return send(res, 409, { error: 'An admin account cannot be removed here. Take the name out of ADMINS on the server first.' });
+      dropFromOtherTables(p.id, null); pace.delete(p.id); delete players[p.id]; savePlayers();
+      console.log('admin ' + me.name + ' removed the account ' + p.name + ' (' + p.id + ')');
+      send(res, 200, { ok: true, removed: p.name });
+    });
+    if (POST && parts[2] === 'password') return readBody(req, res, b => {
+      const p = target(b.id);
+      if (!p) return send(res, 404, { error: 'There is no such player.' });
+      if (!okPw(b.password)) return send(res, 400, { error: 'Choose a password of at least 6 characters.' });
+      if (isAdmin(p) && p !== me) return send(res, 409, { error: 'Another admin changes their own password.' });
+      hashPw(b.password, (err, pw) => { try { if (err) return oops(res, err); p.pw = pw; p.sessions = []; savePlayers(); console.log('admin ' + me.name + ' set a new password for ' + p.name); send(res, 200, { ok: true }); } catch (e) { oops(res, e); } });   // every device of theirs is signed out
+    });
+    return send(res, 404, { error: 'not found' });
+  }
 
   /* levels: the story opens when the points are there; the quiz decides the rest */
   if (GET && what === 'story') {

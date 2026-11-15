@@ -13,7 +13,7 @@ const until = async (f, what) => { for (let i = 0; i < 100; i++) { if (f()) retu
 const meOf = async key => (await call('GET', '/api/me', key)).json.me;
 
 (async () => {
-  const srv = spawn('node', [path.join(__dirname, '..', 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT, DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '150', REVIEW_MS: '4000', MIN_PLAY_MS: '0', REFEREE_GRACE_MS: '500', ALLOWED_ORIGINS: 'https://game.mosi-app.com' }), stdio: 'inherit' });
+  const srv = spawn('node', [path.join(__dirname, '..', 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT, DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '150', REVIEW_MS: '4000', MIN_PLAY_MS: '0', REFEREE_GRACE_MS: '500', ADMINS: 'mohsey, Nobody Yet', ALLOWED_ORIGINS: 'https://game.mosi-app.com' }), stdio: 'inherit' });
   try {
     await sleep(700);
     const meta = (await call('GET', '/api/meta')).json;
@@ -149,6 +149,25 @@ const meOf = async key => (await call('GET', '/api/me', key)).json.me;
     ok(locked === 429 && (await call('POST', '/api/login', null, { name: 'Rudabeh', password: 'secret-Rudabeh' })).status === 429, 'repeated wrong passwords are locked out for a while');
     const before2 = (await call('GET', '/health')).json.tables; for (let i = 0; i < 6; i++) await call('POST', '/api/rooms', B.key, {});
     ok((await call('GET', '/health')).json.tables <= before2 + 1, 'one player cannot pile up empty tables');
+    // the admin: only Mohsey (named in ADMINS on the server) can look after accounts
+    ok((await meOf(A.key)).admin === true && (await meOf(B.key)).admin === false, 'the player named in ADMINS is an admin; nobody else is');
+    ok((await call('GET', '/api/admin/players', B.key)).status === 403 && (await call('POST', '/api/admin/remove', B.key, { id: C.me.id })).status === 403 && (await call('GET', '/api/admin/players')).status === 401, 'everyone else is refused the admin pages');
+    ok((await call('POST', '/api/profile', A.key, { name: 'Someone Else' })).status === 409 && (await call('POST', '/api/profile', B.key, { name: 'Nobody Yet' })).status === 409, 'admin rights cannot be moved by renaming: an admin keeps their name, and nobody can take a name listed as admin');
+    const adm = (await call('GET', '/api/admin/players', A.key)).json;
+    ok(adm.total === 4 && adm.players[0].name === 'Mohsey' && adm.players.every((p, i) => p.place === i + 1) && adm.players.every(p => typeof p.lastSeen === 'number' && typeof p.devices === 'number' && p.refereed >= 0) && !/"pw"|sessions/.test(JSON.stringify(adm)), 'the admin sees every account in leaderboard order, with when they joined and were last seen, and no passwords');
+    ok((await call('GET', '/api/admin/players?q=zal', A.key)).json.players.map(p => p.name).join() === 'Zal', 'the admin can search for an account');
+    const T1 = (await call('POST', '/api/register', null, { name: 'Test account', password: 'testing-1' })).json, tTable = (await call('POST', '/api/rooms', T1.key, {})).json.code, tEye = await listen(tTable, T1.key);
+    await until(() => tEye.state, 'test account at a table'); const tables0 = (await call('GET', '/health')).json.tables;
+    ok((await call('POST', '/api/admin/remove', A.key, { id: A.me.id })).status === 409 && (await call('POST', '/api/admin/remove', A.key, { id: '__proto__' })).status === 404 && (await call('POST', '/api/admin/remove', A.key, { id: { x: 1 } })).status === 404, 'an admin account cannot be removed, and nonsense ids are refused');
+    const rm = await call('POST', '/api/admin/remove', A.key, { id: T1.me.id });
+    ok(rm.status === 200 && rm.json.removed === 'Test account' && (await call('GET', '/api/me', T1.key)).status === 401 && (await call('POST', '/api/login', null, { name: 'Test account', password: 'testing-1' })).status === 401, 'the admin removes the test account: its key and password stop working at once');
+    ok(!(await call('GET', '/api/leaderboard')).json.players.some(p => p.name === 'Test account') && (await call('GET', '/health')).json.tables === tables0 - 1, 'it disappears from the leaderboard, and the table it sat at closes');
+    await sleep(400); ok(!fs.readFileSync(path.join(fx.dir, 'players.json'), 'utf8').includes('Test account'), 'and it is gone from the saved file');
+    ok((await call('POST', '/api/register', null, { name: 'Test account', password: 'testing-2' })).status === 200, 'the name is free again');
+    const T2 = (await call('POST', '/api/register', null, { name: 'Forgetful', password: 'forgot-1' })).json;
+    ok((await call('POST', '/api/admin/password', A.key, { id: T2.me.id, password: '123' })).status === 400, 'a new password needs at least 6 characters');
+    ok((await call('POST', '/api/admin/password', A.key, { id: T2.me.id, password: 'given-by-admin' })).status === 200 && (await call('GET', '/api/me', T2.key)).status === 401 && (await call('POST', '/api/login', null, { name: 'Forgetful', password: 'given-by-admin' })).status === 200, 'the admin can give a player who forgot their password a new one; their old sign-ins end');
+
     const again = await listen(code, A.key); await until(() => again.state, 'second stream'); await sleep(200);
     ok((await call('GET', '/health')).json.ok === true, 'the server is still up after all of that'); again.close();
 

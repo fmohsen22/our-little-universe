@@ -7,7 +7,7 @@ const shots = process.env.SHOTS; if (shots) fs.mkdirSync(shots, { recursive: tru
 const ok = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log('  ok  ' + m); };
 (async () => {
   const web = spawn('python3', ['-m', 'http.server', '4174', '--bind', '127.0.0.1'], { cwd: root, stdio: 'ignore' });
-  const api = spawn('node', [path.join(root, 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT: '8792', DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '300', REVIEW_MS: '60000', MIN_PLAY_MS: '0', ALLOWED_ORIGINS: 'http://127.0.0.1:4174' }), stdio: 'ignore' });
+  const api = spawn('node', [path.join(root, 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT: '8792', DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '300', REVIEW_MS: '60000', MIN_PLAY_MS: '0', ADMINS: 'Mohsey', ALLOWED_ORIGINS: 'http://127.0.0.1:4174' }), stdio: 'ignore' });
   await new Promise(r => setTimeout(r, 900));
   const browser = await chromium.launch(), errors = [];
   const person = async (name, opts) => { const ctx = await browser.newContext(opts); await ctx.route('**/config.js', r => r.fulfill({ contentType: 'text/javascript', body: "window.WPM_CONFIG={serverUrl:'" + apiUrl + "',princeImage:'assets/prince-mohsey.jpg'};" }));
@@ -81,6 +81,20 @@ const ok = (c, m) => { if (!c) throw new Error('ASSERT: ' + m); console.log('  o
     await b.goto(site + '#leaders'); await b.waitForSelector('.leaders tbody tr'); const rows = await b.locator('.leaders tbody tr').allTextContents();
     await b.fill('#l-find', 'rud'); await b.waitForFunction(() => document.querySelectorAll('.leaders tbody tr').length === 1); ok(/Rudabeh/.test(await b.textContent('.leaders tbody')) && /1 player matches/.test(await b.textContent('#l-box')), 'the leaderboard search finds a player by part of their name'); await b.fill('#l-find', ''); await b.waitForFunction(() => document.querySelectorAll('.leaders tbody tr').length === 4);
     ok(rows.length === 4 && /Mohsey/.test(rows[0]) && /Young Hero/.test(rows[0]) && await b.locator('.leaders tr.you').count() === 1, 'the leaderboard lists all four, Mohsey first, and highlights you'); await fits(b, 'leaderboard'); await shot(b, 'leaders');
+    // the admin page, on a phone
+    await fetch(apiUrl + '/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'My test', password: 'testing-1' }) });
+    await b.goto(site + '#home'); await b.waitForSelector('.me-card'); ok(await b.locator('a[href="#admin"]').count() === 0, 'other players have no Admin link');
+    await b.goto(site + '#admin'); await b.waitForSelector('.me-card'); ok(true, 'and opening the admin address just takes them home');
+    await a.goto(site + '#home'); await a.waitForSelector('a[href="#admin"]'); await a.locator('a[href="#admin"]').tap(); await a.waitForSelector('.adm-list');
+    ok(await a.locator('.adm').count() === 5 && /1\. Mohsey/.test(await a.textContent('.adm-list li:first-child')) && /admin/.test(await a.textContent('.adm-list li:first-child')) && /last seen/.test(await a.textContent('#a-box')), 'the admin page lists all five accounts in leaderboard order, with stats and when each was last seen');
+    await a.fill('#a-find', 'my te'); await a.waitForFunction(() => document.querySelectorAll('.adm').length === 1); ok(/My test/.test(await a.textContent('.adm')), 'the admin finds the test account by name');
+    await fits(a, 'admin'); await shot(a, 'admin');
+    await a.locator('[data-act="admrm"]').tap(); await a.waitForFunction(() => /Tap again to remove My test/.test(document.querySelector('.adm').textContent)); ok(true, 'removing asks for a second tap first');
+    await a.locator('[data-act="admrm"]').tap(); await a.waitForFunction(() => /was removed/.test(document.querySelector('#toast').textContent) && document.querySelectorAll('.adm').length === 0);
+    await a.fill('#a-find', ''); await a.waitForFunction(() => document.querySelectorAll('.adm').length === 4); ok(!/My test/.test(await a.textContent('#a-box')), 'after the second tap the account is gone');
+    a.once('dialog', dlg => dlg.accept('fresh-pass-1')); await a.locator('.adm', { hasText: 'Rudabeh' }).locator('[data-act="admpw"]').tap();
+    await a.waitForFunction(() => /New password set for Rudabeh/.test(document.querySelector('#toast').textContent));
+    ok((await (await fetch(apiUrl + '/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Rudabeh', password: 'fresh-pass-1' }) })).status) === 200, 'the admin gives Rudabeh a new password, and it works');
     await a.goto(site + '#me'); await a.waitForSelector('.profile'); ok(await a.locator('.medal-card.earned').count() === 1 && await a.locator('.medal-card').count() === 17, 'the profile shows eight ranks and nine achievements (with the Wise Judge), one earned'); await fits(a, 'profile'); await shot(a, 'profile');
     const d = await person('D', { ...devices['Pixel 7'] }); await d.goto(site); await d.waitForSelector('#w-name'); await d.locator('[data-m="login"]').click(); await d.fill('#w-name', 'mohsey'); await d.fill('#w-pass', 'wrong-pass'); await d.click('form[data-form="login"] [type=submit]');
     await d.waitForFunction(() => /do not match/.test(document.querySelector('#toast').textContent)); await d.fill('#w-pass', 'rostam-123'); await d.click('form[data-form="login"] [type=submit]');
