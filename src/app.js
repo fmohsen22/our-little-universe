@@ -142,16 +142,26 @@
       meta.levels.map(function (L) {
         var passed = L.n <= me.level, open = L.n === me.level + 1 && me.quizReady, current = L.n === me.level + 1;
         return '<li class="chapter' + (passed ? ' passed' : open ? ' open' : current ? ' current' : ' locked') + '"><span class="ch-n">' + (passed ? '✓' : L.n) + '</span><div><b>' + esc(L.title) + '</b><small>' + esc(L.teaser) + '</small>' +
-          (passed ? '<a class="btn small ghost" href="#level-' + L.n + '">Read again</a>' : open ? '<a class="btn small" href="#level-' + L.n + '">Read the story and take the quiz</a>' : current ? bar(me.levelPoints, me.need) + '<small>' + num(me.levelPoints) + ' of ' + num(L.points) + ' points</small>' : '<small>Needs ' + num(L.points) + ' points after chapter ' + (L.n - 1) + '</small>') + '</div></li>';
+          (passed ? '<a class="btn small ghost" href="#level-' + L.n + '">Read again</a>' : open ? '<a class="btn small" href="#level-' + L.n + '">Read the story and take the quiz</a>' : current ? bar(me.levelPoints, me.need) + '<small>' + num(me.levelPoints) + ' of ' + num(L.points) + ' points</small>' : '<small>Needs ' + num(L.points) + ' points after chapter ' + (L.n - 1) + '</small>') + '</div>' + pic(L.n, true) + '</li>';
       }).join('') + '<li class="chapter locked final">' + window.WPM_PRINCE(56) + '<div><b>Where is Prince Mohsey?</b><small>The last chapter is still being written.</small></div></li></ol>';
   };
+
+  // The chapter pictures (assets/levels), with a description for people who cannot see them.
+  var PICS = ['', 'The Simorgh, a great bird with peacock feathers, lifts a white-haired baby from the snowy slopes of Mount Alborz',
+    'Young Rostam throws his lasso over the red-and-gold colt Rakhsh while an old herdsman watches',
+    'Rostam wrestles the White Div, a horned white demon holding a millstone, in a cave; Rakhsh waits outside',
+    'Rostam and the young Sohrab face each other on horseback between the armies of Iran and Turan',
+    'Prince Siavash, dressed in white on a black horse, rides unharmed out of the fire as the king and court watch',
+    'By moonlight beside the sea, the Simorgh watches as grey-bearded Rostam cuts a branch from a tamarisk tree',
+    'Old Rostam’s horse Rakhsh rears and refuses to go on, while a man watches from inside a hollow tree'];
+  var pic = function (n, small) { return '<img class="' + (small ? 'ch-pic' : 'story-pic') + '" src="assets/levels/level-' + n + (small ? '-small' : '') + '.jpg" alt="' + (small ? '' : PICS[n]) + '" width="' + (small ? 360 : 1080) + '" height="' + (small ? 240 : 720) + '"' + (small ? ' loading="lazy"' : '') + ' onerror="this.remove()">'; };
 
   var quiz = null;
   views.level = function (n) {
     app.innerHTML = '<a class="back" href="#journey">← All chapters</a><div class="card"><p class="note">Opening the chapter…</p></div>'; quiz = null;
     api('GET', '/api/story/' + n).then(function (s) {
       if (location.hash !== '#level-' + n) return;
-      app.innerHTML = '<a class="back" href="#journey">← All chapters</a><article class="card story"><p class="eyebrow">Chapter ' + s.n + '</p><h1>' + esc(s.title) + '</h1>' +
+      app.innerHTML = '<a class="back" href="#journey">← All chapters</a><article class="card story"><p class="eyebrow">Chapter ' + s.n + '</p><h1>' + esc(s.title) + '</h1>' + pic(s.n) +
         (s.video ? '<video controls preload="metadata" src="' + esc(s.video) + '"></video>' : '') + s.story.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') +
         (s.sources.length ? '<p class="note">Retold from the Shahnameh of Ferdowsi. ' + s.sources.map(esc).join(' · ') + '</p>' : '') + '</article>' +
         (s.passed ? '<p class="turn center">You have passed this chapter.</p>' : '<div class="card center" id="q-box"><h2>Ready for the quiz?</h2><p class="soft">' + meta.quiz.size + ' questions about this story. You need ' + meta.quiz.pass + ' right. If you fall short, the points you gathered for this chapter are lost and you earn them again.</p><div class="row mid"><button class="btn" data-act="quiz">Take the quiz</button></div></div>');
