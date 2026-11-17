@@ -112,10 +112,13 @@ const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { e
       // Google's script, replaced by a stand-in button that hands the page a signed test token
       const gB = token({ sub: 'g-222', given_name: 'Manizheh' });
       await ctx.route('https://accounts.google.com/gsi/client', q => q.fulfill({ contentType: 'text/javascript', body:
-        'window.google={accounts:{id:{initialize:function(o){window.__g=o;},renderButton:function(el,o){var b=document.createElement("button");b.type="button";b.id="fake-google";b.textContent=o.text==="signup_with"?"Sign up with Google":"Continue with Google";b.onclick=function(){window.__g.callback({credential:' + JSON.stringify(gB) + '});};el.appendChild(b);}}}};' }));
+        'window.google={accounts:{id:{initialize:function(o){window.__g=o;},renderButton:function(el,o){window.__gopts=o;var b=document.createElement("button");b.type="button";b.id="fake-google";b.textContent=o.text==="signup_with"?"Sign up with Google":"Continue with Google";b.onclick=function(){window.__g.callback({credential:' + JSON.stringify(gB) + '});};el.appendChild(b);}}}};' }));
       const p = await ctx.newPage(); p.on('pageerror', e => errors.push(String(e))); p.on('console', m => { if (m.type() === 'error' && !/fonts\.g|net::ERR|40\d/.test(m.text())) errors.push(m.text()); });
       await p.goto(site); await p.waitForSelector('#fake-google');
-      ok(/Sign up with Google/.test(await p.textContent('#g-btn')) && /No password to remember/.test(await p.textContent('.g-card')), 'the welcome screen offers Google sign-up under the normal form');
+      const gTop = await p.locator('.g-card').boundingBox(), formTop = await p.locator('form[data-form="register"]').boundingBox();
+      ok(/Sign up with Google/.test(await p.textContent('#g-btn')) && /quickest way/.test(await p.textContent('.g-card')) && gTop.y < formTop.y && gTop.y < 900, 'the welcome screen offers Google sign-up at the top, above the name and password form');
+      ok(await p.evaluate(() => window.__gopts.locale === 'en'), 'Google’s button is asked to speak English, like the rest of the site');
+      if (process.env.SHOTS) await p.screenshot({ path: path.join(process.env.SHOTS, 'welcome-google.png') });
       await p.locator('#fake-google').tap(); await p.waitForSelector('#g-name');
       ok(await p.inputValue('#g-name') === 'Manizheh' && /Your email is not shown or kept/.test(await p.textContent('#app')), 'after Google, the player chooses a name in the kingdom (Google’s first name suggested)');
       await p.locator('[data-f="kingdom"][data-v="rum"]').tap(); await p.locator('[data-f="royal"][data-v="Princess"]').tap(); await p.locator('form[data-form="gname"] [type=submit]').tap();

@@ -84,14 +84,14 @@
     var isNew = mode === 'new';
     app.innerHTML = '<section class="hero">' + window.WPM_PRINCE(112) + '<p class="eyebrow">A word game from the Book of Kings</p><h1>Where is <em>Prince Mohsey?</em></h1><p class="soft">Play Esm Famil with friends, earn crowns from the Shahnameh, and unlock the life of Rostam chapter by chapter.</p><a class="btn small ghost" href="#guide">How to play</a></section>' +
       '<div class="seg" role="group" aria-label="Account"><button class="chip" data-act="mode" data-m="new" aria-pressed="' + isNew + '">New player</button><button class="chip" data-act="mode" data-m="login" aria-pressed="' + !isNew + '">I have an account</button></div>' +
+      (meta.googleClientId ? '<div class="card g-card"><div id="g-btn" class="g-btn"></div><p class="note center">' + (isNew ? 'The quickest way: no password to remember.' : 'If you joined with Google, continue with Google.') + '</p></div><div class="or" role="separator"><span>or ' + (isNew ? 'choose a name and password' : 'sign in with your name and password') + '</span></div>' : '') +
       '<form class="card" data-form="' + (isNew ? 'register' : 'login') + '"><div class="field"><label for="w-name">' + (isNew ? 'Your name in the kingdom' : 'Your name') + '</label><input id="w-name" type="text" maxlength="20" autocomplete="username" placeholder="For example: Sufi"></div>' +
       '<div class="field"><label for="w-pass">Password</label><input id="w-pass" type="password" maxlength="100" autocomplete="' + (isNew ? 'new-password' : 'current-password') + '" placeholder="' + (isNew ? 'At least 6 characters' : '') + '"></div>' +
       (isNew ? '<p><b>Choose your kingdom</b></p>' + window.WPM_MAP() +
         kingdomChips('pick', 'iran') +
         '<div class="row" role="group" aria-label="Title">' + ['Champion', 'Prince', 'Princess'].map(function (t, i) { return '<button type="button" class="chip" data-act="pick" data-f="royal" data-v="' + t + '" aria-pressed="' + (i === 0) + '">' + t + '</button>'; }).join('') + '</div>' +
         '<button class="btn big" type="submit">Enter the kingdom</button><p class="note">Your name and password sign you in on any phone or computer, with all your points, crowns and chapters.</p>'
-        : '<button class="btn big" type="submit">Sign in</button><p class="note">Your points, crowns and chapters are waiting.</p>') + '</form>' +
-      (meta.googleClientId ? '<div class="or" role="separator"><span>or</span></div><div class="card g-card"><div id="g-btn" class="g-btn"></div><p class="note center">' + (isNew ? 'No password to remember: use your Google account.' : 'If you joined with Google, continue with Google.') + '</p></div>' : '');
+        : '<button class="btn big" type="submit">Sign in</button><p class="note">Your points, crowns and chapters are waiting.</p>') + '</form>';
     if (meta.googleClientId) googleButton(isNew);
   };
   /* "Continue with Google": Google's own button and script, loaded only when the server has a client ID */
@@ -100,7 +100,7 @@
     var draw = function () {
       var box = $('#g-btn'); if (!box || !window.google || !google.accounts) return;
       google.accounts.id.initialize({ client_id: meta.googleClientId, callback: googleDone, ux_mode: 'popup', auto_select: false, cancel_on_tap_outside: true });
-      google.accounts.id.renderButton(box, { type: 'standard', theme: document.documentElement.dataset.theme === 'light' || (!document.documentElement.dataset.theme && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) ? 'outline' : 'filled_black', size: 'large', shape: 'pill', text: isNew ? 'signup_with' : 'continue_with', width: Math.min(360, box.clientWidth || 320) });
+      google.accounts.id.renderButton(box, { type: 'standard', theme: document.documentElement.dataset.theme === 'light' || (!document.documentElement.dataset.theme && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) ? 'outline' : 'filled_black', size: 'large', shape: 'pill', locale: 'en', text: isNew ? 'signup_with' : 'continue_with', width: Math.min(360, box.clientWidth || 320) });
     };
     if (window.google && google.accounts) return draw();
     if (gLoading) return; gLoading = true;
