@@ -89,17 +89,25 @@ That installs a systemd service on port 8787. A Cloudflare Tunnel public hostnam
 cd ~/our-little-universe && git pull && bash server/install-service.sh
 ```
 
-**Admin:** to make yourself admin, run the installer once with your player name (it is remembered for later updates):
+**The owner dashboard** (`https://game.mosi-app.com/#owner`): one login for you that is not a player. Set it once on the server; it asks for a name and password and stores only a hash of the password in `/etc/our-little-universe.env`:
 
 ```
-cd ~/our-little-universe && ADMINS="YourPlayerName" bash server/install-service.sh
+cd ~/our-little-universe && bash server/set-owner.sh
 ```
 
-Then sign in on the website: the home page shows **🛡️ Admin**. There you see every account in leaderboard order (points, wins, rounds, rounds refereed, when they joined and were last seen), can search, give a player a new password, and remove an account (two taps; it cannot be undone). Several admins: `ADMINS="Name1,Name2"`. An admin's name cannot be changed on the website, and nobody can take a name listed as admin. Removals are written to the server log (`journalctl -u our-little-universe`).
+The dashboard shows who is online right now, open tables and rounds in progress, accounts (new today and this week, active today and this week, how many joined with Google), rounds per day for the last 14 days, how many players are at each chapter, and the newest players. Below it, every account: search, give a new password, or remove one (two taps; it cannot be undone). The page is not linked anywhere on the site. Daily numbers are kept in `stats.json` in the data folder, for 90 days. Run `set-owner.sh` again to change the name or password.
+
+**Continue with Google** (optional). Players can create an account with their Google account instead of a password; they still choose a name in the kingdom, and only Google's account number is stored, never the email. To turn it on:
+
+1. Go to https://console.cloud.google.com, create a project (any name), then **APIs & Services → OAuth consent screen**: choose External, fill in the app name and your email, and publish it.
+2. **APIs & Services → Credentials → Create credentials → OAuth client ID**: type *Web application*; under **Authorised JavaScript origins** add `https://game.mosi-app.com`. Create, and copy the **Client ID** (it ends in `.apps.googleusercontent.com`; it is not a secret).
+3. On the server: `cd ~/our-little-universe && bash server/set-google.sh YOUR-CLIENT-ID.apps.googleusercontent.com`
+
+The Google button appears on the welcome screen as soon as the server has the ID. `bash server/set-google.sh off` turns it off.
 
 Players are stored in `players.json` in the data folder (`~/our-little-universe-data` by default). Back it up. Tables live in memory and end when the server restarts.
 
-Settings (environment): `ADMINS`, `PORT`, `HOST` (default `127.0.0.1`), `DATA_DIR`, `ALLOWED_ORIGINS`, and the pace limits `MIN_PLAY_MS`, `REVIEW_MS` (how long the referee has, default 5 minutes), `ROUNDS_PER_HOUR`.
+Settings (environment): `OWNER_USER` and `OWNER_HASH` (set by `set-owner.sh`), `GOOGLE_CLIENT_ID` (set by `set-google.sh`), `PORT`, `HOST` (default `127.0.0.1`), `DATA_DIR`, `ALLOWED_ORIGINS`, and the pace limits `MIN_PLAY_MS`, `REVIEW_MS` (how long the referee has, default 5 minutes), `ROUNDS_PER_HOUR`.
 
 If `players.json` cannot be read at start, the server refuses to start instead of overwriting it; the previous good save is `players.json.bak`.
 
@@ -119,6 +127,7 @@ node tests/server.test.js    # the real server over HTTP with three players
 node tests/play.js           # four phone-sized browsers electing a referee, playing and judging a full round, the story, the quiz and the leaderboard (needs Playwright)
 node tests/scenario.test.js  # nine players at three tables at once, sign-ins, two server restarts, and every record cross-checked
 node tests/journey.test.js   # five accounts play the whole game with the real stories and quizzes: every chapter, a failed quiz, the riddle, Prince Mohsey, a restart
+node tests/owner.test.js     # the owner dashboard and Google sign-in (with a stand-in for Google), over the API and on a phone
 node tests/finale.test.js    # chapter 8: the riddle, hints, the ending, and games against Prince Mohsey, over the API and on a phone
 node tests/crowd.test.js     # thirty players at four tables at once, each table with an elected referee rejecting made-up answers, every score cross-checked
 ```

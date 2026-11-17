@@ -19,8 +19,8 @@
   }
 
   /* ---------- server ---------- */
-  function api(method, path, body) {
-    var h = {}; if (key) h.Authorization = 'Bearer ' + key; if (body) h['Content-Type'] = 'application/json';
+  function api(method, path, body, as) {
+    var h = {}, k = as || key; if (k) h.Authorization = 'Bearer ' + k; if (body) h['Content-Type'] = 'application/json';
     var ctl = window.AbortController ? new AbortController() : null, timer = ctl ? setTimeout(function () { ctl.abort(); }, 15000) : 0;   // never wait forever
     return fetch(API + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: 'no-store', signal: ctl ? ctl.signal : undefined }).then(function (r) {
       clearTimeout(timer);
@@ -90,8 +90,35 @@
         kingdomChips('pick', 'iran') +
         '<div class="row" role="group" aria-label="Title">' + ['Champion', 'Prince', 'Princess'].map(function (t, i) { return '<button type="button" class="chip" data-act="pick" data-f="royal" data-v="' + t + '" aria-pressed="' + (i === 0) + '">' + t + '</button>'; }).join('') + '</div>' +
         '<button class="btn big" type="submit">Enter the kingdom</button><p class="note">Your name and password sign you in on any phone or computer, with all your points, crowns and chapters.</p>'
-        : '<button class="btn big" type="submit">Sign in</button><p class="note">Your points, crowns and chapters are waiting.</p>') + '</form>';
+        : '<button class="btn big" type="submit">Sign in</button><p class="note">Your points, crowns and chapters are waiting.</p>') + '</form>' +
+      (meta.googleClientId ? '<div class="or" role="separator"><span>or</span></div><div class="card g-card"><div id="g-btn" class="g-btn"></div><p class="note center">' + (isNew ? 'No password to remember: use your Google account.' : 'If you joined with Google, continue with Google.') + '</p></div>' : '');
+    if (meta.googleClientId) googleButton(isNew);
   };
+  /* "Continue with Google": Google's own button and script, loaded only when the server has a client ID */
+  var gLoading = false, gCred = null;
+  function googleButton(isNew) {
+    var draw = function () {
+      var box = $('#g-btn'); if (!box || !window.google || !google.accounts) return;
+      google.accounts.id.initialize({ client_id: meta.googleClientId, callback: googleDone, ux_mode: 'popup', auto_select: false, cancel_on_tap_outside: true });
+      google.accounts.id.renderButton(box, { type: 'standard', theme: document.documentElement.dataset.theme === 'light' || (!document.documentElement.dataset.theme && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) ? 'outline' : 'filled_black', size: 'large', shape: 'pill', text: isNew ? 'signup_with' : 'continue_with', width: Math.min(360, box.clientWidth || 320) });
+    };
+    if (window.google && google.accounts) return draw();
+    if (gLoading) return; gLoading = true;
+    var s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = draw; s.onerror = function () { gLoading = false; var b = $('#g-btn'); if (b) b.innerHTML = '<p class="note center">Google sign-in could not be loaded.</p>'; };
+    document.head.appendChild(s);
+  }
+  function googleDone(resp) {
+    gCred = resp.credential;
+    api('POST', '/api/google', { credential: gCred }).then(function (j) { if (j.needName) googleName(j.suggestion); else { gCred = null; enter(j); } }).catch(fail);
+  }
+  function googleName(suggestion) {
+    app.innerHTML = '<form class="card" data-form="gname"><p class="eyebrow">Signed in with Google</p><h1>Choose your name in the kingdom</h1><p class="soft">This is the name other players see. Your email is not shown or kept.</p>' +
+      '<div class="field"><label for="g-name">Your name in the kingdom</label><input id="g-name" type="text" maxlength="20" autocomplete="nickname" value="' + esc(suggestion || '') + '"></div>' +
+      '<p><b>Choose your kingdom</b></p>' + window.WPM_MAP() + kingdomChips('pick', 'iran') +
+      '<div class="row" role="group" aria-label="Title">' + ['Champion', 'Prince', 'Princess'].map(function (t, i) { return '<button type="button" class="chip" data-act="pick" data-f="royal" data-v="' + t + '" aria-pressed="' + (i === 0) + '">' + t + '</button>'; }).join('') + '</div>' +
+      '<button class="btn big" type="submit">Enter the kingdom</button></form>';
+    window.scrollTo(0, 0);
+  }
 
   /* ---------- how to play: open to everyone, signed in or not ---------- */
   views.guide = function () {
@@ -122,11 +149,10 @@
   };
 
   views.home = function () {
-    app.innerHTML = '<section class="card me-card"><div class="row split"><div class="row">' + medal(me, 64) + '<div><h1 class="me-name">' + esc(royalName(me)) + '</h1><p class="soft">' + esc(me.title || 'Not yet crowned') + ' · chapter ' + me.level + ' of ' + meta.levels.length + '</p></div></div><div class="row">' + (me.admin ? '<a class="btn small" href="#admin">🛡️ Admin</a>' : '') + '<a class="btn small ghost" href="#me">Profile</a></div></div>' +
+    app.innerHTML = '<section class="card me-card"><div class="row split"><div class="row">' + medal(me, 64) + '<div><h1 class="me-name">' + esc(royalName(me)) + '</h1><p class="soft">' + esc(me.title || 'Not yet crowned') + ' · chapter ' + me.level + ' of ' + meta.levels.length + '</p></div></div><div class="row">' + '<a class="btn small ghost" href="#me">Profile</a></div></div>' +
       levelLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') +
       '<dl class="stats4"><div><dt>Points</dt><dd>' + num(me.total) + '</dd></div><div><dt>Victories</dt><dd>' + me.wins + '</dd></div><div><dt>Rounds</dt><dd>' + me.rounds + '</dd></div><div><dt>Best streak</dt><dd>' + me.best + '</dd></div></dl></section>' +
       (me.rounds === 0 && !me.refereed ? '<a class="book-link hall-link guide-link" href="#guide"><span><b>👋 New here? How to play</b><br><span class="note">The rules, the referee, points and chapters, in two minutes</span></span><span aria-hidden="true">→</span></a>' : '') +
-      (me.admin ? '<a class="book-link hall-link" href="#admin"><span><b>🛡️ Admin</b><br><span class="note">Accounts and the leaderboard</span></span><span aria-hidden="true">→</span></a>' : '') +
       '<section class="card"><h2>Play Esm Famil</h2><p class="soft">One letter, eight categories, and a clock. A referee chosen by the table decides which answers count. Unique answers score ' + meta.points.unique + ', shared answers ' + meta.points.shared + '. A table needs at least ' + meta.minTable + ' people.</p><button class="btn big" data-act="create">Start a table</button>' +
       '<p class="note"><a href="#guide">How to play</a></p><form class="inline" data-form="join"><label class="sr" for="h-code">Table code</label><input id="h-code" type="text" maxlength="5" autocapitalize="characters" autocomplete="off" placeholder="Table code"><button class="btn ghost" type="submit">Join</button></form>' +
       '<div id="h-tables"><p class="note">Looking for open tables…</p></div></section>' +
@@ -277,7 +303,7 @@
       '<p><b>Achievements</b></p><ul class="medals">' + meta.achievements.map(function (a) { var at = me.ach[a.id], hid = a.hidden && !at; return '<li class="medal-card' + (at ? ' earned' : '') + (at && a.legendary ? ' legendary' : '') + '">' + (hid ? art('lock', 'bronze', 64, 'Hidden', true) : art(a.art, a.metal, 64, a.name, !at)) + '<div><b>' + (hid ? 'A hidden achievement' : esc(a.name)) + '</b><small>' + (hid ? 'Keep playing. It is earned at the table, not by luck.' : esc(a.desc)) + '</small>' + (at ? '<small class="got">Unlocked ' + new Date(at).toLocaleDateString() + '</small>' : bar(me.progress[a.id], a.goal) + '<small>' + me.progress[a.id] + ' of ' + a.goal + '</small>') + '</div></li>'; }).join('') + '</ul></div>' +
       '<form class="card" data-form="rename"><div class="field"><label for="p-name">Name</label><div class="inline"><input id="p-name" type="text" maxlength="20" value="' + esc(me.name) + '"><button class="btn small ghost" type="submit">Save</button></div></div></form>' +
       '<div class="card"><p><b>The three kingdoms</b></p>' + window.WPM_MAP() + '</div>' +
-      '<form class="card" data-form="password"><p><b>' + (me.hasPassword ? 'Change your password' : 'Set a password') + '</b></p><p class="note">' + (me.hasPassword ? 'Changing it signs you out on your other devices.' : 'With a password you can sign in on any phone or computer.') + '</p>' +
+      '<form class="card" data-form="password"><p><b>' + (me.hasPassword ? 'Change your password' : 'Set a password') + '</b></p><p class="note">' + (me.hasPassword ? 'Changing it signs you out on your other devices.' : (me.google ? 'You signed up with Google. ' : '') + 'With a password you can sign in on any phone or computer.') + '</p>' +
       (me.hasPassword ? '<div class="field"><label for="p-cur">Current password</label><input id="p-cur" type="password" maxlength="100" autocomplete="current-password"></div>' : '') +
       '<div class="field"><label for="p-new">New password</label><input id="p-new" type="password" maxlength="100" autocomplete="new-password" placeholder="At least 6 characters"></div><button class="btn small ghost" type="submit">Save password</button></form>' +
       '<div class="row mid"><button class="linkbtn" data-act="signout">' + (armed === 'signout' ? 'Tap again to sign out' : 'Sign out on this device') + '</button></div>';
@@ -375,46 +401,93 @@
   }
 
   /* ---------- actions ---------- */
-  /* ---------- admin: only for players named in ADMINS on the server ---------- */
-  var adminTimer = 0, adminList = [];
+  /* ---------- the owner's dashboard (game.mosi-app.com/#owner): a separate login, not a player ---------- */
+  var adminTimer = 0, adminList = [], ownerKey = lsGet('owner'), ownerTimer = 0;
   var ago = function (t) { if (!t) return '—'; var m = Math.round((Date.now() - t) / 60000); return m < 2 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' days ago'; };
   var day = function (t) { return t ? new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; };
+  var O = function (method, path, body) { return api(method, '/api/owner/' + path, body, ownerKey).catch(function (e) { if (e.status === 401) { ownerKey = null; lsSet('owner', null); if (location.hash === '#owner') views.owner(); } throw e; }); };
   function adminRow(p) {
     var armedHere = armed === 'rm:' + p.id;
-    return '<li class="adm" data-id="' + p.id + '"><div class="row split"><span><b>' + p.place + '. ' + esc(p.name) + '</b>' + (p.admin ? ' <small class="tag">admin</small>' : '') + (p.online ? ' <small class="tag on">at a table</small>' : '') +
-      '<small>' + kingdom(p.kingdom).name + ' · chapter ' + p.level + ' · ' + esc(p.title || 'not yet crowned') + '</small></span></div>' +
+    return '<li class="adm" data-id="' + p.id + '"><div class="row split"><span><b>' + p.place + '. ' + esc(p.name) + '</b>' + (p.google ? ' <small class="tag">Google</small>' : '') + (p.online ? ' <small class="tag on">at a table</small>' : '') +
+      '<small>' + kingdom(p.kingdom).name + ' · chapter ' + (p.finale ? '8 🪶' : p.level) + ' · ' + esc(p.title || 'not yet crowned') + '</small></span></div>' +
       '<dl class="adm-stats"><div><dt>Points</dt><dd>' + num(p.total) + '</dd></div><div><dt>Wins</dt><dd>' + p.wins + '</dd></div><div><dt>Rounds</dt><dd>' + p.rounds + '</dd></div><div><dt>Refereed</dt><dd>' + p.refereed + '</dd></div></dl>' +
       '<p class="note">Joined ' + day(p.createdAt) + ' · last seen ' + ago(p.lastSeen) + ' · signed in on ' + p.devices + (p.devices === 1 ? ' device' : ' devices') + '</p>' +
-      (p.admin ? '' : '<div class="row"><button class="btn small ghost" data-act="admpw" data-id="' + p.id + '">New password</button><button class="btn small ' + (armedHere ? 'danger' : 'ghost') + '" data-act="admrm" data-id="' + p.id + '">' + (armedHere ? 'Tap again to remove ' + esc(p.name) : 'Remove account') + '</button></div>') + '</li>';
+      '<div class="row"><button class="btn small ghost" data-act="admpw" data-id="' + p.id + '">' + (p.hasPassword ? 'New password' : 'Set a password') + '</button><button class="btn small ' + (armedHere ? 'danger' : 'ghost') + '" data-act="admrm" data-id="' + p.id + '">' + (armedHere ? 'Tap again to remove ' + esc(p.name) : 'Remove account') + '</button></div></li>';
   }
   function adminLoad() {
     var q = ($('#a-find') || {}).value || '';
-    api('GET', '/api/admin/players' + (q.trim() ? '?q=' + encodeURIComponent(q.trim()) : '')).then(function (j) {
+    O('GET', 'players' + (q.trim() ? '?q=' + encodeURIComponent(q.trim()) : '')).then(function (j) {
       adminList = j.players; var b = $('#a-box'); if (!b) return;
       b.innerHTML = '<p class="note">' + (q.trim() ? j.players.length + ' of ' + j.total + ' players match' : j.total + (j.total === 1 ? ' player' : ' players') + ', in leaderboard order') + '</p>' + (j.players.length ? '<ul class="adm-list">' + j.players.map(adminRow).join('') + '</ul>' : '');
     }).catch(fail);
   }
-  views.admin = function () {
-    if (!me.admin) { location.hash = 'home'; return; }
-    app.innerHTML = back + '<h1>Admin</h1><p class="soft">Every account, in leaderboard order. Removing an account deletes its points and badges for good.</p>' +
-      '<div class="field"><label for="a-find">Find a player</label><input id="a-find" type="search" maxlength="20" autocomplete="off" placeholder="Type a name"></div>' +
-      '<div id="a-box"><p class="note">Loading…</p></div>';
+  var tile = function (label, value, sub) { return '<div class="tile"><dt>' + label + '</dt><dd>' + value + '</dd>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; };
+  function roundsChart(days) {   // one series, so no legend: the heading names it. Every column has a tooltip; the busiest day and today carry a label.
+    var max = Math.max.apply(null, days.map(function (d) { return d.rounds; })), top = Math.max(1, max), busiest = days.map(function (d) { return d.rounds; }).lastIndexOf(max);
+    var label = function (d) { return new Date(d.date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }); };
+    return '<div class="cols" role="img" aria-label="Rounds played on each of the last 14 days; the table below has every value">' + days.map(function (d, i) {
+      var tip = label(d) + ': ' + d.rounds + (d.rounds === 1 ? ' round, ' : ' rounds, ') + d.players + (d.players === 1 ? ' player, ' : ' players, ') + d.signups + ' new';
+      return '<div class="col" tabindex="0" data-tip="' + esc(tip) + '"><span class="col-v">' + ((i === busiest && max > 0) || i === days.length - 1 ? d.rounds : '') + '</span><span class="col-bar" style="height:' + (d.rounds ? Math.max(2, 100 * d.rounds / top) : 0) + '%"></span><span class="col-x">' + (i === days.length - 1 ? 'Today' : i % 2 === 1 ? '' : new Date(d.date + 'T12:00:00').getDate()) + '</span></div>';
+    }).join('') + '</div><div class="tip" id="o-tip" role="status" hidden></div>' +
+      '<details class="table-view"><summary>Show as a table</summary><table class="board"><thead><tr><th scope="col">Day</th><th scope="col">Rounds</th><th scope="col">Players</th><th scope="col">New</th></tr></thead><tbody>' +
+      days.slice().reverse().map(function (d) { return '<tr><th scope="row">' + label(d) + '</th><td>' + d.rounds + '</td><td>' + d.players + '</td><td>' + d.signups + '</td></tr>'; }).join('') + '</tbody></table></details>';
+  }
+  function chaptersChart(p) {
+    var rows = p.chapters.map(function (n, i) { return [i === 0 ? 'Not started' : 'Chapter ' + i + ' passed', n]; }).concat([['Found Prince Mohsey 🪶', p.finale]]), top = Math.max(1, Math.max.apply(null, rows.map(function (r) { return r[1]; })));
+    return '<ul class="hbars">' + rows.map(function (r) { return '<li data-tip="' + esc(r[0] + ': ' + r[1] + (r[1] === 1 ? ' player' : ' players')) + '" tabindex="0"><span class="hb-l">' + r[0] + '</span><span class="hb-track"><span class="hb-bar" style="width:' + (r[1] ? Math.max(1, 100 * r[1] / top) : 0) + '%"></span><span class="hb-v">' + r[1] + '</span></span></li>'; }).join('') + '</ul>';
+  }
+  function ownerStats() {
+    O('GET', 'stats').then(function (s) {
+      var box = $('#o-stats'); if (!box) return;
+      box.innerHTML =
+        '<section class="card"><h2>Right now</h2><dl class="tiles">' + tile('People online', s.now.online) + tile('Tables open', s.now.tables) + tile('Rounds being played', s.now.playing) + '</dl></section>' +
+        '<section class="card"><h2>Players</h2><dl class="tiles">' + tile('Accounts', num(s.players.total), s.players.google + ' with Google') + tile('New this week', s.players.newWeek, s.players.newToday + ' today') + tile('Active today', s.players.activeToday) + tile('Active this week', s.players.activeWeek) + '</dl></section>' +
+        '<section class="card"><h2>Rounds</h2><dl class="tiles">' + tile('Today', s.rounds.today, s.rounds.playersToday + (s.rounds.playersToday === 1 ? ' player' : ' players')) + tile('This week', s.rounds.week, s.rounds.playersWeek + (s.rounds.playersWeek === 1 ? ' player' : ' players')) + '</dl>' +
+          '<h3 class="chart-h">Rounds played, last 14 days</h3>' + roundsChart(s.days) + '<p class="note">Counting since ' + day(new Date(s.rounds.since + 'T12:00:00').getTime()) + '.</p></section>' +
+        '<section class="card"><h2>Progress through Rostam’s life</h2><p class="note">How many players are at each point of the story.</p>' + chaptersChart(s.progress) +
+          '<dl class="tiles">' + tile('Quizzes passed', s.progress.quizzesPassed) + tile('Riddle solved', s.progress.finale) + tile('Games vs Mohsey', s.progress.mohseyGames, s.progress.mohseyWins + ' won by players') + '</dl></section>' +
+        '<section class="card"><h2>Newest players</h2>' + (s.recent.length ? '<ul class="tables">' + s.recent.map(function (r) { return '<li><span><b>' + esc(r.name) + '</b><small>' + ago(r.createdAt) + (r.google ? ' · Google' : '') + '</small></span></li>'; }).join('') + '</ul>' : '<p class="note">Nobody yet.</p>') + '</section>' +
+        '<section class="card"><h2>Top 10</h2>' + board(s.top) + '</section>';
+      $('#o-when').textContent = 'Updated ' + new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }).catch(fail);
+  }
+  views.owner = function () {
+    clearInterval(ownerTimer);
+    var backLink = me ? back : '<a class="back" href="#">← Back</a>';
+    if (!ownerKey) {
+      app.innerHTML = backLink + '<form class="card" data-form="owner"><h1>Owner</h1><p class="soft">The dashboard for the game’s owner.</p>' +
+        '<div class="field"><label for="o-user">Name</label><input id="o-user" type="text" maxlength="60" autocomplete="username" autocapitalize="none"></div>' +
+        '<div class="field"><label for="o-pass">Password</label><input id="o-pass" type="password" maxlength="200" autocomplete="current-password"></div>' +
+        '<button class="btn big" type="submit">Open the dashboard</button></form>';
+      return;
+    }
+    app.innerHTML = backLink + '<div class="row split"><h1>Dashboard</h1><div class="row"><button class="btn small ghost" data-act="ownerrefresh">Refresh</button><button class="btn small ghost" data-act="ownerout">Sign out</button></div></div><p class="note" id="o-when"></p>' +
+      '<div id="o-stats" class="stack"><p class="note">Loading…</p></div>' +
+      '<section class="card"><h2>Accounts</h2><p class="soft">Every account, in leaderboard order. Removing an account deletes its points and badges for good.</p>' +
+      '<div class="field"><label for="a-find">Find a player</label><input id="a-find" type="search" maxlength="20" autocomplete="off" placeholder="Type a name"></div><div id="a-box"><p class="note">Loading…</p></div></section>';
     $('#a-find').addEventListener('input', function () { clearTimeout(adminTimer); adminTimer = setTimeout(adminLoad, 250); });
-    adminLoad();
+    ownerStats(); adminLoad();
+    ownerTimer = setInterval(function () { if (location.hash === '#owner' && ownerKey && !document.hidden) ownerStats(); else if (location.hash !== '#owner') clearInterval(ownerTimer); }, 30000);
   };
+  // the tooltips on the dashboard charts: hover, tap or keyboard focus
+  function showTip(el) { var tip = $('#o-tip'), t = el && el.closest('[data-tip]'); if (!tip) return; if (!t) { tip.hidden = true; return; } tip.textContent = t.dataset.tip; tip.hidden = false; var r = t.getBoundingClientRect(); tip.style.left = Math.max(8, Math.min(window.innerWidth - tip.offsetWidth - 8, r.left + r.width / 2 - tip.offsetWidth / 2)) + 'px'; tip.style.top = (r.top + window.scrollY - tip.offsetHeight - 8) + 'px'; }
+  document.addEventListener('mouseover', function (e) { if (location.hash === '#owner') showTip(e.target); });
+  document.addEventListener('focusin', function (e) { if (location.hash === '#owner') showTip(e.target); });
 
   var acts = {
+    ownerrefresh: function () { ownerStats(); adminLoad(); },
+    ownerout: function () { O('POST', 'logout').catch(function () { /* signed out here either way */ }); ownerKey = null; lsSet('owner', null); views.owner(); },
     duelstart: function () { api('POST', '/api/mohsey/start').then(duelPlay).catch(fail); },
     admrm: function (el) {
       var id = el.dataset.id, p = adminList.filter(function (x) { return x.id === id; })[0]; if (!p) return;
       if (armed !== 'rm:' + id) { armed = 'rm:' + id; el.closest('li').outerHTML = adminRow(p); setTimeout(function () { if (armed === 'rm:' + id) { armed = ''; var li = $('li[data-id="' + id + '"]'); if (li) li.outerHTML = adminRow(p); } }, 5000); return; }
-      armed = ''; api('POST', '/api/admin/remove', { id: id }).then(function (j) { toast(j.removed + ' was removed'); adminLoad(); }).catch(fail);
+      armed = ''; O('POST', 'remove', { id: id }).then(function (j) { toast(j.removed + ' was removed'); adminLoad(); }).catch(fail);
     },
     admpw: function (el) {
       var p = adminList.filter(function (x) { return x.id === el.dataset.id; })[0]; if (!p) return;
       var pw = window.prompt('New password for ' + p.name + ' (at least 6 characters). Tell them yourself; they will be signed out everywhere.');
       if (pw === null) return;
-      api('POST', '/api/admin/password', { id: p.id, password: pw }).then(function () { toast('New password set for ' + p.name); }).catch(fail);
+      O('POST', 'password', { id: p.id, password: pw }).then(function () { toast('New password set for ' + p.name); }).catch(fail);
     },
     pick: function (el) { $$('[data-f="' + el.dataset.f + '"]').forEach(function (b) { b.setAttribute('aria-pressed', b === el); }); },
     create: function () { api('POST', '/api/rooms', {}).then(function (j) { location.hash = 'table-' + j.code; }).catch(fail); },
@@ -437,6 +510,7 @@
   function enter(j) { key = j.key; lsSet('key', key); setMe(j.me); route(); }
   function copy(input, msg) { var manual = function () { input.focus(); input.select(); toast('Select the text and copy it'); }; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(input.value).then(function () { toast(msg); }, manual); else manual(); }
   var forms = {
+    owner: function () { api('POST', '/api/owner/login', { user: $('#o-user').value, password: $('#o-pass').value }).then(function (j) { ownerKey = j.key; lsSet('owner', ownerKey); views.owner(); }).catch(fail); },
     duel: function () { duelSend(); },
     riddle: function () {
       var v = $('#f-answer').value; if (!v.trim()) { toast('Type the name of a city'); return; }
@@ -448,6 +522,11 @@
     register: function () {
       var b = { name: $('#w-name').value, password: $('#w-pass').value, kingdom: ($('[data-f="kingdom"][aria-pressed="true"]') || {}).dataset.v, royal: ($('[data-f="royal"][aria-pressed="true"]') || {}).dataset.v };
       api('POST', '/api/register', b).then(enter).catch(fail);
+    },
+    gname: function () {
+      if (!gCred) { mode = 'new'; views.welcome(); return; }
+      api('POST', '/api/google', { credential: gCred, name: $('#g-name').value, kingdom: ($('[data-f="kingdom"][aria-pressed="true"]') || {}).dataset.v, royal: ($('[data-f="royal"][aria-pressed="true"]') || {}).dataset.v })
+        .then(function (j) { gCred = null; enter(j); }).catch(function (e) { if (e.status === 401) { gCred = null; toast('Your Google sign-in timed out. Please continue with Google again.'); mode = 'new'; views.welcome(); } else fail(e); });
     },
     login: function () { api('POST', '/api/login', { name: $('#w-name').value, password: $('#w-pass').value }).then(enter).catch(fail); },
     password: function () {
@@ -472,7 +551,7 @@
     delete app.dataset.key;
     if (!(m = /^table-([A-Za-z]{5})$/.exec(h))) leaveTable();
     if (!meta) return;
-    if (h === 'guide') { views.guide(); window.scrollTo(0, 0); return; }
+    if (h === 'guide' || h === 'owner') { views[h](); window.scrollTo(0, 0); return; }
     if (!me) { views.welcome(); return; }
     if (m) { if (!table || table.code !== m[1].toUpperCase()) openTable(m[1].toUpperCase()); else renderTable(); }
     else if ((m = /^level-([1-7])$/.exec(h))) views.level(+m[1]);
