@@ -42,7 +42,7 @@ If the referee leaves during a round and is not back within 20 seconds, the roun
 
 ## Chapter 8: Where is Prince Mohsey?
 
-After the seven chapters of Rostam's life comes the last one, about Prince Mohsey of Iran: the Simurgh's last feather, his journey west into Rum, the King of Rum who sends him to study, and Princess Sophie.
+After the seven chapters of Rostam's life comes the last one, about Prince Mohsey of Iran: the Simurgh's last feather, his journey west into Rum, the King of Rum who sends him to study, and Princess Softolli.
 
 - **The riddle:** each of chapters 1 to 7 ends with a fragment of the Simurgh's riddle (`clue` in `levels.json`). Chapter 8 opens when all seven are passed and asks: where is Prince Mohsey? Wrong answers get a hint (`hints`, `near`), never a penalty. The right answer (`answers`: Vienna, Wien, Vienne…) tells the ending and earns the Last Feather badge. The answer and the ending are never sent to the browser before the riddle is solved.
 - **Prince Mohsey's table:** players who solved the riddle can play Esm Famil against Prince Mohsey, played by the server (`server/mohsey.js`): his own word lists for every letter, a few lines in character, and no outside service. He trusts answers he does not know. Beating him once earns Equal of the Prince. These games do not change points or the leaderboard.

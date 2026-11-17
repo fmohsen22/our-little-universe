@@ -30,7 +30,7 @@ const knows = (cat, text) => !!(known[cat] && known[cat].has(G.key(text)));
 const LINES = {
   hello: [
     'Welcome to my table! I have not played since I left Iran. Be gentle with me. Or don’t.',
-    'Sophie says I take this game far too seriously. She is right. Shall we begin?',
+    'Princess Softolli says I take this game far too seriously. She is right. Shall we begin?',
     'You found me! The least I can do is beat you at Esm Famil.',
     'Sit down, sit down. A coffee? This is Vienna, after all. Now, the letter…'
   ],
@@ -40,7 +40,7 @@ const LINES = {
     'Well played, but the table belongs to me today. Try again!'
   ],
   lose: [
-    'You beat me! I will have to tell Sophie, and she will never let me forget it.',
+    'You beat me! I will have to tell Princess Softolli, and she will never let me forget it.',
     'Bravo! Even the Simurgh would bow to that.',
     'I surrender my crown, but only until the next round.'
   ],
