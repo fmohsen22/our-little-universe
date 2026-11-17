@@ -45,7 +45,7 @@ Object.values(players).forEach(p => { delete p.admin; });   // an earlier versio
 // server/set-owner.sh, which writes OWNER_USER and OWNER_HASH to /etc/our-little-universe.env.
 const OWNER_USER = process.env.OWNER_USER || '', OWNER_HASH = process.env.OWNER_HASH || '';
 const ownerSessions = new Map();   // hash of the token -> when it expires; signing in again after a restart is fine
-const OWNER_DAYS = 30;
+const OWNER_DAYS = 30, ownerFails = new Map();
 // The owner's password is set in a terminal but typed on a phone: spaces at either end are dropped (as the terminal
 // does), and Persian or Arabic digits count as the same digits, so a Persian keyboard still works.
 const ownerPw = v => (typeof v === 'string' ? v : '').normalize('NFC').replace(/[\u06F0-\u06F9]/g, d => String(d.charCodeAt(0) - 0x06F0)).replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x0660)).trim().slice(0, 200);
@@ -342,10 +342,11 @@ function handle(req, res) {
     if (POST && parts[2] === 'login') return readBody(req, res, b => {
       const ip = String(req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '').slice(0, 64);
       if (!OWNER_USER || !OWNER_HASH) return send(res, 503, { error: 'No owner is set up yet. On the server run: bash server/set-owner.sh' });
-      if (tooManyTries('owner:' + ip, 8) || tooManyTries('owner', 30)) return send(res, 429, { error: 'Too many attempts. Wait 15 minutes and try again.' });
+      const now = Date.now(), fails = (ownerFails.get(ip) || []).filter(x => now - x < 900000), all = (ownerFails.get('*') || []).filter(x => now - x < 900000);
+      if (fails.length >= 8 || all.length >= 30) return send(res, 429, { error: 'Too many wrong tries. Wait 15 minutes and try again.' });   // only wrong tries count
       const u = typeof b.user === 'string' ? b.user.trim().toLowerCase().slice(0, 60) : '';
       checkPw(ownerPw(b.password), OWNER_HASH, good => { try {
-        if (!good || u !== OWNER_USER.toLowerCase()) return send(res, 401, { error: 'That name and password do not match.' });
+        if (!good || u !== OWNER_USER.toLowerCase()) { ownerFails.set(ip, fails.concat(now)); ownerFails.set('*', all.concat(now)); return send(res, 401, { error: 'That name and password do not match.' }); }
         const token = rid(24); ownerSessions.set(sha(token), Date.now() + OWNER_DAYS * 86400000);
         console.log('the owner signed in'); send(res, 200, { key: 'owner.' + token });
       } catch (e) { oops(res, e); } });

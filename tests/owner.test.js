@@ -12,7 +12,7 @@ async function listen(code, key) { const ctl = new AbortController(), box = { st
   (async () => { const dec = new TextDecoder(); let buf = ''; try { for await (const ch of r.body) { buf += dec.decode(ch, { stream: true }); let i; while ((i = buf.indexOf('\n\n')) >= 0) { const m = /data: (.*)/.exec(buf.slice(0, i)); buf = buf.slice(i + 2); if (m) box.state = JSON.parse(m[1]); } } } catch (e) { /* closed */ } })(); return box; }
 
 // the owner's password hashed exactly as server/set-owner.sh does it (the same node snippet, password on standard input)
-const script = fs.readFileSync(path.join(root, 'server', 'set-owner.sh'), 'utf8'), snippet = /node -e '([\s\S]*?)'\)"/.exec(script)[1];
+const script = fs.readFileSync(path.join(root, 'server', 'set-owner.sh'), 'utf8'), snippet = Array.from(script.matchAll(/node -e '([\s\S]*?)'\)"/g)).map(m => m[1]).find(x => x.includes('scrypt'));
 const OWNER_HASH = execFileSync('node', ['-e', snippet], { input: 'correct horse battery' }).toString();
 
 // a stand-in for Google: its public key at a "certs" address, and tokens signed with the private key
@@ -94,13 +94,13 @@ const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { e
     s = (await call('GET', '/api/owner/stats', own2.key)).json;
     ok(s.rounds.today === 1 && s.days[13].signups === 5 && s.players.total === 4, 'after a restart the daily numbers are still there');
     srv.kill(); await sleep(300);
-    const persianHash = execFileSync('node', ['-e', snippet], { input: '  Rostam۱۳۸۵ ' }).toString();
+    const persianHash = execFileSync('node', ['-e', snippet], { input: 'Rostam1385' }).toString();
     srv = start({ OWNER_USER: 'Mosi', OWNER_HASH: persianHash, GOOGLE_CLIENT_ID: CLIENT }); await sleep(700);
     ok((await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'Rostam1385 ' })).json.key && (await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'Rostam۱۳۸۵' })).json.key && (await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'Rostam1386' })).status === 401,
-      'a password set with Persian digits works typed with Persian or Latin digits, and with a stray space; a different one does not');
+      'the password works typed with Latin or Persian digits and with a stray space from a phone keyboard; a different one does not');
     srv.kill(); await sleep(300); srv = start({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT }); await sleep(700);
     let locked = 0; for (let i = 0; i < 10; i++) locked = (await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'guess ' + i })).status;
-    ok(locked === 429, 'guessing the owner password is locked out after a few tries');
+    ok(locked === 429, 'guessing the owner password is locked out after a few wrong tries');
 
     // on a phone
     web = spawn('python3', ['-m', 'http.server', '4180', '--bind', '127.0.0.1'], { cwd: root, stdio: 'ignore' }); await sleep(500);

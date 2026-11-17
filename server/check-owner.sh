@@ -27,7 +27,7 @@ case "$REPLY" in
   "") bad "the game server is not answering on port $PORT. Run: bash server/install-service.sh, then: journalctl -u our-little-universe -n 30 --no-pager";;
   *"Sign in first"*|*"not found"*) bad "the running server is an old version. Run: bash server/install-service.sh (it restarts the server)";;
   *"No owner is set up"*) bad "the running server has not loaded the login. Run: sudo systemctl restart our-little-universe";;
-  *"Too many attempts"*) bad "too many tries: the login is locked for 15 minutes. Wait, or run: sudo systemctl restart our-little-universe";;
+  *"Too many"*) bad "too many tries: the login is locked for 15 minutes. Wait, or run: sudo systemctl restart our-little-universe";;
   *"do not match"*) ok "the running server has the owner login loaded";;
   *) echo "  ??    the server answered: $REPLY";;
 esac

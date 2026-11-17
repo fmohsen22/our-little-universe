@@ -89,13 +89,16 @@ That installs a systemd service on port 8787. A Cloudflare Tunnel public hostnam
 cd ~/our-little-universe && git pull && bash server/install-service.sh
 ```
 
-**The owner dashboard** (`https://game.mosi-app.com/#owner`): one login for you that is not a player. Set it once on the server; it asks for a name and password and stores only a hash of the password in `/etc/our-little-universe.env`:
+**The owner dashboard** (`https://game.mosi-app.com/#owner`): one login for you that is not a player. The name is `admin`. Set the password once on the server:
 
 ```
-cd ~/our-little-universe && bash server/set-owner.sh
+cd ~/our-little-universe && bash server/set-owner.sh            # makes a strong password and shows it once
+cd ~/our-little-universe && bash server/set-owner.sh --choose   # or type your own (shown while you type)
 ```
 
-The dashboard shows who is online right now, open tables and rounds in progress, accounts (new today and this week, active today and this week, how many joined with Google), rounds per day for the last 14 days, how many players are at each chapter, and the newest players. Below it, every account: search, give a new password, or remove one (two taps; it cannot be undone). The page is not linked anywhere on the site. Daily numbers are kept in `stats.json` in the data folder, for 90 days. Run `set-owner.sh` again to change the name or password. If signing in does not work, `bash server/check-owner.sh` finds out why (it prints no secrets).
+Only a hash of the password is stored, in `/etc/our-little-universe.env`. The script restarts the server and tests the login before it finishes.
+
+The dashboard shows who is online right now, open tables and rounds in progress, accounts (new today and this week, active today and this week, how many joined with Google), rounds per day for the last 14 days, how many players are at each chapter, and the newest players. Below it, every account: search, give a new password, or remove one (two taps; it cannot be undone). The page is not linked anywhere on the site. Daily numbers are kept in `stats.json` in the data folder, for 90 days. Run `set-owner.sh` again for a new password. If signing in does not work, `bash server/check-owner.sh` finds out why (it prints no secrets).
 
 **Continue with Google** (optional). Players can create an account with their Google account instead of a password; they still choose a name in the kingdom, and only Google's account number is stored, never the email. To turn it on:
 
