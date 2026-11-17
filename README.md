@@ -118,6 +118,7 @@ node tests/game.test.js      # the rules: scoring, referee rejections, ranks, st
 node tests/server.test.js    # the real server over HTTP with three players
 node tests/play.js           # four phone-sized browsers electing a referee, playing and judging a full round, the story, the quiz and the leaderboard (needs Playwright)
 node tests/scenario.test.js  # nine players at three tables at once, sign-ins, two server restarts, and every record cross-checked
+node tests/journey.test.js   # five accounts play the whole game with the real stories and quizzes: every chapter, a failed quiz, the riddle, Prince Mohsey, a restart
 node tests/finale.test.js    # chapter 8: the riddle, hints, the ending, and games against Prince Mohsey, over the API and on a phone
 node tests/crowd.test.js     # thirty players at four tables at once, each table with an elected referee rejecting made-up answers, every score cross-checked
 ```
