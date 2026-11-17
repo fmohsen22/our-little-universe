@@ -33,6 +33,9 @@ const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { e
     await sleep(700);
     ok((await call('POST', '/api/owner/login', null, { user: 'boss', password: 'x' })).status === 503 && (await call('GET', '/api/meta')).json.googleClientId === '' && (await call('POST', '/api/google', null, { credential: 'x' })).status === 503, 'with nothing set up, the owner login and Google sign-in are simply off');
     srv.kill(); await sleep(300);
+    srv = start({ GOOGLE_CLIENT_ID: 'GOCSPX-thisLooksLikeASecret123' }); await sleep(700);
+    ok((await call('GET', '/api/meta')).json.googleClientId === '' && !JSON.stringify((await call('GET', '/api/meta')).json).includes('GOCSPX'), 'a client secret put in by mistake is never shown, and Google sign-in stays off');
+    srv.kill(); await sleep(300);
     srv = start({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT }); await sleep(700);
 
     // the owner

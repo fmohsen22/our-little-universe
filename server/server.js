@@ -69,7 +69,10 @@ function countSignup() { dayOf().signups += 1; saveStats(); }
 
 // Google sign-in: the browser gets a signed token from Google; the server checks Google's signature, the audience
 // (our client ID) and the expiry, then signs the player in. Only Google's account number is kept, never the email.
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '', GOOGLE_CERTS_URL = process.env.GOOGLE_CERTS_URL || 'https://www.googleapis.com/oauth2/v3/certs';
+// Only something shaped like a client ID is ever used or shown: the client ID is public, a client secret must never be.
+const GOOGLE_RAW = (process.env.GOOGLE_CLIENT_ID || '').trim(), GOOGLE_CLIENT_ID = /^[A-Za-z0-9-]+\.apps\.googleusercontent\.com$/.test(GOOGLE_RAW) ? GOOGLE_RAW : '';
+if (GOOGLE_RAW && !GOOGLE_CLIENT_ID) console.error('GOOGLE_CLIENT_ID is not a Google client ID (it must end in .apps.googleusercontent.com), so Google sign-in is off. Was the client secret used by mistake?');
+const GOOGLE_CERTS_URL = process.env.GOOGLE_CERTS_URL || 'https://www.googleapis.com/oauth2/v3/certs';
 let googleKeys = null, googleKeysAt = 0;
 async function googleKey(kid) {
   if (!googleKeys || Date.now() - googleKeysAt > 3600000 || !googleKeys[kid]) {
