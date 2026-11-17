@@ -38,6 +38,8 @@ const ACHIEVEMENTS = [
   { id: 'keeper', name: 'Keeper of the Book of Kings', art: 'planet', metal: 'gold', legendary: true, goal: 300, desc: 'Play 300 scored rounds.', value: p => p.rounds },
   { id: 'scholar', name: 'Scholar of the Shahnameh', art: 'palette', metal: 'sapphire', goal: 3, desc: 'Pass three level quizzes at the first attempt.', value: p => p.firstTries },
   { id: 'judge', name: 'Wise Judge of the Court', art: 'book', metal: 'emerald', goal: 10, desc: 'Referee 10 rounds.', value: p => p.refereed || 0 },
+  { id: 'feather', name: 'The Last Feather', art: 'feather', metal: 'gold', legendary: true, goal: 1, desc: 'Solve the Simurgh\u2019s riddle and find Prince Mohsey.', value: p => p.finale ? 1 : 0 },
+  { id: 'equal', name: 'Equal of the Prince', art: 'royalcrown', metal: 'ruby', legendary: true, goal: 1, desc: 'Beat Prince Mohsey at his own table.', value: p => p.mohseyWins || 0 },
   { id: 'cup', name: 'The Cup of Kay Khosrow', art: 'cup', metal: 'gold', legendary: true, hidden: true, goal: 1, desc: 'Win a round at a table of five or more.', value: p => p.bigWins }
 ];
 
@@ -88,7 +90,7 @@ function scoreRound(round) {
 function newPlayer(id, name, now) {
   return { id, name, kingdom: 'iran', royal: 'Champion', createdAt: now, lastSeen: now,
     total: 0, level: 0, levelPoints: 0, rounds: 0, wins: 0, streak: 0, best: 0, lossStreak: 0, comebacks: 0, cleanStops: 0, bigWins: 0, firstTries: 0,
-    quizFails: 0, quiz: null, refereed: 0, ranks: {}, ach: {} };
+    quizFails: 0, quiz: null, refereed: 0, finale: 0, mohseyWins: 0, mohseyGames: 0, ranks: {}, ach: {} };
 }
 function rankOf(p) { let cur = null; RANKS.forEach(r => { if (p.ranks[r.id]) cur = r; }); return cur; }
 const KINGDOMS = { iran: 'Iran', turan: 'Turan', rum: 'Rum' };   // Fereydun's division: Iraj, Tur and Salm
@@ -123,7 +125,7 @@ function applyQuiz(p, correct, now) {
   return { passed, level, correct, unlocks: checkUnlocks(p, now) };
 }
 // Leaderboard order: highest level, then lifetime points, then wins, then who got there first.
-function compareBoard(a, b) { return b.level - a.level || b.total - a.total || b.wins - a.wins || a.createdAt - b.createdAt; }
+function compareBoard(a, b) { return b.level - a.level || (b.finale ? 1 : 0) - (a.finale ? 1 : 0) || b.total - a.total || b.wins - a.wins || a.createdAt - b.createdAt; }
 
 module.exports = { MIN_TABLE, notACountry, junk, KINGDOMS, CATEGORIES, LETTERS, DEFAULT_SETTINGS, POINTS, MAX_PLAYERS, MIN_SCORED, LEVELS, RANKS, ACHIEVEMENTS,
   levelPoints, fold, key, clean, startsWith, scoreRound, newPlayer, rankOf, rankTitle, checkUnlocks, nextLevelNeed, quizReady, applyRound, applyQuiz, compareBoard };

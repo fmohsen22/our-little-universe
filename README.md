@@ -40,6 +40,16 @@ If the referee leaves during a round and is not back within 20 seconds, the roun
 - **The quiz:** when the points are there, the chapter's story opens. Then 5 questions drawn from 10; 4 right keeps the chapter. Fail, and the points gathered for that chapter are lost (lifetime points are not) and the story closes until you earn them again.
 - **Chapter 8** is reserved for "Where is Prince Mohsey?" and is not written yet.
 
+## Chapter 8: Where is Prince Mohsey?
+
+After the seven chapters of Rostam's life comes the last one, about Prince Mohsey of Iran: the Simurgh's last feather, his journey west into Rum, the King of Rum who sends him to study, and Princess Sophie.
+
+- **The riddle:** each of chapters 1 to 7 ends with a fragment of the Simurgh's riddle (`clue` in `levels.json`). Chapter 8 opens when all seven are passed and asks: where is Prince Mohsey? Wrong answers get a hint (`hints`, `near`), never a penalty. The right answer (`answers`: Vienna, Wien, Vienne…) tells the ending and earns the Last Feather badge. The answer and the ending are never sent to the browser before the riddle is solved.
+- **Prince Mohsey's table:** players who solved the riddle can play Esm Famil against Prince Mohsey, played by the server (`server/mohsey.js`): his own word lists for every letter, a few lines in character, and no outside service. He trusts answers he does not know. Beating him once earns Equal of the Prince. These games do not change points or the leaderboard.
+- **The leaderboard** ranks players who found Prince Mohsey above others at the same chapter.
+
+All the text of chapter 8 is in `levels.json` under `finale`; change it there and restart the server.
+
 ## The stories
 
 `server/levels.json` holds the seven stories and their quizzes. Each level has `title`, `teaser`, `story` (paragraphs), `video` (a URL, empty for now), `quiz` and `sources`. To add a video, put its address in `video`; to add chapter 8, raise `LEVELS.count` in `server/game.js` and add an eighth entry.
@@ -108,5 +118,6 @@ node tests/game.test.js      # the rules: scoring, referee rejections, ranks, st
 node tests/server.test.js    # the real server over HTTP with three players
 node tests/play.js           # four phone-sized browsers electing a referee, playing and judging a full round, the story, the quiz and the leaderboard (needs Playwright)
 node tests/scenario.test.js  # nine players at three tables at once, sign-ins, two server restarts, and every record cross-checked
+node tests/finale.test.js    # chapter 8: the riddle, hints, the ending, and games against Prince Mohsey, over the API and on a phone
 node tests/crowd.test.js     # thirty players at four tables at once, each table with an elected referee rejecting made-up answers, every score cross-checked
 ```

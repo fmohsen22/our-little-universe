@@ -334,3 +334,24 @@ input[type="search"], input[type="password"] { width: 100%; min-width: 0; font: 
 .ch-pic { flex: none; width: 96px; height: 64px; object-fit: cover; border-radius: 10px; align-self: center; }
 .chapter.locked .ch-pic { filter: grayscale(1); }
 @media (min-width: 560px) { .ch-pic { width: 150px; height: 100px; } }
+
+/* the Simurgh's riddle and Prince Mohsey's table */
+.clue { border: 1px dashed var(--gold); border-radius: 14px; padding: 12px 16px; background: var(--surface-2); }
+.clue p:last-child { font-style: italic; margin: 4px 0 0; }
+.riddle { display: flex; flex-direction: column; gap: 12px; }
+.clues { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; font-style: italic; }
+#f-hint:not(:empty) { color: var(--rose); font-weight: 600; }
+.shake { animation: shake .4s; }
+@keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@media (prefers-reduced-motion: reduce) { .shake { animation: none; } }
+.mohsey { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.duel-board { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.duel-board li { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.duel-board li:last-child { border-bottom: 0; }
+.duel-cat { grid-column: 1 / -1; margin: 0; font: 700 .75rem var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); }
+.duel-cat small { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--surface-2); color: var(--ink); font-size: .7rem; letter-spacing: 0; }
+.duel-head b { font-size: .9rem; } .duel-head.total b { font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+.duel-ans { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
+.duel-ans span { min-width: 0; overflow-wrap: anywhere; }
+.duel-ans.bad span { text-decoration: line-through; color: var(--soft); }
+.duel-ans .pts { min-width: 40px; min-height: 30px; font-size: .9rem; display: grid; place-items: center; cursor: default; }

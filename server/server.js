@@ -26,7 +26,10 @@ const MAX_PLAYERS_TOTAL = 5000, MAX_STREAMS = 600, NEW_PLAYERS_PER_HOUR = 300;
 fs.mkdirSync(DATA, { recursive: true });
 
 let LEVELS = [];
-try { LEVELS = JSON.parse(fs.readFileSync(process.env.LEVELS_FILE || path.join(__dirname, 'levels.json'), 'utf8')).levels || []; } catch (e) { console.error('levels.json could not be read: ' + e.message); }
+let FINALE = null;   // chapter 8: Prince Mohsey's story, the Simurgh's riddle and its ending
+try { const book = JSON.parse(fs.readFileSync(process.env.LEVELS_FILE || path.join(__dirname, 'levels.json'), 'utf8')); LEVELS = book.levels || []; FINALE = book.finale || null; } catch (e) { console.error('levels.json could not be read: ' + e.message); }
+const M = require('./mohsey.js'), MOHSEY_SECS = +(process.env.MOHSEY_SECS || 120);
+const duels = new Map();   // a game against Prince Mohsey in progress, by player
 
 /* ---------- players (persisted) ---------- */
 const FILE = path.join(DATA, 'players.json');
@@ -76,10 +79,10 @@ const tries = new Map();
 function tooManyTries(k, max) { const now = Date.now(), list = (tries.get(k) || []).filter(t => now - t < 900000); if (list.length >= max) { tries.set(k, list); return true; } list.push(now); tries.set(k, list); return false; }
 function cleanName(s) { return (typeof s === 'string' ? s : '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 20); }
 function nameTaken(name, except) { const k = G.key(name); return Object.values(players).some(p => p.id !== except && G.key(p.name) === k); }
-function pub(p) { const r = G.rankOf(p); return { id: p.id, name: p.name, kingdom: p.kingdom, royal: p.royal, level: p.level, total: p.total, wins: p.wins, rounds: p.rounds, streak: p.streak, best: p.best, rank: r ? r.id : null, title: r ? G.rankTitle(r, p) : '' }; }
+function pub(p) { const r = G.rankOf(p); return { id: p.id, name: p.name, kingdom: p.kingdom, royal: p.royal, level: p.level, finale: !!p.finale, total: p.total, wins: p.wins, rounds: p.rounds, streak: p.streak, best: p.best, rank: r ? r.id : null, title: r ? G.rankTitle(r, p) : '' }; }
 function priv(p) {
   const prog = {}; G.ACHIEVEMENTS.forEach(a => { prog[a.id] = Math.min(a.goal, a.value(p)); });
-  return Object.assign(pub(p), { refereed: p.refereed || 0, news: p.news || [], levelPoints: p.levelPoints, need: G.nextLevelNeed(p), quizReady: G.quizReady(p), quizPending: !!p.quiz, quizFails: p.quizFails, hasPassword: !!p.pw, admin: isAdmin(p), ranks: p.ranks, ach: p.ach, progress: prog });
+  return Object.assign(pub(p), { refereed: p.refereed || 0, mohseyWins: p.mohseyWins || 0, mohseyGames: p.mohseyGames || 0, news: p.news || [], levelPoints: p.levelPoints, need: G.nextLevelNeed(p), quizReady: G.quizReady(p), quizPending: !!p.quiz, quizFails: p.quizFails, hasPassword: !!p.pw, admin: isAdmin(p), ranks: p.ranks, ach: p.ach, progress: prog });
 }
 function meta() {
   return {
@@ -203,6 +206,7 @@ setInterval(() => {
   regs.forEach((list, ip) => { if (!list.some(t => now - t < 3600000)) regs.delete(ip); });
   tries.forEach((list, k) => { if (!list.some(t => now - t < 900000)) tries.delete(k); });
   pace.forEach((list, id) => { if (!list.some(t => now - t < 3600000)) pace.delete(id); });
+  duels.forEach((d, id) => { if (now - d.endsAt > 3600000) duels.delete(id); });
 }, 60000).unref();
 
 /* ---------- http ---------- */
@@ -309,7 +313,7 @@ function handle(req, res) {
       const p = target(b.id);
       if (!p) return send(res, 404, { error: 'There is no such player.' });
       if (isAdmin(p)) return send(res, 409, { error: 'An admin account cannot be removed here. Take the name out of ADMINS on the server first.' });
-      dropFromOtherTables(p.id, null); pace.delete(p.id); delete players[p.id]; savePlayers();
+      dropFromOtherTables(p.id, null); pace.delete(p.id); duels.delete(p.id); delete players[p.id]; savePlayers();
       console.log('admin ' + me.name + ' removed the account ' + p.name + ' (' + p.id + ')');
       send(res, 200, { ok: true, removed: p.name });
     });
@@ -327,7 +331,7 @@ function handle(req, res) {
   if (GET && what === 'story') {
     const n = +parts[2], L = LEVELS[n - 1];
     if (!L || !(n <= me.level || (n === me.level + 1 && G.quizReady(me)))) return send(res, 403, { error: 'This chapter is still locked.' });
-    return send(res, 200, { n, title: L.title, story: L.story, video: L.video || '', sources: L.sources || [], passed: n <= me.level });
+    return send(res, 200, { n, title: L.title, story: L.story, video: L.video || '', sources: L.sources || [], clue: L.clue || '', passed: n <= me.level });
   }
   if (POST && what === 'quiz' && parts[2] === 'start') {
     const L = LEVELS[me.level];
@@ -346,6 +350,57 @@ function handle(req, res) {
     const r = G.applyQuiz(me, right, Date.now()); savePlayers();
     send(res, 200, { passed: r.passed, level: r.level, correct: r.correct, of: qz.items.length, unlocks: r.unlocks, me: priv(me) });   // only the count: which ones were wrong is not revealed
   });
+
+  /* chapter 8: the Simurgh's riddle. It opens once all seven chapters are passed. */
+  if (what === 'finale') {
+    if (!FINALE || me.level < G.LEVELS.count) return send(res, 403, { error: 'Pass all seven chapters of Rostam\u2019s life to open the last one.' });
+    const page = () => ({ title: FINALE.title, story: FINALE.story, riddle: FINALE.riddle, clues: LEVELS.map(L => L.clue || ''), solved: !!me.finale, ending: me.finale ? FINALE.ending : undefined });
+    if (GET && parts.length === 2) return send(res, 200, page());
+    if (POST && parts[2] === 'answer') return readBody(req, res, b => {
+      if (me.finale) return send(res, 200, Object.assign(page(), { correct: true, unlocks: [], me: priv(me) }));
+      const k = G.key(typeof b.answer === 'string' ? b.answer.slice(0, 60) : '');
+      if (!k) return send(res, 400, { error: 'Type the name of a city.' });
+      if (tooManyTries('finale:' + me.id, 40)) return send(res, 429, { error: 'The Simurgh is resting. Try again in a few minutes.' });
+      if ((FINALE.answers || []).some(a => k.includes(G.key(a)))) {
+        me.finale = Date.now(); const unlocks = G.checkUnlocks(me, me.finale); savePlayers();
+        console.log(me.name + ' solved the Simurgh\u2019s riddle');
+        return send(res, 200, Object.assign(page(), { correct: true, unlocks, me: priv(me) }));
+      }
+      me.finaleTries = (me.finaleTries || 0) + 1; savePlayers();
+      const near = Object.keys(FINALE.near || {}).find(n => k.includes(G.key(n))), hints = FINALE.hints || [];
+      send(res, 200, { correct: false, hint: near ? FINALE.near[near] : hints[Math.min(me.finaleTries, hints.length) - 1] || 'Not this one.' });
+    });
+    return send(res, 404, { error: 'not found' });
+  }
+
+  /* the last reward: a game of Esm Famil against Prince Mohsey, played by the server. It does not change the leaderboard. */
+  if (what === 'mohsey') {
+    if (!me.finale) return send(res, 403, { error: 'Solve the Simurgh\u2019s riddle to find Prince Mohsey first.' });
+    const d = duels.get(me.id), open = d && Date.now() < d.endsAt + 8000;
+    if (GET && parts.length === 2) return send(res, 200, { wins: me.mohseyWins || 0, draws: me.mohseyDraws || 0, games: me.mohseyGames || 0, duel: open ? { letter: d.letter, cats: d.cats, endsAt: d.endsAt, now: Date.now(), hello: d.hello } : null });
+    if (POST && parts[2] === 'start') {
+      if (open) return send(res, 200, { letter: d.letter, cats: d.cats, endsAt: d.endsAt, now: Date.now(), hello: d.hello });
+      const letters = G.LETTERS.en, cats = G.DEFAULT_SETTINGS.cats.slice(), letter = letters[crypto.randomInt(letters.length)];
+      const duel = { letter, cats, endsAt: Date.now() + MOHSEY_SECS * 1000, bot: M.play(letter, cats), hello: M.pick(M.LINES.hello) };
+      duels.set(me.id, duel); return send(res, 200, { letter, cats, endsAt: duel.endsAt, now: Date.now(), hello: duel.hello });
+    }
+    if (POST && parts[2] === 'answer') return readBody(req, res, b => {
+      if (!d) return send(res, 409, { error: 'There is no game running. Start a new one.' });
+      duels.delete(me.id);
+      const late = !open, src = b.answers && typeof b.answers === 'object' ? b.answers : {}, mine = {};
+      d.cats.forEach(c => { mine[c] = late ? '' : G.clean(src[c]); });
+      const sc = G.scoreRound({ letter: d.letter, cats: d.cats, answers: { you: mine, mohsey: d.bot } });
+      const you = sc.players.you, him = sc.players.mohsey, winner = sc.winner;
+      const unknown = d.cats.filter(c => you.cats[c].status === 'ok' && !you.cats[c].shared && !M.knows(c, you.cats[c].text));
+      const shared = d.cats.filter(c => you.cats[c].shared).length;
+      const notes = [shared ? (shared === 1 ? 'We had the same answer once: we share those points.' : 'We had the same answer ' + shared + ' times: we share those points.') : '',
+        unknown.length ? 'I didn\u2019t know ' + (unknown.length === 1 ? 'one of your words' : unknown.length + ' of your words') + ', but in Rum I learned to trust a friend.' : ''].filter(Boolean);
+      me.mohseyGames = (me.mohseyGames || 0) + 1; if (winner === 'you') me.mohseyWins = (me.mohseyWins || 0) + 1; else if (!winner) me.mohseyDraws = (me.mohseyDraws || 0) + 1;
+      const unlocks = G.checkUnlocks(me, Date.now()); savePlayers();
+      send(res, 200, { letter: d.letter, cats: d.cats, you, mohsey: him, winner, late, notes, line: M.pick(late ? M.LINES.late : winner === 'you' ? M.LINES.lose : winner === 'mohsey' ? M.LINES.win : M.LINES.draw), unknown, wins: me.mohseyWins || 0, draws: me.mohseyDraws || 0, games: me.mohseyGames, unlocks, me: priv(me) });
+    });
+    return send(res, 404, { error: 'not found' });
+  }
 
   /* tables */
   if (what !== 'rooms') return send(res, 404, { error: 'not found' });

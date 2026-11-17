@@ -72,7 +72,8 @@
       "sources": [
         "Ferdowsi, Shahnameh, reign of Manuchehr: the tale of Sam and the Simurgh, Zal and Rudabeh, and the birth of Rostam (as in Dick Davis, Shahnameh: The Persian Book of Kings, Penguin Classics)",
         "A. G. Warner and E. Warner, The Shahnama of Firdausi, vol. 1 (1905)"
-      ]
+      ],
+      "clue": "The one you seek lives where a great river runs east toward the Black Sea."
     },
     {
       "n": 2,
@@ -146,7 +147,8 @@
       "sources": [
         "Ferdowsi, Shahnameh, end of the reign of Manuchehr through the reigns of Nowzar, Zav and Garshasp to the crowning of Kay Qobad (Rostam and the white elephant; Rostam chooses Rakhsh; Rostam brings Kay Qobad from Mount Alborz)",
         "Dick Davis, Shahnameh: The Persian Book of Kings (Penguin Classics); Warner and Warner, The Shahnama of Firdausi, vol. 1"
-      ]
+      ],
+      "clue": "In his city, white horses are taught to dance."
     },
     {
       "n": 3,
@@ -221,7 +223,8 @@
       "sources": [
         "Ferdowsi, Shahnameh, reign of Kay Kavus: the war in Mazandaran and the Seven Labours (Haft Khan) of Rostam",
         "Dick Davis, Shahnameh: The Persian Book of Kings (Penguin Classics); Warner and Warner, The Shahnama of Firdausi, vol. 2"
-      ]
+      ],
+      "clue": "Twice the armies of the East camped at its walls, and twice they turned back."
     },
     {
       "n": 4,
@@ -296,7 +299,8 @@
       "sources": [
         "Ferdowsi, Shahnameh, reign of Kay Kavus: the tale of Sohrab",
         "Dick Davis, Shahnameh: The Persian Book of Kings (Penguin Classics); Warner and Warner, The Shahnama of Firdausi, vol. 2"
-      ]
+      ],
+      "clue": "Its people dance in three beats, turning and turning, in halls of gold."
     },
     {
       "n": 5,
@@ -371,7 +375,8 @@
       "sources": [
         "Ferdowsi, Shahnameh, reign of Kay Kavus: the tale of Siavash, Rostam's war of vengeance, and Giv's search for Kay Khosrow; the tale of Bizhan and Manizheh (reign of Kay Khosrow)",
         "Dick Davis, Shahnameh: The Persian Book of Kings (Penguin Classics); Warner and Warner, The Shahnama of Firdausi, vols. 2-3"
-      ]
+      ],
+      "clue": "The summer palace of its emperors is painted the yellow of saffron."
     },
     {
       "n": 6,
@@ -446,7 +451,8 @@
       "sources": [
         "Ferdowsi, Shahnameh, reign of Goshtasp: the tale of Rostam and Esfandiyar",
         "Dick Davis, Shahnameh: The Persian Book of Kings (Penguin Classics); Warner and Warner, The Shahnama of Firdausi, vol. 5"
-      ]
+      ],
+      "clue": "Its bakers hide apricot beneath chocolate, and once quarrelled about it for years."
     },
     {
       "n": 7,
@@ -521,7 +527,48 @@
       "sources": [
         "Ferdowsi, Shahnameh, reign of Goshtasp: the tale of Rostam and Shaghad (the death of Rostam)",
         "Dick Davis, Shahnameh: The Persian Book of Kings (Penguin Classics); Warner and Warner, The Shahnama of Firdausi, vol. 5"
-      ]
+      ],
+      "clue": "In its old heart a great church wears a roof of coloured tiles, and the people call its tower Steffl."
     }
-  ]
+  ],
+  "finale": {
+    "title": "Where is Prince Mohsey?",
+    "story": [
+      "When Rostam died, the Simurgh flew one last time over Zabolestan. Zal, now very old, stood at his window and watched her circle the house where his son had grown up. She did not land. She let a single feather fall onto his windowsill, and he heard her voice as clearly as on the day she had carried him down from Mount Alborz.",
+      "“This is my last feather for your family,” she said. “Do not burn it for war. Keep it for a child of Iran who is lost, as you were once lost. When it is burned, I will come one final time.”",
+      "Zal laid the feather in a box of sandalwood. The box passed from hand to hand for centuries, from the house of Sam to the kings of Iran, the heirs of Iraj, and it was kept in the royal treasury long after anyone remembered what it was for. Rostam’s battles became songs, the songs became a book, and the book became the Shahnameh.",
+      "In time a prince was born in that royal house and named Mohsey. As a boy he read the Book of Kings until the candles burned out. He knew every labour of Rostam and every line of Fereydun’s division of the world. And he could never sit still. He climbed the palace walls to look at the horizon, and he asked every traveller what lay beyond it.",
+      "When he came of age he told his family that he wanted to see the world. His grandmother, the queen mother, did not argue. She opened the treasury, took out the sandalwood box and put it in his hands. “This is not for when you are tired or sad,” she said. “It is only for when you are truly lost.”",
+      "Mohsey rode west. He crossed rivers and deserts, slept in caravanserais and under the stars, and learned a little of every language on the road. Then, high in the mountains, a storm came down on him. Snow hid the path and the night hid the snow. His horse stopped and would not go on. For the first time in his life Mohsey did not know which way was home and which way was forward.",
+      "He opened the box, struck a spark and burned the last feather. Out of the storm came a sound like a great wind, and the Simurgh settled on the rocks beside him, her feathers glowing like coals.",
+      "“I raised a lost child once,” she said. “His name was Zal. I will not carry you home, Prince of Iran. Home is behind you. What you are looking for is ahead. Ride down into Rum, find the great river that runs east to the Black Sea, and follow it against the current until you reach a city where white horses dance. You will know the rest when you see it.” Before he could thank her, she was gone, and the storm with her.",
+      "So Mohsey came into Rum, the land Fereydun gave to Salm, whose brother Tur had helped him murder Iraj, the first king of Iran. The guards at the frontier saw the seal of Iraj’s line on his ring and did not know what to do. A thousand years ago their kings had been enemies. But the law of Rum was clear: a prince of a royal house must be brought before the King.",
+      "The King of Rum was old and white-bearded, and his eyes were kind. His courtiers whispered as Mohsey bowed before the throne, for they too knew the story of Salm and Iraj. The King raised his hand for silence. “Your ancestor was killed by mine,” he said. “That was a very long time ago. A wise king does not inherit his grandfathers’ quarrels, only their duties. You are welcome here.”",
+      "He saw that the young prince was hungry for learning, so he gave him a place at the royal academy in his capital, the city on the great river. There Mohsey studied the languages of the West, the law of kings, the stars, and the long history of Rum.",
+      "One afternoon in the great library he took down a copy of the Book of Kings and opened it at the story of Fereydun’s sons. A young woman at the same table was reading the same page in another copy. She looked up and told him, quite firmly, that Salm was not entirely to blame. Mohsey told her, just as firmly, that he certainly was. They argued until the librarian asked them to leave, and they kept arguing all the way down the stairs.",
+      "Her name was Sophie, and she was a princess of Rum, of the line of Salm. She was clever, she laughed easily, and she never gave up an argument. Neither did he. They argued again the next day, and the day after that, until neither of them could remember the last day they had not talked.",
+      "Where did the prince of Iran find the princess of Rum? The Simurgh left you a fragment of her riddle at the end of every chapter of Rostam’s life. Put the seven fragments together and name the city."
+    ],
+    "riddle": "Where is Prince Mohsey?",
+    "answers": ["vienna", "wien", "vienne", "viena", "wenen", "viden", "becs", "wieden", "وین"],
+    "near": {
+      "austria": "The right land, but the Simurgh asked for a city. Which city?",
+      "osterreich": "The right land, but the Simurgh asked for a city. Which city?",
+      "danube": "That is the river. Which city stands on it?",
+      "donau": "That is the river. Which city stands on it?"
+    },
+    "hints": [
+      "The Simurgh shakes her head. Read the fragments again: a great river, dancing white horses, a city besieged twice, a dance in three beats.",
+      "The river is the Danube, and the white horses are the Lipizzaners of the Spanish Riding School.",
+      "Today the city is the capital of Austria."
+    ],
+    "ending": [
+      "Vienna. The city on the Danube, where the white horses of the Spanish Riding School dance, where the waltz turns in golden ballrooms, and where the summer palace of Schönbrunn is painted the yellow of saffron.",
+      "Twice the armies of the East came to its walls, and twice they turned back. The third time a man came from the East, he came alone, with no army at all, and the city let him in.",
+      "Mohsey and Sophie walked by the Danube in every season. They ate Sachertorte in coffee houses with marble tables, still arguing about Salm and Iraj, and they waltzed at a winter ball while the bell in the Steffl rang out over the old town.",
+      "When the old King of Rum heard that the prince of Iran and the princess of Rum had chosen each other, he laughed until his crown slipped. “Fereydun divided the world among his sons,” he said, “and their children fought over it for a thousand years. It took two people who would not stop talking to put it back together.”",
+      "Far away, on the summit of Mount Alborz, the Simurgh folded her wings. The last feather had done its work. A child of Iran had been lost, and had been found.",
+      "So where is Prince Mohsey? He is in Vienna. And he has heard that you have come all this way, through seven chapters and every one of Rostam’s battles, to find him. He is waiting at his table, and he would like a game."
+    ]
+  }
 }

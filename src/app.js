@@ -108,6 +108,8 @@
       '<p>Jealous of their brother’s share, Salm and Tur murder Iraj, and from that crime grows the long war between Iran and Turan that fills the age of heroes, and the life of Rostam.</p>' +
       '<p class="note">You belong to the Kingdom of ' + kingdom(me.kingdom).name + ', the realm of ' + kingdom(me.kingdom).heir + '.</p>' +
       '<details class="map-more"><summary>Show the map</summary>' + window.WPM_MAP() + '</details></section>' +
+      (me.finale ? '<a class="book-link hall-link" href="#mohsey"><span><b>👑 Play Prince Mohsey</b><br><span class="note">You found him in Vienna. Now beat him at Esm Famil.</span></span><span aria-hidden="true">→</span></a>'
+        : me.level >= meta.levels.length ? '<a class="book-link hall-link" href="#finale"><span><b>🪶 The last chapter is open</b><br><span class="note">Solve the Simurgh’s riddle: where is Prince Mohsey?</span></span><span aria-hidden="true">→</span></a>' : '') +
       '<a class="book-link hall-link" href="#journey"><span><b>📜 The life of Rostam</b><br><span class="note">Seven chapters to unlock, and one still to come</span></span><span aria-hidden="true">→</span></a>';
     api('GET', '/api/rooms').then(function (j) {
       var box = $('#h-tables'); if (!box) return;
@@ -119,7 +121,7 @@
   function board(list) {
     if (!list.length) return '<p class="note">Nobody yet. Be the first name in the book.</p>';
     return '<div class="scroll"><table class="board leaders"><thead><tr><th scope="col">#</th><th scope="col">Player</th><th scope="col">Chapter</th><th scope="col">Points</th><th scope="col">Wins</th></tr></thead><tbody>' +
-      list.map(function (p, i) { return '<tr' + (me && p.id === me.id ? ' class="you"' : '') + '><td>' + (p.place || i + 1) + '</td><th scope="row"><span class="who-cell">' + medal(p, 30) + '<span>' + esc(royalName(p)) + '<small>' + esc(p.title || 'Not yet crowned') + ' · ' + kingdom(p.kingdom).name + '</small></span></span></th><td>' + p.level + '</td><td>' + num(p.total) + '</td><td>' + p.wins + '</td></tr>'; }).join('') + '</tbody></table></div>';
+      list.map(function (p, i) { return '<tr' + (me && p.id === me.id ? ' class="you"' : '') + '><td>' + (p.place || i + 1) + '</td><th scope="row"><span class="who-cell">' + medal(p, 30) + '<span>' + esc(royalName(p)) + '<small>' + esc(p.title || 'Not yet crowned') + ' · ' + kingdom(p.kingdom).name + '</small></span></span></th><td>' + (p.finale ? '8 🪶' : p.level) + '</td><td>' + num(p.total) + '</td><td>' + p.wins + '</td></tr>'; }).join('') + '</tbody></table></div>';
   }
   var findTimer = 0;
   function findPlayers() {
@@ -143,7 +145,10 @@
         var passed = L.n <= me.level, open = L.n === me.level + 1 && me.quizReady, current = L.n === me.level + 1;
         return '<li class="chapter' + (passed ? ' passed' : open ? ' open' : current ? ' current' : ' locked') + '"><span class="ch-n">' + (passed ? '✓' : L.n) + '</span><div><b>' + esc(L.title) + '</b><small>' + esc(L.teaser) + '</small>' +
           (passed ? '<a class="btn small ghost" href="#level-' + L.n + '">Read again</a>' : open ? '<a class="btn small" href="#level-' + L.n + '">Read the story and take the quiz</a>' : current ? bar(me.levelPoints, me.need) + '<small>' + num(me.levelPoints) + ' of ' + num(L.points) + ' points</small>' : '<small>Needs ' + num(L.points) + ' points after chapter ' + (L.n - 1) + '</small>') + '</div>' + pic(L.n, true) + '</li>';
-      }).join('') + '<li class="chapter locked final">' + window.WPM_PRINCE(56) + '<div><b>Where is Prince Mohsey?</b><small>The last chapter is still being written.</small></div></li></ol>';
+      }).join('') + '<li class="chapter final' + (me.finale ? ' passed' : me.level >= meta.levels.length ? ' open' : ' locked') + '">' + window.WPM_PRINCE(56) + '<div><b>8. Where is Prince Mohsey?</b>' +
+        (me.finale ? '<small>You found him. He is waiting at his table.</small><div class="row"><a class="btn small ghost" href="#finale">Read again</a><a class="btn small" href="#mohsey">Play Prince Mohsey</a></div>'
+          : me.level >= meta.levels.length ? '<small>The last chapter is open. Solve the Simurgh’s riddle.</small><a class="btn small" href="#finale">Open the last chapter</a>'
+          : '<small>Pass all seven chapters to open the last one. Collect the Simurgh’s riddle along the way.</small>') + '</div></li></ol>';
   };
 
   // The chapter pictures (assets/levels), with a description for people who cannot see them.
@@ -156,6 +161,61 @@
     'Old Rostam’s horse Rakhsh rears and refuses to go on, while a man watches from inside a hollow tree'];
   var pic = function (n, small) { return '<img class="' + (small ? 'ch-pic' : 'story-pic') + '" src="assets/levels/level-' + n + (small ? '-small' : '') + '.jpg" alt="' + (small ? '' : PICS[n]) + '" width="' + (small ? 360 : 1080) + '" height="' + (small ? 240 : 720) + '"' + (small ? ' loading="lazy"' : '') + ' onerror="this.remove()">'; };
 
+  /* ---------- chapter 8: the Simurgh's riddle ---------- */
+  function finaleEnding(f) {
+    return '<article class="card story"><p class="eyebrow">The answer</p><h2>' + esc(f.riddle) + '</h2>' + f.ending.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '</article>' +
+      '<div class="card feature center mohsey">' + window.WPM_PRINCE(96) + '<p class="big-text">Prince Mohsey is waiting at his table.</p><div class="row mid"><a class="btn big" href="#mohsey">Play Prince Mohsey</a></div></div>';
+  }
+  views.finale = function () {
+    app.innerHTML = '<a class="back" href="#journey">← All chapters</a><div class="card"><p class="note">Opening the last chapter…</p></div>';
+    api('GET', '/api/finale').then(function (f) {
+      if (location.hash !== '#finale') return;
+      app.innerHTML = '<a class="back" href="#journey">← All chapters</a><article class="card story"><p class="eyebrow">Chapter 8 · the last chapter</p><h1>' + esc(f.title) + '</h1>' +
+        '<div class="center">' + window.WPM_PRINCE(120) + '</div>' + f.story.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '</article>' +
+        (f.solved ? '<div id="f-box">' + finaleEnding(f) + '</div>' :
+          '<div id="f-box"><form class="card riddle" data-form="riddle"><p class="eyebrow">🪶 The Simurgh’s riddle</p><h2>' + esc(f.riddle) + '</h2><ol class="clues">' + f.clues.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ol>' +
+          '<div class="field"><label for="f-answer">Name the city</label><input id="f-answer" type="text" maxlength="60" autocomplete="off" autocapitalize="words" placeholder="The city is…"></div><p class="note" id="f-hint" aria-live="polite"></p>' +
+          '<button class="btn big" type="submit">Answer the Simurgh</button><p class="note center">No points are lost for a wrong answer. Take your time.</p></form></div>');
+    }).catch(function (e) { app.innerHTML = '<a class="back" href="#journey">← All chapters</a><div class="card feature"><p class="big-text">' + esc(e.message) + '</p></div>'; });
+  };
+
+  /* ---------- the last reward: a game against Prince Mohsey ---------- */
+  var duel = null, duelTimer = 0, CATNAME = function (id) { return catOf(id).en; };
+  var record = function (j) { var lost = j.games - j.wins - (j.draws || 0); return 'You ' + j.wins + ' · Prince Mohsey ' + lost + (j.draws ? ' · ' + j.draws + (j.draws === 1 ? ' draw' : ' draws') : ''); };
+  function duelIntro(j, line) {
+    app.innerHTML = back + '<div class="card feature center mohsey">' + window.WPM_PRINCE(120) + '<h1>Prince Mohsey’s table</h1><p class="big-text">“' + esc(line || 'Ah, my guest! Sit down. One letter, eight categories, two minutes. Shall we?') + '”</p>' +
+      '<p class="soft">' + record(j) + '</p><div class="row mid"><button class="btn big" data-act="duelstart">' + (j.games ? 'Play again' : 'Sit down and play') + '</button></div>' +
+      '<p class="note">Prince Mohsey is played by the computer, from his own word lists. These games are just for fun: they do not change the leaderboard.</p></div>';
+  }
+  function duelPlay(d) {
+    duel = d; duel.offset = d.now - Date.now(); var t = function () { return Math.max(0, Math.ceil((duel.endsAt - (Date.now() + duel.offset)) / 1000)); };
+    app.innerHTML = back + '<h1>Against Prince Mohsey</h1><p class="soft center">“' + esc(d.hello) + '”</p><p class="letter">' + esc(d.letter) + '</p><p class="timer" id="d-time">' + t() + '</p>' +
+      '<form class="card" data-form="duel">' + d.cats.map(function (id) { return '<div class="field"><label for="d-' + id + '">' + CATNAME(id) + '</label><input id="d-' + id + '" data-duel="' + id + '" type="text" dir="auto" maxlength="40" autocomplete="off"></div>'; }).join('') +
+      '<button class="btn" type="submit">Done! Show me his answers</button><p class="note center">When the clock runs out, your answers are handed in.</p></form>';
+    clearInterval(duelTimer);
+    duelTimer = setInterval(function () { var el = $('#d-time'); if (!el || !duel) { clearInterval(duelTimer); return; } var s = t(); el.textContent = s; el.classList.toggle('low', s <= 10); if (s <= 0) { clearInterval(duelTimer); duelSend(); } }, 250);
+  }
+  function duelSend() {
+    if (!duel) return; var a = {}; $$('input[data-duel]').forEach(function (el) { a[el.dataset.duel] = el.value; }); duel = null; clearInterval(duelTimer);
+    api('POST', '/api/mohsey/answer', { answers: a }).then(function (r) {
+      setMe(r.me);
+      var side = function (a) { return '<div class="duel-ans' + (a.status === 'ok' ? '' : ' bad') + '"><span dir="auto">' + (esc(a.text) || '—') + '</span><b class="pts" data-v="' + a.pts + '">' + a.pts + '</b></div>'; };
+      var row = function (id) { return '<li><p class="duel-cat">' + CATNAME(id) + (r.unknown.indexOf(id) >= 0 ? ' <small title="He did not know this word">?</small>' : '') + '</p>' + side(r.you.cats[id]) + side(r.mohsey.cats[id]) + '</li>'; };
+      app.innerHTML = back + '<div class="card feature center mohsey">' + window.WPM_PRINCE(96) + '<p class="big-text">' + (r.winner === 'you' ? 'You beat Prince Mohsey!' : r.winner === 'mohsey' ? 'Prince Mohsey wins' : 'A draw') + '</p><p class="turn">' + r.you.total + ' to ' + r.mohsey.total + '</p><p class="soft">“' + esc(r.line) + '”</p></div>' +
+        (r.notes.length ? '<p class="soft center">“' + r.notes.map(esc).join(' ') + '”</p>' : '') +
+        '<div class="card"><ul class="duel-board"><li class="duel-head"><p class="duel-cat">Letter ' + esc(r.letter) + '</p><b>You</b><b>Prince Mohsey</b></li>' + r.cats.map(row).join('') +
+        '<li class="duel-head total"><p class="duel-cat">Total</p><b>' + r.you.total + '</b><b>' + r.mohsey.total + '</b></li></ul></div>' +
+        '<div class="row mid"><button class="btn big" data-act="duelstart">Play again</button></div><p class="soft center">' + record(r) + '</p>';
+      if (r.winner === 'you') celebrate(); if (r.unlocks && r.unlocks.length) ceremony(r.unlocks);
+      window.scrollTo(0, 0);
+    }).catch(fail);
+  }
+  views.mohsey = function () {
+    if (!me.finale) { location.hash = 'journey'; return; }
+    app.innerHTML = back + '<div class="card"><p class="note">Prince Mohsey is pulling up a chair…</p></div>';
+    api('GET', '/api/mohsey').then(function (j) { if (location.hash !== '#mohsey') return; if (j.duel) duelPlay(j.duel); else duelIntro(j); }).catch(fail);
+  };
+
   var quiz = null;
   views.level = function (n) {
     app.innerHTML = '<a class="back" href="#journey">← All chapters</a><div class="card"><p class="note">Opening the chapter…</p></div>'; quiz = null;
@@ -163,6 +223,7 @@
       if (location.hash !== '#level-' + n) return;
       app.innerHTML = '<a class="back" href="#journey">← All chapters</a><article class="card story"><p class="eyebrow">Chapter ' + s.n + '</p><h1>' + esc(s.title) + '</h1>' + pic(s.n) +
         (s.video ? '<video controls preload="metadata" src="' + esc(s.video) + '"></video>' : '') + s.story.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') +
+        (s.clue ? '<aside class="clue"><p class="eyebrow">🪶 The Simurgh’s riddle · fragment ' + s.n + ' of 7</p><p>' + esc(s.clue) + '</p></aside>' : '') +
         (s.sources.length ? '<p class="note">Retold from the Shahnameh of Ferdowsi. ' + s.sources.map(esc).join(' · ') + '</p>' : '') + '</article>' +
         (s.passed ? '<p class="turn center">You have passed this chapter.</p>' : '<div class="card center" id="q-box"><h2>Ready for the quiz?</h2><p class="soft">' + meta.quiz.size + ' questions about this story. You need ' + meta.quiz.pass + ' right. If you fall short, the points you gathered for this chapter are lost and you earn them again.</p><div class="row mid"><button class="btn" data-act="quiz">Take the quiz</button></div></div>');
     }).catch(function (e) { app.innerHTML = '<a class="back" href="#journey">← All chapters</a><div class="card feature"><p class="big-text">' + esc(e.message) + '</p></div>'; });
@@ -313,6 +374,7 @@
   };
 
   var acts = {
+    duelstart: function () { api('POST', '/api/mohsey/start').then(duelPlay).catch(fail); },
     admrm: function (el) {
       var id = el.dataset.id, p = adminList.filter(function (x) { return x.id === id; })[0]; if (!p) return;
       if (armed !== 'rm:' + id) { armed = 'rm:' + id; el.closest('li').outerHTML = adminRow(p); setTimeout(function () { if (armed === 'rm:' + id) { armed = ''; var li = $('li[data-id="' + id + '"]'); if (li) li.outerHTML = adminRow(p); } }, 5000); return; }
@@ -345,6 +407,14 @@
   function enter(j) { key = j.key; lsSet('key', key); setMe(j.me); route(); }
   function copy(input, msg) { var manual = function () { input.focus(); input.select(); toast('Select the text and copy it'); }; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(input.value).then(function () { toast(msg); }, manual); else manual(); }
   var forms = {
+    duel: function () { duelSend(); },
+    riddle: function () {
+      var v = $('#f-answer').value; if (!v.trim()) { toast('Type the name of a city'); return; }
+      api('POST', '/api/finale/answer', { answer: v }).then(function (r) {
+        if (!r.correct) { var h = $('#f-hint'); h.textContent = r.hint; h.classList.remove('shake'); void h.offsetWidth; h.classList.add('shake'); $('#f-answer').select(); return; }
+        setMe(r.me); $('#f-box').innerHTML = finaleEnding(r); $('#f-box').scrollIntoView({ behavior: 'smooth' }); celebrate(); if (r.unlocks && r.unlocks.length) ceremony(r.unlocks);
+      }).catch(fail);
+    },
     register: function () {
       var b = { name: $('#w-name').value, password: $('#w-pass').value, kingdom: ($('[data-f="kingdom"][aria-pressed="true"]') || {}).dataset.v, royal: ($('[data-f="royal"][aria-pressed="true"]') || {}).dataset.v };
       api('POST', '/api/register', b).then(enter).catch(fail);
