@@ -90,6 +90,12 @@ const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { e
     const own2 = (await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'correct horse battery' })).json;
     s = (await call('GET', '/api/owner/stats', own2.key)).json;
     ok(s.rounds.today === 1 && s.days[13].signups === 5 && s.players.total === 4, 'after a restart the daily numbers are still there');
+    srv.kill(); await sleep(300);
+    const persianHash = execFileSync('node', ['-e', snippet], { input: '  Rostam۱۳۸۵ ' }).toString();
+    srv = start({ OWNER_USER: 'Mosi', OWNER_HASH: persianHash, GOOGLE_CLIENT_ID: CLIENT }); await sleep(700);
+    ok((await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'Rostam1385 ' })).json.key && (await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'Rostam۱۳۸۵' })).json.key && (await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'Rostam1386' })).status === 401,
+      'a password set with Persian digits works typed with Persian or Latin digits, and with a stray space; a different one does not');
+    srv.kill(); await sleep(300); srv = start({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT }); await sleep(700);
     let locked = 0; for (let i = 0; i < 10; i++) locked = (await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'guess ' + i })).status;
     ok(locked === 429, 'guessing the owner password is locked out after a few tries');
 

@@ -15,6 +15,7 @@ read -r -s -p "Same password again: " PW2; echo
 # the password goes to node on standard input, so it never appears in the process list or the shell history
 HASH="$(printf '%s' "$PW1" | node -e '
   const c = require("crypto"); let pw = ""; process.stdin.on("data", d => pw += d).on("end", () => {
+    pw = pw.normalize("NFC").replace(/[\u06F0-\u06F9]/g, d => String(d.charCodeAt(0) - 0x06F0)).replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x0660)).trim();
     const salt = c.randomBytes(16); c.scrypt(pw, salt, 32, (e, k) => { if (e) throw e; process.stdout.write(salt.toString("hex") + ":" + k.toString("hex")); }); });')"
 unset PW1 PW2
 sudo touch "$ENV_FILE"

@@ -46,6 +46,9 @@ Object.values(players).forEach(p => { delete p.admin; });   // an earlier versio
 const OWNER_USER = process.env.OWNER_USER || '', OWNER_HASH = process.env.OWNER_HASH || '';
 const ownerSessions = new Map();   // hash of the token -> when it expires; signing in again after a restart is fine
 const OWNER_DAYS = 30;
+// The owner's password is set in a terminal but typed on a phone: spaces at either end are dropped (as the terminal
+// does), and Persian or Arabic digits count as the same digits, so a Persian keyboard still works.
+const ownerPw = v => (typeof v === 'string' ? v : '').normalize('NFC').replace(/[\u06F0-\u06F9]/g, d => String(d.charCodeAt(0) - 0x06F0)).replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x0660)).trim().slice(0, 200);
 
 // Daily numbers for the owner's dashboard: rounds played, who played, and new accounts, for the last 90 days.
 const STATS_FILE = path.join(DATA, 'stats.json');
@@ -338,7 +341,7 @@ function handle(req, res) {
       if (!OWNER_USER || !OWNER_HASH) return send(res, 503, { error: 'No owner is set up yet. On the server run: bash server/set-owner.sh' });
       if (tooManyTries('owner:' + ip, 8) || tooManyTries('owner', 30)) return send(res, 429, { error: 'Too many attempts. Wait 15 minutes and try again.' });
       const u = typeof b.user === 'string' ? b.user.trim().toLowerCase().slice(0, 60) : '';
-      checkPw(typeof b.password === 'string' ? b.password.slice(0, 200) : '', OWNER_HASH, good => { try {
+      checkPw(ownerPw(b.password), OWNER_HASH, good => { try {
         if (!good || u !== OWNER_USER.toLowerCase()) return send(res, 401, { error: 'That name and password do not match.' });
         const token = rid(24); ownerSessions.set(sha(token), Date.now() + OWNER_DAYS * 86400000);
         console.log('the owner signed in'); send(res, 200, { key: 'owner.' + token });
