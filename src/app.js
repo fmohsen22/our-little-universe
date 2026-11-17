@@ -82,7 +82,7 @@
 
   views.welcome = function () {
     var isNew = mode === 'new';
-    app.innerHTML = '<section class="hero">' + window.WPM_PRINCE(112) + '<p class="eyebrow">A word game from the Book of Kings</p><h1>Where is <em>Prince Mohsey?</em></h1><p class="soft">Play Esm Famil with friends, earn crowns from the Shahnameh, and unlock the life of Rostam chapter by chapter.</p></section>' +
+    app.innerHTML = '<section class="hero">' + window.WPM_PRINCE(112) + '<p class="eyebrow">A word game from the Book of Kings</p><h1>Where is <em>Prince Mohsey?</em></h1><p class="soft">Play Esm Famil with friends, earn crowns from the Shahnameh, and unlock the life of Rostam chapter by chapter.</p><a class="btn small ghost" href="#guide">How to play</a></section>' +
       '<div class="seg" role="group" aria-label="Account"><button class="chip" data-act="mode" data-m="new" aria-pressed="' + isNew + '">New player</button><button class="chip" data-act="mode" data-m="login" aria-pressed="' + !isNew + '">I have an account</button></div>' +
       '<form class="card" data-form="' + (isNew ? 'register' : 'login') + '"><div class="field"><label for="w-name">' + (isNew ? 'Your name in the kingdom' : 'Your name') + '</label><input id="w-name" type="text" maxlength="20" autocomplete="username" placeholder="For example: Sufi"></div>' +
       '<div class="field"><label for="w-pass">Password</label><input id="w-pass" type="password" maxlength="100" autocomplete="' + (isNew ? 'new-password' : 'current-password') + '" placeholder="' + (isNew ? 'At least 6 characters' : '') + '"></div>' +
@@ -93,13 +93,42 @@
         : '<button class="btn big" type="submit">Sign in</button><p class="note">Your points, crowns and chapters are waiting.</p>') + '</form>';
   };
 
+  /* ---------- how to play: open to everyone, signed in or not ---------- */
+  views.guide = function () {
+    var P = meta.points, first = meta.levels[0].points, ex = [['Name', 'Sara'], ['Surname', 'Smith'], ['City', 'Shiraz'], ['Country', 'Spain'], ['Animal', 'Snake'], ['Food', 'Soup'], ['Object', 'Spoon'], ['Colour', 'Silver']];
+    var step = function (n, icon, title, body) { return '<section class="card guide-step"><p class="eyebrow">' + n + '</p><h2><span aria-hidden="true">' + icon + '</span> ' + title + '</h2>' + body + '</section>'; };
+    app.innerHTML = (me ? back : '<a class="back" href="#">← Back</a>') + '<h1>How to play</h1><p class="soft">Everything you need, in two minutes.</p>' +
+      step('The game', '✍️', 'Esm Famil in one minute',
+        '<p>Everyone gets the same <b>letter</b> and the same clock. Write one word for each category, starting with that letter.</p>' +
+        '<div class="guide-sheet"><p class="letter-mini">S</p><dl>' + ex.map(function (e) { return '<div><dt>' + e[0] + '</dt><dd>' + e[1] + '</dd></div>'; }).join('') + '</dl></div>' +
+        '<p>The first player to fill <b>every</b> box can press <b>Stop</b>, which ends the round for everyone. Otherwise the round ends when the clock runs out.</p>') +
+      step('Getting together', '👥', 'Start or join a table',
+        '<p>Press <b>Start a table</b> and send the link to your friends (there is a WhatsApp button), or join a table that is already open. A table needs <b>' + meta.minTable + ' to ' + meta.maxPlayers + ' people</b>: a referee and at least two players.</p>') +
+      step('The referee', '⚖️', 'One person judges the answers',
+        '<p>Before the round, anyone can tap <b>Volunteer as referee</b>, and the others vote. The referee does not play that round.</p>' +
+        '<p>When the round ends, the referee sees every answer and taps <b>✓</b> or <b>✗</b> on each one. Is “Snake” an animal? ✓. Is “Sxyz” a city? ✗. Then they press <b>Give the verdict</b>.</p>' +
+        '<p class="note">The game already refuses empty boxes, wrong first letters, nonsense like “sss”, and countries that do not exist. Take turns: be a fair referee and the table will vote for you again.</p>') +
+      step('Points', '⭐', 'How a round is scored',
+        '<ul class="guide-points"><li><b class="pts" data-v="10">' + P.unique + '</b> an answer nobody else wrote</li><li><b class="pts" data-v="5">' + P.shared + '</b> an answer someone else also wrote</li><li><b class="pts" data-v="0">0</b> empty, wrong or rejected</li></ul>' +
+        '<p>The highest score wins the round. Your points and victories are kept in your account, on any phone.</p>') +
+      step('Crowns and badges', '👑', 'Rise through the ranks',
+        '<p>Every victory counts toward a royal title from the Shahnameh, from <b>' + esc(meta.ranks[0].title.replace('{royal}', 'Prince')) + '</b> after your first win to <b>' + esc(meta.ranks[meta.ranks.length - 1].title) + '</b> after ' + meta.ranks[meta.ranks.length - 1].wins + '. There are also badges for streaks, comebacks, refereeing and more. See them all in your profile.</p>') +
+      step('The life of Rostam', '📜', 'Seven chapters to unlock',
+        '<p>Your points also open the seven chapters of Rostam’s life. The first chapter needs ' + num(first) + ' points, about 10 hours of play, and each one after needs a little more.</p>' +
+        '<p>When a chapter opens, read its story and take a short quiz: <b>' + meta.quiz.size + ' questions, ' + meta.quiz.pass + ' right to pass</b>. If you fail, the points for that chapter are lost and you win them again at the table, so read carefully.</p>') +
+      step('The last chapter', '🪶', 'Where is Prince Mohsey?',
+        '<p>At the end of every chapter the Simurgh leaves you <b>one line of a riddle</b>. Remember them. After all seven chapters, the last one asks a single question: where is Prince Mohsey? Find the answer and he will be waiting for you at his own table.</p>') +
+      (me ? '<div class="row mid"><a class="btn big" href="#home">Let’s play</a></div>' : '<div class="row mid"><a class="btn big" href="#">Create my account</a></div>');
+  };
+
   views.home = function () {
     app.innerHTML = '<section class="card me-card"><div class="row split"><div class="row">' + medal(me, 64) + '<div><h1 class="me-name">' + esc(royalName(me)) + '</h1><p class="soft">' + esc(me.title || 'Not yet crowned') + ' · chapter ' + me.level + ' of ' + meta.levels.length + '</p></div></div><div class="row">' + (me.admin ? '<a class="btn small" href="#admin">🛡️ Admin</a>' : '') + '<a class="btn small ghost" href="#me">Profile</a></div></div>' +
       levelLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') +
       '<dl class="stats4"><div><dt>Points</dt><dd>' + num(me.total) + '</dd></div><div><dt>Victories</dt><dd>' + me.wins + '</dd></div><div><dt>Rounds</dt><dd>' + me.rounds + '</dd></div><div><dt>Best streak</dt><dd>' + me.best + '</dd></div></dl></section>' +
+      (me.rounds === 0 && !me.refereed ? '<a class="book-link hall-link guide-link" href="#guide"><span><b>👋 New here? How to play</b><br><span class="note">The rules, the referee, points and chapters, in two minutes</span></span><span aria-hidden="true">→</span></a>' : '') +
       (me.admin ? '<a class="book-link hall-link" href="#admin"><span><b>🛡️ Admin</b><br><span class="note">Accounts and the leaderboard</span></span><span aria-hidden="true">→</span></a>' : '') +
       '<section class="card"><h2>Play Esm Famil</h2><p class="soft">One letter, eight categories, and a clock. A referee chosen by the table decides which answers count. Unique answers score ' + meta.points.unique + ', shared answers ' + meta.points.shared + '. A table needs at least ' + meta.minTable + ' people.</p><button class="btn big" data-act="create">Start a table</button>' +
-      '<form class="inline" data-form="join"><label class="sr" for="h-code">Table code</label><input id="h-code" type="text" maxlength="5" autocapitalize="characters" autocomplete="off" placeholder="Table code"><button class="btn ghost" type="submit">Join</button></form>' +
+      '<p class="note"><a href="#guide">How to play</a></p><form class="inline" data-form="join"><label class="sr" for="h-code">Table code</label><input id="h-code" type="text" maxlength="5" autocapitalize="characters" autocomplete="off" placeholder="Table code"><button class="btn ghost" type="submit">Join</button></form>' +
       '<div id="h-tables"><p class="note">Looking for open tables…</p></div></section>' +
       '<section class="card"><div class="row split"><h2>Leaderboard</h2><a class="btn small ghost" href="#leaders">See everyone</a></div><div id="h-leaders"><p class="note">Loading…</p></div></section>' +
       '<section class="card"><h2>Bring your friends</h2><p class="soft">The more players at the table, the better the game.</p>' + shareRow('Come and play Esm Famil with me in “Where is Prince Mohsey?”', SITE) + '</section>' +
@@ -171,7 +200,8 @@
     api('GET', '/api/finale').then(function (f) {
       if (location.hash !== '#finale') return;
       app.innerHTML = '<a class="back" href="#journey">← All chapters</a><article class="card story"><p class="eyebrow">Chapter 8 · the last chapter</p><h1>' + esc(f.title) + '</h1>' +
-        '<div class="center">' + window.WPM_PRINCE(120) + '</div>' + f.story.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '</article>' +
+        '<img class="story-pic" src="assets/levels/level-8.jpg" alt="Prince Mohsey and Princess Softolli in the great library" width="1080" height="720" onload="var p = document.querySelector(\'.f-portrait\'); if (p) p.remove();" onerror="this.remove()">' +
+        '<div class="center f-portrait">' + window.WPM_PRINCE(120) + '</div>' + f.story.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '</article>' +
         (f.solved ? '<div id="f-box">' + finaleEnding(f) + '</div>' :
           '<div id="f-box"><form class="card riddle" data-form="riddle"><p class="eyebrow">🪶 The Simurgh’s riddle</p><h2>' + esc(f.riddle) + '</h2><ol class="clues">' + f.clues.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ol>' +
           '<div class="field"><label for="f-answer">Name the city</label><input id="f-answer" type="text" maxlength="60" autocomplete="off" autocapitalize="words" placeholder="The city is…"></div><p class="note" id="f-hint" aria-live="polite"></p>' +
@@ -442,6 +472,7 @@
     delete app.dataset.key;
     if (!(m = /^table-([A-Za-z]{5})$/.exec(h))) leaveTable();
     if (!meta) return;
+    if (h === 'guide') { views.guide(); window.scrollTo(0, 0); return; }
     if (!me) { views.welcome(); return; }
     if (m) { if (!table || table.code !== m[1].toUpperCase()) openTable(m[1].toUpperCase()); else renderTable(); }
     else if ((m = /^level-([1-7])$/.exec(h))) views.level(+m[1]);
