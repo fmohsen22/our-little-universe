@@ -56,6 +56,12 @@ const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { e
     srv.kill(); await sleep(300);
     srv = start(Object.assign({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT }, MAILENV)); await sleep(700);
 
+    // the owner's sign-in link
+    srv.kill(); await sleep(300); const linkTok = crypto.randomBytes(24).toString('hex');
+    srv = start(Object.assign({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT, OWNER_LINK: crypto.createHash('sha256').update(linkTok).digest('hex') }, MAILENV)); await sleep(700);
+    const viaLink = (await call('POST', '/api/owner/link', null, { token: linkTok })).json;
+    ok(viaLink.key && (await call('GET', '/api/owner/stats', viaLink.key)).status === 200 && (await call('POST', '/api/owner/link', null, { token: 'f'.repeat(48) })).status === 401 && (await call('POST', '/api/owner/link', null, { token: linkTok.slice(0, 40) })).status === 401, 'the personal sign-in link opens the dashboard with nothing to type; any other link is refused');
+
     // the owner
     ok((await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'wrong password' })).status === 401 && (await call('POST', '/api/owner/login', null, { user: 'someone', password: 'correct horse battery' })).status === 401, 'a wrong password or a wrong name is refused');
     const own = (await call('POST', '/api/owner/login', null, { user: ' mosi ', password: 'correct horse battery' })).json;

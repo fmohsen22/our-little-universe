@@ -102,6 +102,8 @@ cd ~/our-little-universe && bash server/set-owner.sh --choose   # or type your o
 
 Only a hash of the password is stored, in `/etc/our-little-universe.env`. The script restarts the server and tests the login before it finishes.
 
+**Or sign in with a link, nothing to type:** `bash server/owner-link.sh` prints a personal link (`https://game.mosi-app.com/#owner-…`). Opening it signs you in for 30 days. Keep it private like a password; running the script again makes a new link and switches the old one off.
+
 **Messages:** the Contact page (linked at the bottom of every page, and from "Forgot your password?" on the sign-in screen) sends a message to the owner, signed in or not. Messages appear on the dashboard, where you mark them done or delete them, and are kept in `messages.json` in the data folder. A player who forgot their password writes there; find their account on the dashboard and give them a new password.
 
 **Messages by email:** every message is also emailed to you, through your own Gmail. Your address is stored only on the server (in `/etc/our-little-universe.env`) and never appears on the website, in the code or in anything the server sends. Set it up once:

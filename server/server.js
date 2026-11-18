@@ -44,6 +44,7 @@ Object.values(players).forEach(p => { delete p.admin; });   // an earlier versio
 // The owner: one admin login that is not a player. Its name and a hash of its password are set on the server with
 // server/set-owner.sh, which writes OWNER_USER and OWNER_HASH to /etc/our-little-universe.env.
 const OWNER_USER = process.env.OWNER_USER || '', OWNER_HASH = process.env.OWNER_HASH || '';
+const OWNER_LINK = /^[0-9a-f]{64}$/.test(process.env.OWNER_LINK || '') ? process.env.OWNER_LINK : '';   // the hash of the owner's sign-in link (server/owner-link.sh)
 const ownerSessions = new Map();   // hash of the token -> when it expires; signing in again after a restart is fine
 const OWNER_DAYS = 30, ownerFails = new Map();
 // The owner's password is set in a terminal but typed on a phone: spaces at either end are dropped (as the terminal
@@ -367,6 +368,15 @@ function handle(req, res) {
 
   /* the owner's dashboard: not a player account */
   if (what === 'owner') {
+    if (POST && parts[2] === 'link') return readBody(req, res, b => {   // the owner's personal sign-in link: no name or password to type
+      const ip = String(req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '').slice(0, 64), now = Date.now();
+      const fails = (ownerFails.get(ip) || []).filter(x => now - x < 900000);
+      if (fails.length >= 8) return send(res, 429, { error: 'Too many wrong tries. Wait 15 minutes and try again.' });
+      const tok = typeof b.token === 'string' ? b.token.trim() : '', h = Buffer.from(sha(tok), 'hex'), want = Buffer.from(OWNER_LINK || '00', 'hex');
+      if (!OWNER_LINK || !/^[0-9a-f]{48}$/.test(tok) || h.length !== want.length || !crypto.timingSafeEqual(h, want)) { ownerFails.set(ip, fails.concat(now)); return send(res, 401, { error: 'This sign-in link is not valid any more. Make a new one on the server: bash server/owner-link.sh' }); }
+      const token = rid(24); ownerSessions.set(sha(token), now + OWNER_DAYS * 86400000);
+      console.log('the owner signed in with the link'); send(res, 200, { key: 'owner.' + token });
+    });
     if (POST && parts[2] === 'login') return readBody(req, res, b => {
       const ip = String(req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '').slice(0, 64);
       if (!OWNER_USER || !OWNER_HASH) return send(res, 503, { error: 'No owner is set up yet. On the server run: bash server/set-owner.sh' });

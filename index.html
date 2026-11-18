@@ -1003,7 +1003,7 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
       app.innerHTML = backLink + '<form class="card" data-form="owner"><h1>Owner</h1><p class="soft">The dashboard for the game’s owner.</p>' +
         '<div class="field"><label for="o-user">Name</label><input id="o-user" type="text" maxlength="60" autocomplete="username" autocapitalize="none"></div>' +
         '<div class="field"><label for="o-pass">Password</label><input id="o-pass" type="password" maxlength="200" autocomplete="current-password"></div>' +
-        '<button class="btn big" type="submit">Open the dashboard</button></form>';
+        '<button class="btn big" type="submit">Open the dashboard</button><p class="note">Easier: on the server run <code>bash server/owner-link.sh</code> and open the link it shows.</p></form>';
       return;
     }
     app.innerHTML = backLink + '<div class="row split"><h1>Dashboard</h1><div class="row"><button class="btn small ghost" data-act="ownerrefresh">Refresh</button><button class="btn small ghost" data-act="ownerout">Sign out</button></div></div><p class="note" id="o-when"></p>' +
@@ -1120,6 +1120,13 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
     if (!(m = /^table-([A-Za-z]{5})$/.exec(h))) leaveTable();
     if (!meta) return;
     if (h === 'guide' || h === 'owner' || h === 'privacy') { views[h](); window.scrollTo(0, 0); return; }
+    var ol = /^owner-([0-9a-f]{48})$/.exec(h);
+    if (ol) {   // the owner's sign-in link: sign in, then take the secret out of the address bar and the history
+      try { history.replaceState(null, '', location.pathname + '#owner'); } catch (e) { location.hash = 'owner'; }
+      app.innerHTML = '<div class="card feature"><p class="big-text">Signing you in…</p></div>';
+      api('POST', '/api/owner/link', { token: ol[1] }).then(function (j) { ownerKey = j.key; lsSet('owner', ownerKey); views.owner(); }).catch(function (e) { fail(e); views.owner(); });
+      return;
+    }
     var c = /^contact(?:-([a-z]+))?$/.exec(h); if (c) { views.contact(c[1]); window.scrollTo(0, 0); return; }
     if (!me) { views.welcome(); return; }
     if (m) { if (!table || table.code !== m[1].toUpperCase()) openTable(m[1].toUpperCase()); else renderTable(); }
