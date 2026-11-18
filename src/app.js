@@ -267,7 +267,8 @@
   var duel = null, duelTimer = 0, CATNAME = function (id) { return catOf(id).en; };
   var record = function (j) { var lost = j.games - j.wins - (j.draws || 0); return 'You ' + j.wins + ' · Prince Mohsey ' + lost + (j.draws ? ' · ' + j.draws + (j.draws === 1 ? ' draw' : ' draws') : ''); };
   function duelIntro(j, line) {
-    app.innerHTML = back + '<div class="card feature center mohsey">' + window.WPM_PRINCE(120) + '<h1>Prince Mohsey’s table</h1><p class="big-text">“' + esc(line || 'Ah, my guest! Sit down. One letter, eight categories, two minutes. Shall we?') + '”</p>' +
+    app.innerHTML = back + '<img class="story-pic" src="assets/prince-mohsey-full.jpg" alt="Prince Mohsey in the great library in Vienna, smiling, the Book of Kings open before him and the Danube behind the windows" width="1080" height="720" onerror="this.remove()">' +
+      '<div class="card feature center mohsey"><h1>Prince Mohsey’s table</h1><p class="big-text">“' + esc(line || 'Ah, my guest! Sit down. One letter, eight categories, two minutes. Shall we?') + '”</p>' +
       '<p class="soft">' + record(j) + '</p><div class="row mid"><button class="btn big" data-act="duelstart">' + (j.games ? 'Play again' : 'Sit down and play') + '</button></div>' +
       '<p class="note">Prince Mohsey is played by the computer, from his own word lists. These games are just for fun: they do not change the leaderboard.</p></div>';
   }
