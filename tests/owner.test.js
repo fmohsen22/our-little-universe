@@ -25,6 +25,24 @@ function token(claims, opts = {}) {
   return head + '.' + body + '.' + crypto.sign('RSA-SHA256', Buffer.from(head + '.' + body), opts.key || privateKey).toString('base64url');
 }
 
+// a stand-in mail server: it checks the login and keeps every email it is given
+const net = require('net'), SMTP = PORT + 2, mails = [], MAILENV = { MAIL_HOST: '127.0.0.1', MAIL_PORT: String(SMTP), MAIL_TLS: '0', MAIL_TO: 'owner.private@secret-mail.test', MAIL_USER: 'sender.private@secret-mail.test', MAIL_PASS: 'abcd efgh ijkl mnop' };
+const smtp = net.createServer(sock => {
+  let buf = '', mode = 'cmd', data = '', step = 0, user = '';
+  sock.write('220 test ready\r\n');
+  sock.on('data', d => { buf += d; let i;
+    while ((i = buf.indexOf('\r\n')) >= 0) { const line = buf.slice(0, i); buf = buf.slice(i + 2);
+      if (mode === 'data') { if (line === '.') { mode = 'cmd'; mails.push({ user, data }); sock.write('250 queued\r\n'); } else data += line + '\n'; continue; }
+      if (/^EHLO/.test(line)) sock.write('250-test\r\n250 AUTH LOGIN\r\n');
+      else if (line === 'AUTH LOGIN') { step = 1; sock.write('334 VXNlcm5hbWU6\r\n'); }
+      else if (step === 1) { user = Buffer.from(line, 'base64').toString(); step = 2; sock.write('334 UGFzc3dvcmQ6\r\n'); }
+      else if (step === 2) { step = 0; sock.write(Buffer.from(line, 'base64').toString() === 'abcdefghijklmnop' && user === MAILENV.MAIL_USER ? '235 ok\r\n' : '535 bad\r\n'); }
+      else if (/^MAIL FROM|^RCPT TO/.test(line)) { data += line + '\n'; sock.write('250 ok\r\n'); }
+      else if (line === 'DATA') { mode = 'data'; sock.write('354 go\r\n'); }
+      else if (line === 'QUIT') { sock.write('221 bye\r\n'); sock.end(); } } });
+}).listen(SMTP, '127.0.0.1');
+const decode = m => { const [head, body] = m.data.split('\n\n'); return { head, body: Buffer.from(body.replace(/\s+/g, ''), 'base64').toString() }; };
+
 const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { env: Object.assign({}, process.env, { PORT, DATA_DIR: fx.dir, LEVELS_FILE: fx.file, LEVEL_SCALE: '0.005', COLLECT_MS: '60', MIN_PLAY_MS: '0', ALLOWED_ORIGINS: 'http://127.0.0.1:4180', GOOGLE_CERTS_URL: 'http://127.0.0.1:' + CERTS }, env), stdio: 'ignore' });
 
 (async () => {
@@ -36,7 +54,7 @@ const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { e
     srv = start({ GOOGLE_CLIENT_ID: 'GOCSPX-thisLooksLikeASecret123' }); await sleep(700);
     ok((await call('GET', '/api/meta')).json.googleClientId === '' && !JSON.stringify((await call('GET', '/api/meta')).json).includes('GOCSPX'), 'a client secret put in by mistake is never shown, and Google sign-in stays off');
     srv.kill(); await sleep(300);
-    srv = start({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT }); await sleep(700);
+    srv = start(Object.assign({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT }, MAILENV)); await sleep(700);
 
     // the owner
     ok((await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'wrong password' })).status === 401 && (await call('POST', '/api/owner/login', null, { user: 'someone', password: 'correct horse battery' })).status === 401, 'a wrong password or a wrong name is refused');
@@ -93,15 +111,22 @@ const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { e
     ok((await call('POST', '/api/contact', null, { topic: 'password', name: 'Kaveh', message: 'I forgot my password.\nMy name is Kaveh.', reply: '+43 660 000000' })).status === 200, 'someone who forgot their password can write without signing in');
     ok((await call('POST', '/api/contact', made.key, { topic: 'player', message: 'The referee at my table rejected everything.', name: 'Someone Else' })).status === 200, 'a signed-in player writes too, and is always named by their own account');
     ok((await call('POST', '/api/contact', null, { topic: { x: 1 }, name: 'Rudaba', message: '<script>alert(1)</script> weird \u0000 text' })).status === 200, 'odd input is stored as plain text');
+    for (let i = 0; i < 60 && mails.length < 3; i++) await sleep(50);
+    const kav = mails.map(decode).find(x => /Kaveh/.test(x.body)), tah = mails.map(decode).find(x => /Tahmineh/.test(x.body));
+    ok(mails.length === 3 && mails.every(m => m.user === MAILENV.MAIL_USER && /RCPT TO:<owner\.private@secret-mail\.test>/.test(m.data)), 'each message is emailed to the owner, through the owner’s own mail account');
+    ok(/Forgot password/.test(kav.head + kav.body) && /I forgot my password\.\nMy name is Kaveh\./.test(kav.body) && /Answer them at: \+43 660 000000/.test(kav.body) && !/Reply-To/.test(kav.head) && /not signed in/.test(kav.body), 'the email says what it is about, who wrote, the message itself and how to answer them');
+    ok(/signed in as this player/.test(tah.body) && /referee at my table/.test(tah.body), 'a message from a signed-in player says so');
     let ms = (await call('GET', '/api/owner/messages', own.key)).json;
     ok(ms.open === 3 && ms.messages[0].topic === 'other' && ms.messages[1].playerName === 'Tahmineh' && ms.messages[1].name === 'Tahmineh' && ms.messages[2].reply === '+43 660 000000' && ms.messages[2].text.includes('\n') && !ms.messages[0].text.includes('\u0000'), 'the owner sees all three, newest first, with who sent them and how to answer');
+    const pub = JSON.stringify([(await call('GET', '/api/meta')).json, (await call('GET', '/api/me', made.key)).json, ms, (await call('GET', '/api/owner/stats', own.key)).json, (await call('GET', '/api/leaderboard')).json]) + fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    ok(!/secret-mail|private@/.test(pub) && ms.email === true && ms.messages.every(m => m.mailed), 'the owner’s email address appears nowhere: not on the website, not in anything the server sends, not even on the dashboard');
     ok((await call('GET', '/api/owner/messages', made.key)).status === 401 && (await call('GET', '/api/owner/stats', own.key)).json.messages === 3, 'only the owner can read them, and the dashboard counts the new ones');
     ok((await call('POST', '/api/owner/message', own.key, { id: ms.messages[2].id })).json.open === 2 && (await call('POST', '/api/owner/message', own.key, { id: ms.messages[0].id, remove: true })).json.open === 1 && (await call('POST', '/api/owner/message', own.key, { id: 'nope' })).status === 404, 'the owner marks a message done or deletes it');
     let spam = 0; for (let i = 0; i < 8; i++) spam = (await call('POST', '/api/contact', null, { topic: 'idea', name: 'Spammer', message: 'buy buy buy ' + i })).status;
     ok(spam === 429, 'one person cannot flood the owner with messages');
 
     // the stats survive a restart; the owner signs in again
-    Object.values(eyes).forEach(e => e.close()); await sleep(800); srv.kill(); await sleep(300); srv = start({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT }); await sleep(700);
+    Object.values(eyes).forEach(e => e.close()); await sleep(800); srv.kill(); await sleep(300); srv = start(Object.assign({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT }, MAILENV)); await sleep(700);
     const own2 = (await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'correct horse battery' })).json;
     s = (await call('GET', '/api/owner/stats', own2.key)).json;
     ok(s.rounds.today === 1 && s.days[13].signups === 5 && s.players.total === 4, 'after a restart the daily numbers are still there');
@@ -111,13 +136,13 @@ const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { e
     srv = start({ OWNER_USER: 'Mosi', OWNER_HASH: persianHash, GOOGLE_CLIENT_ID: CLIENT }); await sleep(700);
     ok((await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'Rostam1385 ' })).json.key && (await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'Rostam۱۳۸۵' })).json.key && (await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'Rostam1386' })).status === 401,
       'the password works typed with Latin or Persian digits and with a stray space from a phone keyboard; a different one does not');
-    srv.kill(); await sleep(300); srv = start({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT }); await sleep(700);
+    srv.kill(); await sleep(300); srv = start(Object.assign({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT }, MAILENV)); await sleep(700);
     let locked = 0; for (let i = 0; i < 10; i++) locked = (await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'guess ' + i })).status;
     ok(locked === 429, 'guessing the owner password is locked out after a few wrong tries');
 
     // on a phone
     web = spawn('python3', ['-m', 'http.server', '4180', '--bind', '127.0.0.1'], { cwd: root, stdio: 'ignore' }); await sleep(500);
-    srv.kill(); await sleep(300); srv = start({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT }); await sleep(700);
+    srv.kill(); await sleep(300); srv = start(Object.assign({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT }, MAILENV)); await sleep(700);
     const { chromium, devices } = require('playwright'), browser = await chromium.launch(), errors = [];
     try {
       const ctx = await browser.newContext({ ...devices['Pixel 7'] });
@@ -146,7 +171,9 @@ const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { e
       ok(await p.locator('input[name="c-topic"][value="password"]').isChecked() && await p.locator('#c-name').isVisible(), 'Forgot your password? opens the contact form, already on “I forgot my password”');
       await p.fill('#c-name', 'Gordafarid'); await p.fill('#c-text', 'I forgot my password, my name in the game is Gordafarid.'); await p.fill('#c-reply', 'gordafarid@example.org');
       await p.locator('form[data-form="contact"] [type=submit]').tap(); await p.waitForFunction(() => /Your message was sent/.test(document.querySelector('#app').textContent));
-      ok(/answer you at gordafarid@example.org/.test(await p.textContent('#app')), 'the message is sent, and the player is told how the owner will answer');
+      ok(/answer you at gordafarid@example.org/.test(await p.textContent('#app')) && !/secret-mail/.test(await p.content()), 'the message is sent, the player is told how the owner will answer, and never sees the owner’s address');
+      for (let i = 0; i < 60 && !mails.some(m => /Gordafarid/.test(decode(m).body)); i++) await sleep(50);
+      ok(/Reply-To: <gordafarid@example\.org>/.test(decode(mails.find(m => /Gordafarid/.test(decode(m).body))).head), 'when the player leaves an email, the owner can simply press Reply');
       await p.locator('.foot a[href="#privacy"]').tap(); await p.waitForSelector('h1');
       const priv = await p.textContent('#app'); ok(/What the game keeps/.test(priv) && /does not store it/.test(priv) && /Deleting your account/.test(priv), 'the privacy page opens from the footer without signing in');
       if (process.env.SHOTS) await p.screenshot({ path: path.join(process.env.SHOTS, 'privacy.png'), fullPage: true });
@@ -168,5 +195,5 @@ const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { e
       ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
     } finally { await browser.close(); }
     console.log('\nowner: ' + n + ' checks passed');
-  } finally { srv.kill(); if (web) web.kill(); certs.close(); fs.rmSync(fx.dir, { recursive: true, force: true }); }
+  } finally { srv.kill(); if (web) web.kill(); certs.close(); smtp.close(); fs.rmSync(fx.dir, { recursive: true, force: true }); }
 })().catch(e => { console.error('FAILED: ' + e.message); process.exit(1); });

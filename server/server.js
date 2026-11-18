@@ -72,6 +72,14 @@ const MSG_FILE = path.join(DATA, 'messages.json'), TOPICS = ['account', 'passwor
 let messages = [];
 try { messages = JSON.parse(fs.readFileSync(MSG_FILE, 'utf8')).messages || []; } catch (e) { /* none yet */ }
 let msgTimer = null;
+const MAIL = require('./mail.js');
+// email each new message to the owner; a failed send is tried again later (up to 6 times), and the message stays on the dashboard either way
+function mailMessage(m) {
+  if (!MAIL.ready() || m.mailed || (m.tries || 0) >= 6) return;
+  m.tries = (m.tries || 0) + 1;
+  MAIL.send(MAIL.forMessage(m)).then(() => { m.mailed = Date.now(); saveMessages(); }, e => { console.error('email for a message failed (' + m.tries + '/6): ' + e.message); saveMessages(); });
+}
+setInterval(() => { messages.filter(m => !m.mailed && (m.tries || 0) < 6 && Date.now() - m.at < 3 * 86400000).slice(-20).forEach(mailMessage); }, 10 * 60000).unref();
 function saveMessages() { clearTimeout(msgTimer); msgTimer = setTimeout(() => { messages = messages.slice(-2000); fs.writeFile(MSG_FILE + '.tmp', JSON.stringify({ messages }), err => { if (!err) fs.rename(MSG_FILE + '.tmp', MSG_FILE, () => {}); }); }, 300); }
 const msgText = (v, n) => (typeof v === 'string' ? v : '').replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '').replace(/\r\n?/g, '\n').trim().slice(0, n);
 
@@ -352,7 +360,7 @@ function handle(req, res) {
     if (text.length < 5) return send(res, 400, { error: 'Write a few words, please.' });
     if (!me && G.key(name).length < 1 && !reply) return send(res, 400, { error: 'Tell us your name in the game, or how to reach you.' });
     if (tooManyTries('contact:' + ip, 6) || tooManyTries('contact', 200)) return send(res, 429, { error: 'Thank you! You have sent several messages already. Try again a little later.' });
-    messages.push({ id: 'm' + rid(6), at: Date.now(), topic, text, name, reply, player: me ? me.id : null, done: false }); saveMessages();
+    const m = { id: 'm' + rid(6), at: Date.now(), topic, text, name, reply, player: me ? me.id : null, done: false }; messages.push(m); saveMessages(); mailMessage(m);
     console.log('a new message from ' + (name || 'someone') + ' (' + topic + ')');
     send(res, 200, { ok: true });
   });
@@ -393,7 +401,7 @@ function handle(req, res) {
     }
     if (GET && parts[2] === 'messages') {
       const list = messages.slice().reverse().slice(0, 300).map(m => Object.assign({}, m, { playerName: m.player && has(m.player) ? players[m.player].name : '', exists: !m.player || has(m.player) }));
-      return send(res, 200, { open: messages.filter(m => !m.done).length, total: messages.length, messages: list });
+      return send(res, 200, { open: messages.filter(m => !m.done).length, total: messages.length, email: MAIL.ready(), messages: list });
     }
     if (POST && parts[2] === 'message') return readBody(req, res, b => {
       const i = messages.findIndex(m => m.id === b.id); if (i < 0) return send(res, 404, { error: 'That message is gone.' });

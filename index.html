@@ -669,7 +669,7 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
   var TOPICS = [['password', 'I forgot my password'], ['account', 'My account'], ['bug', 'Something is broken'], ['player', 'A player or a referee'], ['idea', 'An idea'], ['other', 'Something else']];
   views.contact = function (topic) {
     var t = TOPICS.some(function (x) { return x[0] === topic; }) ? topic : (me ? 'idea' : 'password');
-    app.innerHTML = (me ? back : '<a class="back" href="#">← Back</a>') + '<form class="card" data-form="contact"><h1>Contact</h1><p class="soft">Your message goes straight to the owner of the game.</p>' +
+    app.innerHTML = (me ? back : '<a class="back" href="#">← Back</a>') + '<form class="card" data-form="contact"><h1>Contact</h1><p class="soft">Fill in the form and your message is sent to the owner of the game.</p>' +
       '<fieldset class="topics"><legend><b>What is it about?</b></legend>' + TOPICS.map(function (x) { return '<label class="chip"><input type="radio" name="c-topic" value="' + x[0] + '"' + (x[0] === t ? ' checked' : '') + '> ' + x[1] + '</label>'; }).join('') + '</fieldset>' +
       (me ? '<p class="note">Sent as <b>' + esc(me.name) + '</b>.</p>' : '<div class="field"><label for="c-name">Your name in the game</label><input id="c-name" type="text" maxlength="20" autocomplete="username"></div>') +
       '<div class="field"><label for="c-text">Your message</label><textarea id="c-text" rows="6" maxlength="2000" placeholder="' + (t === 'password' ? 'For example: I forgot my password. My name in the game is …' : 'Tell us what happened, or what you would like.') + '"></textarea></div>' +
@@ -1018,8 +1018,8 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
   function msgLoad() {
     O('GET', 'messages').then(function (j) {
       var b = $('#m-box'); if (!b) return;
-      b.innerHTML = '<p class="note">' + (j.open ? j.open + (j.open === 1 ? ' new message' : ' new messages') : 'No new messages') + (j.total ? ' · ' + j.total + ' in all' : '') + '</p>' + (j.messages.length ? '<ul class="msgs">' + j.messages.map(function (m) {
-        return '<li class="msg' + (m.done ? ' done' : '') + '" data-id="' + m.id + '"><p class="msg-head"><b>' + esc(TOPICNAME[m.topic] || m.topic) + '</b> · ' + ago(m.at) + '</p><p class="msg-text">' + esc(m.text) + '</p>' +
+      b.innerHTML = '<p class="note">' + (j.open ? j.open + (j.open === 1 ? ' new message' : ' new messages') : 'No new messages') + (j.total ? ' · ' + j.total + ' in all' : '') + ' · ' + (j.email ? 'each one is also emailed to you' : 'email is off: on the server run bash server/set-email.sh') + '</p>' + (j.messages.length ? '<ul class="msgs">' + j.messages.map(function (m) {
+        return '<li class="msg' + (m.done ? ' done' : '') + '" data-id="' + m.id + '"><p class="msg-head"><b>' + esc(TOPICNAME[m.topic] || m.topic) + '</b> · ' + ago(m.at) + (j.email ? (m.mailed ? ' · emailed' : ' · not emailed yet') : '') + '</p><p class="msg-text">' + esc(m.text) + '</p>' +
           '<p class="note">From <b>' + esc(m.player ? (m.playerName || m.name) + ' (player)' : (m.name || 'someone')) + '</b>' + (m.player && !m.exists ? ' · account since removed' : '') + (m.reply ? ' · answer at <b>' + esc(m.reply) + '</b>' : ' · left no way to answer') + '</p>' +
           '<div class="row">' + (m.done ? '<button class="btn small ghost" data-act="msgdone" data-id="' + m.id + '" data-v="0">Mark as new</button>' : '<button class="btn small" data-act="msgdone" data-id="' + m.id + '" data-v="1">Done</button>') + '<button class="btn small ghost" data-act="msgdel" data-id="' + m.id + '">Delete</button>' +
           (m.topic === 'password' && m.player === null && m.name ? '<button class="btn small ghost" data-act="msgfind" data-name="' + esc(m.name) + '">Find the account</button>' : '') + '</div></li>';

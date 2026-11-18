@@ -100,6 +100,15 @@ Only a hash of the password is stored, in `/etc/our-little-universe.env`. The sc
 
 **Messages:** the Contact page (linked at the bottom of every page, and from "Forgot your password?" on the sign-in screen) sends a message to the owner, signed in or not. Messages appear on the dashboard, where you mark them done or delete them, and are kept in `messages.json` in the data folder. A player who forgot their password writes there; find their account on the dashboard and give them a new password.
 
+**Messages by email:** every message is also emailed to you, through your own Gmail. Your address is stored only on the server (in `/etc/our-little-universe.env`) and never appears on the website, in the code or in anything the server sends. Set it up once:
+
+```
+cd ~/our-little-universe && bash server/set-email.sh       # asks for your address and a Gmail app password, then sends a test email
+cd ~/our-little-universe && bash server/set-email.sh off   # stop the emails
+```
+
+Gmail needs an app password (Google account → 2-Step Verification on → https://myaccount.google.com/apppasswords). If a player leaves an email address, press Reply to answer them. A message that cannot be emailed stays on the dashboard and is tried again later.
+
 **Privacy:** the Privacy page (`#privacy`) says in plain words what the game keeps and what it does not. Change it in `views.privacy` in `src/app.js` if what is stored ever changes.
 
 The dashboard shows who is online right now, open tables and rounds in progress, accounts (new today and this week, active today and this week, how many joined with Google), rounds per day for the last 14 days, how many players are at each chapter, and the newest players. Below it, every account: search, give a new password, or remove one (two taps; it cannot be undone). The page is not linked anywhere on the site. Daily numbers are kept in `stats.json` in the data folder, for 90 days. Run `set-owner.sh` again for a new password. If signing in does not work, `bash server/check-owner.sh` finds out why (it prints no secrets).
@@ -114,7 +123,7 @@ The Google button appears on the welcome screen as soon as the server has the ID
 
 Players are stored in `players.json` in the data folder (`~/our-little-universe-data` by default). Back it up. Tables live in memory and end when the server restarts.
 
-Settings (environment): `OWNER_USER` and `OWNER_HASH` (set by `set-owner.sh`), `GOOGLE_CLIENT_ID` (set by `set-google.sh`), `PORT`, `HOST` (default `127.0.0.1`), `DATA_DIR`, `ALLOWED_ORIGINS`, and the pace limits `MIN_PLAY_MS`, `REVIEW_MS` (how long the referee has, default 5 minutes), `ROUNDS_PER_HOUR`.
+Settings (environment): `MAIL_TO`, `MAIL_USER`, `MAIL_PASS` (set by `set-email.sh`), `OWNER_USER` and `OWNER_HASH` (set by `set-owner.sh`), `GOOGLE_CLIENT_ID` (set by `set-google.sh`), `PORT`, `HOST` (default `127.0.0.1`), `DATA_DIR`, `ALLOWED_ORIGINS`, and the pace limits `MIN_PLAY_MS`, `REVIEW_MS` (how long the referee has, default 5 minutes), `ROUNDS_PER_HOUR`.
 
 If `players.json` cannot be read at start, the server refuses to start instead of overwriting it; the previous good save is `players.json.bak`.
 
