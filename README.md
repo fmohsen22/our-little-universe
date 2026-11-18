@@ -93,11 +93,10 @@ The service runs on port 8787. A Cloudflare Tunnel public hostname (`game-api.mo
 cd ~/our-little-universe && git pull && bash server/install-service.sh
 ```
 
-**The owner dashboard** (`https://game.mosi-app.com/#owner`): one login for you that is not a player. The name is `admin`. Set the password once on the server:
+**The owner dashboard** (`https://game.mosi-app.com/#owner`): one login for you that is not a player. Choose your name and password once on the server:
 
 ```
-cd ~/our-little-universe && bash server/set-owner.sh            # makes a strong password and shows it once
-cd ~/our-little-universe && bash server/set-owner.sh --choose   # or type your own (shown while you type)
+cd ~/our-little-universe && bash server/set-owner.sh   # asks for your name and password (shown as you type), tests them
 ```
 
 Only a hash of the password is stored, in `/etc/our-little-universe.env`. The script restarts the server and tests the login before it finishes.
