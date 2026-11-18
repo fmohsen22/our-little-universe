@@ -37,9 +37,35 @@ if [ -f /etc/systemd/system/our-little-universe-referee.timer ]; then
   sudo rm -f /etc/systemd/system/our-little-universe-referee.timer /etc/systemd/system/our-little-universe-referee.service
 fi
 
+# a copy of the data every night at 03:17 (or as soon as the computer is on again), keeping 30 days
+sudo tee /etc/systemd/system/our-little-universe-backup.service >/dev/null <<UNIT
+[Unit]
+Description=Where is Prince Mohsey? nightly backup
+
+[Service]
+Type=oneshot
+User=$USER
+Environment=DATA_DIR=$DATA
+Environment=HOME=$HOME
+ExecStart=/usr/bin/env bash $REPO/server/backup.sh
+UNIT
+sudo tee /etc/systemd/system/our-little-universe-backup.timer >/dev/null <<UNIT
+[Unit]
+Description=Back up the game's data every night
+
+[Timer]
+OnCalendar=*-*-* 03:17
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+UNIT
+
 sudo systemctl daemon-reload
+sudo systemctl enable --now our-little-universe-backup.timer
 sudo systemctl enable our-little-universe
 sudo systemctl restart our-little-universe   # always pick up the new code
 sleep 1
 curl -fsS "http://localhost:$PORT/health" && echo "  <- the game server is running on port $PORT, data in $DATA"
+DATA_DIR="$DATA" bash "$REPO/server/backup.sh" || true   # a first copy right away
 if sudo grep -q '^OWNER_HASH=' /etc/our-little-universe.env 2>/dev/null; then echo "Owner dashboard: https://game.mosi-app.com/#owner"; else echo "No owner login yet. Set one with: bash server/set-owner.sh"; fi

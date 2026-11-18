@@ -81,7 +81,11 @@ cd our-little-universe
 bash server/install-service.sh
 ```
 
-That installs a systemd service on port 8787. A Cloudflare Tunnel public hostname (`game-api.mosi-app.com` → `http://localhost:8787`) makes it reachable. `https://game-api.mosi-app.com/health` should answer `{"ok":true,...}`.
+That installs a systemd service on port 8787, and a timer that saves a copy of the data every night (`~/our-little-universe-backups`, the last 30 copies; `bash server/backup.sh` makes one by hand). To restore one: stop the service, unpack the copy into the data folder, start it again.
+
+**Everything at once** (update, restart, backup, the admin login and the emails, asking before each): `cd ~/our-little-universe && bash server/setup.sh`
+
+The service runs on port 8787. A Cloudflare Tunnel public hostname (`game-api.mosi-app.com` → `http://localhost:8787`) makes it reachable. `https://game-api.mosi-app.com/health` should answer `{"ok":true,...}`.
 
 **To update after a change here:**
 
