@@ -88,11 +88,24 @@ const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { e
     ok((await call('POST', '/api/password', made.key, { password: 'also-a-pass' })).status === 200 && (await call('POST', '/api/login', null, { name: 'Tahmineh', password: 'also-a-pass' })).status === 200, 'a Google player can add a password and then also sign in by name');
     ok((await call('GET', '/api/owner/stats', own.key)).json.players.google === 1, 'the dashboard counts the accounts made with Google');
 
+    // the contact form: open to everyone; the messages reach the owner's dashboard
+    ok((await call('POST', '/api/contact', null, { topic: 'password', message: 'hi' })).status === 400 && (await call('POST', '/api/contact', null, { topic: 'password', message: 'I forgot my password, please help' })).status === 400, 'a message needs a few words, and someone who is not signed in must say who they are');
+    ok((await call('POST', '/api/contact', null, { topic: 'password', name: 'Kaveh', message: 'I forgot my password.\nMy name is Kaveh.', reply: '+43 660 000000' })).status === 200, 'someone who forgot their password can write without signing in');
+    ok((await call('POST', '/api/contact', made.key, { topic: 'player', message: 'The referee at my table rejected everything.', name: 'Someone Else' })).status === 200, 'a signed-in player writes too, and is always named by their own account');
+    ok((await call('POST', '/api/contact', null, { topic: { x: 1 }, name: 'Rudaba', message: '<script>alert(1)</script> weird \u0000 text' })).status === 200, 'odd input is stored as plain text');
+    let ms = (await call('GET', '/api/owner/messages', own.key)).json;
+    ok(ms.open === 3 && ms.messages[0].topic === 'other' && ms.messages[1].playerName === 'Tahmineh' && ms.messages[1].name === 'Tahmineh' && ms.messages[2].reply === '+43 660 000000' && ms.messages[2].text.includes('\n') && !ms.messages[0].text.includes('\u0000'), 'the owner sees all three, newest first, with who sent them and how to answer');
+    ok((await call('GET', '/api/owner/messages', made.key)).status === 401 && (await call('GET', '/api/owner/stats', own.key)).json.messages === 3, 'only the owner can read them, and the dashboard counts the new ones');
+    ok((await call('POST', '/api/owner/message', own.key, { id: ms.messages[2].id })).json.open === 2 && (await call('POST', '/api/owner/message', own.key, { id: ms.messages[0].id, remove: true })).json.open === 1 && (await call('POST', '/api/owner/message', own.key, { id: 'nope' })).status === 404, 'the owner marks a message done or deletes it');
+    let spam = 0; for (let i = 0; i < 8; i++) spam = (await call('POST', '/api/contact', null, { topic: 'idea', name: 'Spammer', message: 'buy buy buy ' + i })).status;
+    ok(spam === 429, 'one person cannot flood the owner with messages');
+
     // the stats survive a restart; the owner signs in again
     Object.values(eyes).forEach(e => e.close()); await sleep(800); srv.kill(); await sleep(300); srv = start({ OWNER_USER: 'Mosi', OWNER_HASH, GOOGLE_CLIENT_ID: CLIENT }); await sleep(700);
     const own2 = (await call('POST', '/api/owner/login', null, { user: 'Mosi', password: 'correct horse battery' })).json;
     s = (await call('GET', '/api/owner/stats', own2.key)).json;
     ok(s.rounds.today === 1 && s.days[13].signups === 5 && s.players.total === 4, 'after a restart the daily numbers are still there');
+    ms = (await call('GET', '/api/owner/messages', own2.key)).json; ok(ms.total === 5 && ms.messages.some(m => m.name === 'Kaveh' && m.done), 'and so are the messages, with what was marked done');
     srv.kill(); await sleep(300);
     const persianHash = execFileSync('node', ['-e', snippet], { input: 'Rostam1385' }).toString();
     srv = start({ OWNER_USER: 'Mosi', OWNER_HASH: persianHash, GOOGLE_CLIENT_ID: CLIENT }); await sleep(700);
@@ -127,6 +140,16 @@ const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { e
       await p.evaluate(() => localStorage.clear()); await p.goto(site); await p.waitForSelector('[data-m="login"]'); await p.locator('[data-m="login"]').tap(); await p.waitForSelector('#fake-google');
       await p.locator('#fake-google').tap(); await p.waitForSelector('.me-card'); ok(/Princess Manizheh/.test(await p.textContent('.me-name')), 'signing in again with Google goes straight in');
 
+      // forgot password -> contact -> the owner's dashboard; the privacy page from the footer
+      await p.evaluate(() => localStorage.clear()); await p.goto(site); await p.waitForSelector('[data-m="login"]'); await p.locator('[data-m="login"]').tap();
+      await p.locator('a[href="#contact-password"]').tap(); await p.waitForSelector('#c-text');
+      ok(await p.locator('input[name="c-topic"][value="password"]').isChecked() && await p.locator('#c-name').isVisible(), 'Forgot your password? opens the contact form, already on “I forgot my password”');
+      await p.fill('#c-name', 'Gordafarid'); await p.fill('#c-text', 'I forgot my password, my name in the game is Gordafarid.'); await p.fill('#c-reply', 'gordafarid@example.org');
+      await p.locator('form[data-form="contact"] [type=submit]').tap(); await p.waitForFunction(() => /Your message was sent/.test(document.querySelector('#app').textContent));
+      ok(/answer you at gordafarid@example.org/.test(await p.textContent('#app')), 'the message is sent, and the player is told how the owner will answer');
+      await p.locator('.foot a[href="#privacy"]').tap(); await p.waitForSelector('h1');
+      const priv = await p.textContent('#app'); ok(/What the game keeps/.test(priv) && /does not store it/.test(priv) && /Deleting your account/.test(priv), 'the privacy page opens from the footer without signing in');
+      if (process.env.SHOTS) await p.screenshot({ path: path.join(process.env.SHOTS, 'privacy.png'), fullPage: true });
       await p.goto(site + '#owner'); await p.waitForSelector('#o-user');
       ok(await p.locator('a[href="#owner"]').count() === 0, 'the owner page is not linked anywhere on the site; it opens only by its address');
       await p.fill('#o-user', 'Mosi'); await p.fill('#o-pass', 'correct horse battery'); await p.locator('form[data-form="owner"] [type=submit]').tap();
@@ -134,7 +157,10 @@ const start = env => spawn('node', [path.join(root, 'server', 'server.js')], { e
       const dash = await p.textContent('#app');
       ok(/Right now/.test(dash) && /People online/.test(dash) && /Accounts/.test(dash) && /Rounds played, last 14 days/.test(dash) && /Found Prince Mohsey/.test(dash) && /Newest players/.test(dash), 'the dashboard shows who is online, players, rounds per day, progress through the chapters and the newest players');
       ok(await p.locator('.cols .col').count() === 14 && await p.locator('.hbars li').count() === 9 && await p.locator('.adm').count() === 5, 'the 14-day chart, the chapter chart and all five accounts are there');
-      await p.locator('.cols .col').last().focus(); await p.waitForSelector('#o-tip:not([hidden])'); ok(/: 1 round, 4 players, 6 new/.test(await p.textContent('#o-tip')), 'each day in the chart has a tooltip with its numbers');
+      await p.waitForSelector('.msg'); ok(/Gordafarid/.test(await p.textContent('#m-box')) && /gordafarid@example.org/.test(await p.textContent('#m-box')), 'the owner reads the new message on the dashboard');
+      await p.locator('.msg', { hasText: 'Gordafarid' }).locator('[data-act="msgfind"]').tap(); await p.waitForFunction(() => document.querySelector('#a-find').value === 'Gordafarid'); ok(true, 'Find the account jumps to the account search with that name');
+      await p.locator('.msg', { hasText: 'Gordafarid' }).locator('[data-act="msgdone"]').tap(); await p.waitForFunction(() => document.querySelector('.msg.done') && /Gordafarid/.test(document.querySelector('.msg.done').textContent)); ok(true, 'and marks it done');
+      await p.locator('.cols .col').last().focus(); await p.waitForSelector('#o-tip:not([hidden])'); ok(/: 1 round, 4 players, \d+ new/.test(await p.textContent('#o-tip')), 'each day in the chart has a tooltip with its numbers');
       if (process.env.SHOTS) await p.screenshot({ path: path.join(process.env.SHOTS, 'owner.png'), fullPage: true });
       ok(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no sideways scroll on the phone');
       await p.reload(); await p.waitForSelector('.tiles'); ok(true, 'the owner stays signed in after a reload');

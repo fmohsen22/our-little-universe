@@ -91,7 +91,7 @@
         kingdomChips('pick', 'iran') +
         '<div class="row" role="group" aria-label="Title">' + ['Champion', 'Prince', 'Princess'].map(function (t, i) { return '<button type="button" class="chip" data-act="pick" data-f="royal" data-v="' + t + '" aria-pressed="' + (i === 0) + '">' + t + '</button>'; }).join('') + '</div>' +
         '<button class="btn big" type="submit">Enter the kingdom</button><p class="note">Your name and password sign you in on any phone or computer, with all your points, crowns and chapters.</p>'
-        : '<button class="btn big" type="submit">Sign in</button><p class="note">Your points, crowns and chapters are waiting.</p>') + '</form>';
+        : '<button class="btn big" type="submit">Sign in</button><p class="note">Your points, crowns and chapters are waiting.</p><p class="note">Forgot your password? <a href="#contact-password">Ask the owner for a new one</a>.' + (meta.googleClientId ? ' If you joined with Google, use the Google button above.' : '') + '</p>') + '</form>';
     if (meta.googleClientId) googleButton(isNew);
   };
   /* "Continue with Google": Google's own button and script, loaded only when the server has a client ID */
@@ -145,7 +145,35 @@
         '<p>When a chapter opens, read its story and take a short quiz: <b>' + meta.quiz.size + ' questions, ' + meta.quiz.pass + ' right to pass</b>. If you fail, the points for that chapter are lost and you win them again at the table, so read carefully.</p>') +
       step('The last chapter', '🪶', 'Where is Prince Mohsey?',
         '<p>At the end of every chapter the Simurgh leaves you <b>one line of a riddle</b>. Remember them. After all seven chapters, the last one asks a single question: where is Prince Mohsey? Find the answer and he will be waiting for you at his own table.</p>') +
+      '<p class="note center">Stuck, or forgot your password? <a href="#contact">Send a message</a>.</p>' +
       (me ? '<div class="row mid"><a class="btn big" href="#home">Let’s play</a></div>' : '<div class="row mid"><a class="btn big" href="#">Create my account</a></div>');
+  };
+
+  /* ---------- contact: messages go to the owner's dashboard ---------- */
+  var TOPICS = [['password', 'I forgot my password'], ['account', 'My account'], ['bug', 'Something is broken'], ['player', 'A player or a referee'], ['idea', 'An idea'], ['other', 'Something else']];
+  views.contact = function (topic) {
+    var t = TOPICS.some(function (x) { return x[0] === topic; }) ? topic : (me ? 'idea' : 'password');
+    app.innerHTML = (me ? back : '<a class="back" href="#">← Back</a>') + '<form class="card" data-form="contact"><h1>Contact</h1><p class="soft">Your message goes straight to the owner of the game.</p>' +
+      '<fieldset class="topics"><legend><b>What is it about?</b></legend>' + TOPICS.map(function (x) { return '<label class="chip"><input type="radio" name="c-topic" value="' + x[0] + '"' + (x[0] === t ? ' checked' : '') + '> ' + x[1] + '</label>'; }).join('') + '</fieldset>' +
+      (me ? '<p class="note">Sent as <b>' + esc(me.name) + '</b>.</p>' : '<div class="field"><label for="c-name">Your name in the game</label><input id="c-name" type="text" maxlength="20" autocomplete="username"></div>') +
+      '<div class="field"><label for="c-text">Your message</label><textarea id="c-text" rows="6" maxlength="2000" placeholder="' + (t === 'password' ? 'For example: I forgot my password. My name in the game is …' : 'Tell us what happened, or what you would like.') + '"></textarea></div>' +
+      '<div class="field"><label for="c-reply">How can we answer you? <span class="note">(optional)</span></label><input id="c-reply" type="text" maxlength="120" autocomplete="email" placeholder="An email address or a phone number"></div>' +
+      '<p class="note">' + (t === 'password' ? 'For a new password, leave a way to reach you, so the owner can send it to you. ' : '') + 'See <a href="#privacy">what the game keeps</a>.</p>' +
+      '<button class="btn big" type="submit">Send</button></form>';
+  };
+
+  /* ---------- privacy ---------- */
+  views.privacy = function () {
+    var sec = function (title, body) { return '<section class="card"><h2>' + title + '</h2>' + body + '</section>'; };
+    app.innerHTML = (me ? back : '<a class="back" href="#">← Back</a>') + '<h1>Privacy</h1><p class="soft">What this game keeps about you, and what it does not. In plain words.</p>' +
+      sec('What the game keeps', '<ul class="plain"><li><b>Your account:</b> the name you chose in the game, your kingdom and title.</li><li><b>How you sign in:</b> if you use a password, only a scrambled version of it (a hash), never the password itself. If you use Google, only Google’s account number for you.</li><li><b>Your game:</b> points, victories, rounds played and refereed, badges, chapters, quiz progress, the riddle and your games against Prince Mohsey.</li><li><b>Daily totals:</b> how many rounds were played each day and who took part, kept for 90 days, so the owner can see how the game is doing.</li><li><b>Messages you send</b> with the contact form, with the name and any way to reach you that you write in it.</li></ul>' +
+        '<p class="note">The answers you write during a round are seen by the others at your table and kept only until the table closes.</p>') +
+      sec('What the game does not keep', '<ul class="plain"><li>Your email address. When you sign in with Google, the game does not store it.</li><li>Your real name, unless you choose it as your name in the game.</li><li>Your location, contacts or anything else from your phone.</li><li>No advertising, no tracking and no selling of data. Ever.</li></ul>') +
+      sec('Who can see what', '<p>Other players see your name in the game, kingdom, title, points, victories and chapter, on the leaderboard and at tables. The owner of the game can see everything listed above, to look after accounts and answer messages.</p>') +
+      sec('Where it is kept', '<p>Everything is stored on the owner’s own server. Nothing is shared with anyone. The website itself is served by GitHub Pages, and its fonts come from Google Fonts; like any website, they may see that someone opened the page. If you use “Sign up with Google”, Google’s own button and rules apply to that step.</p>' +
+        '<p>On your phone or computer, the game remembers only that you are signed in (in the browser’s storage), so you do not have to sign in every time. Signing out removes it.</p>') +
+      sec('Deleting your account', '<p>Send a message with the <a href="#contact-account">contact form</a> and the owner will delete your account and everything in it.</p>') +
+      '<p class="note center">Last updated 18 November 2026.</p>';
   };
 
   views.home = function () {
@@ -440,7 +468,7 @@
     O('GET', 'stats').then(function (s) {
       var box = $('#o-stats'); if (!box) return;
       box.innerHTML =
-        '<section class="card"><h2>Right now</h2><dl class="tiles">' + tile('People online', s.now.online) + tile('Tables open', s.now.tables) + tile('Rounds being played', s.now.playing) + '</dl></section>' +
+        '<section class="card"><h2>Right now</h2><dl class="tiles">' + tile('People online', s.now.online) + tile('Tables open', s.now.tables) + tile('Rounds being played', s.now.playing) + tile('New messages', s.messages, s.messages ? '<a href="#o-msgs">read them</a>' : '') + '</dl></section>' +
         '<section class="card"><h2>Players</h2><dl class="tiles">' + tile('Accounts', num(s.players.total), s.players.google + ' with Google') + tile('New this week', s.players.newWeek, s.players.newToday + ' today') + tile('Active today', s.players.activeToday) + tile('Active this week', s.players.activeWeek) + '</dl></section>' +
         '<section class="card"><h2>Rounds</h2><dl class="tiles">' + tile('Today', s.rounds.today, s.rounds.playersToday + (s.rounds.playersToday === 1 ? ' player' : ' players')) + tile('This week', s.rounds.week, s.rounds.playersWeek + (s.rounds.playersWeek === 1 ? ' player' : ' players')) + '</dl>' +
           '<h3 class="chart-h">Rounds played, last 14 days</h3>' + roundsChart(s.days) + '<p class="note">Counting since ' + day(new Date(s.rounds.since + 'T12:00:00').getTime()) + '.</p></section>' +
@@ -463,19 +491,36 @@
     }
     app.innerHTML = backLink + '<div class="row split"><h1>Dashboard</h1><div class="row"><button class="btn small ghost" data-act="ownerrefresh">Refresh</button><button class="btn small ghost" data-act="ownerout">Sign out</button></div></div><p class="note" id="o-when"></p>' +
       '<div id="o-stats" class="stack"><p class="note">Loading…</p></div>' +
+      '<section class="card" id="o-msgs"><h2>Messages</h2><div id="m-box"><p class="note">Loading…</p></div></section>' +
       '<section class="card"><h2>Accounts</h2><p class="soft">Every account, in leaderboard order. Removing an account deletes its points and badges for good.</p>' +
       '<div class="field"><label for="a-find">Find a player</label><input id="a-find" type="search" maxlength="20" autocomplete="off" placeholder="Type a name"></div><div id="a-box"><p class="note">Loading…</p></div></section>';
     $('#a-find').addEventListener('input', function () { clearTimeout(adminTimer); adminTimer = setTimeout(adminLoad, 250); });
-    ownerStats(); adminLoad();
+    ownerStats(); adminLoad(); msgLoad();
     ownerTimer = setInterval(function () { if (location.hash === '#owner' && ownerKey && !document.hidden) ownerStats(); else if (location.hash !== '#owner') clearInterval(ownerTimer); }, 30000);
   };
+  var TOPICNAME = { password: 'Forgot password', account: 'Account', bug: 'Something broken', player: 'A player or referee', idea: 'Idea', other: 'Other' };
+  function msgLoad() {
+    O('GET', 'messages').then(function (j) {
+      var b = $('#m-box'); if (!b) return;
+      b.innerHTML = '<p class="note">' + (j.open ? j.open + (j.open === 1 ? ' new message' : ' new messages') : 'No new messages') + (j.total ? ' · ' + j.total + ' in all' : '') + '</p>' + (j.messages.length ? '<ul class="msgs">' + j.messages.map(function (m) {
+        return '<li class="msg' + (m.done ? ' done' : '') + '" data-id="' + m.id + '"><p class="msg-head"><b>' + esc(TOPICNAME[m.topic] || m.topic) + '</b> · ' + ago(m.at) + '</p><p class="msg-text">' + esc(m.text) + '</p>' +
+          '<p class="note">From <b>' + esc(m.player ? (m.playerName || m.name) + ' (player)' : (m.name || 'someone')) + '</b>' + (m.player && !m.exists ? ' · account since removed' : '') + (m.reply ? ' · answer at <b>' + esc(m.reply) + '</b>' : ' · left no way to answer') + '</p>' +
+          '<div class="row">' + (m.done ? '<button class="btn small ghost" data-act="msgdone" data-id="' + m.id + '" data-v="0">Mark as new</button>' : '<button class="btn small" data-act="msgdone" data-id="' + m.id + '" data-v="1">Done</button>') + '<button class="btn small ghost" data-act="msgdel" data-id="' + m.id + '">Delete</button>' +
+          (m.topic === 'password' && m.player === null && m.name ? '<button class="btn small ghost" data-act="msgfind" data-name="' + esc(m.name) + '">Find the account</button>' : '') + '</div></li>';
+      }).join('') + '</ul>' : '');
+    }).catch(fail);
+  }
+
   // the tooltips on the dashboard charts: hover, tap or keyboard focus
   function showTip(el) { var tip = $('#o-tip'), t = el && el.closest('[data-tip]'); if (!tip) return; if (!t) { tip.hidden = true; return; } tip.textContent = t.dataset.tip; tip.hidden = false; var r = t.getBoundingClientRect(); tip.style.left = Math.max(8, Math.min(window.innerWidth - tip.offsetWidth - 8, r.left + r.width / 2 - tip.offsetWidth / 2)) + 'px'; tip.style.top = (r.top + window.scrollY - tip.offsetHeight - 8) + 'px'; }
   document.addEventListener('mouseover', function (e) { if (location.hash === '#owner') showTip(e.target); });
   document.addEventListener('focusin', function (e) { if (location.hash === '#owner') showTip(e.target); });
 
   var acts = {
-    ownerrefresh: function () { ownerStats(); adminLoad(); },
+    ownerrefresh: function () { ownerStats(); adminLoad(); msgLoad(); },
+    msgdone: function (el) { O('POST', 'message', { id: el.dataset.id, done: el.dataset.v === '1' }).then(function () { msgLoad(); ownerStats(); }).catch(fail); },
+    msgdel: function (el) { O('POST', 'message', { id: el.dataset.id, remove: true }).then(function () { msgLoad(); ownerStats(); }).catch(fail); },
+    msgfind: function (el) { var f = $('#a-find'); f.value = el.dataset.name; adminLoad(); f.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
     ownerout: function () { O('POST', 'logout').catch(function () { /* signed out here either way */ }); ownerKey = null; lsSet('owner', null); views.owner(); },
     duelstart: function () { api('POST', '/api/mohsey/start').then(duelPlay).catch(fail); },
     admrm: function (el) {
@@ -510,6 +555,12 @@
   function enter(j) { key = j.key; lsSet('key', key); setMe(j.me); route(); }
   function copy(input, msg) { var manual = function () { input.focus(); input.select(); toast('Select the text and copy it'); }; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(input.value).then(function () { toast(msg); }, manual); else manual(); }
   var forms = {
+    contact: function () {
+      var topic = ($('input[name="c-topic"]:checked') || {}).value, body = { topic: topic, message: $('#c-text').value, reply: $('#c-reply').value, name: ($('#c-name') || {}).value };
+      api('POST', '/api/contact', body).then(function () {
+        app.innerHTML = (me ? back : '<a class="back" href="#">← Back</a>') + '<div class="card feature center"><p class="big-text">Thank you! Your message was sent.</p><p class="soft">' + (body.reply.trim() ? 'The owner will answer you at ' + esc(body.reply.trim()) + '.' : 'The owner reads every message.') + '</p><div class="row mid"><a class="btn" href="' + (me ? '#home' : '#') + '">Back to the game</a></div></div>';
+      }).catch(fail);
+    },
     owner: function () { api('POST', '/api/owner/login', { user: $('#o-user').value, password: $('#o-pass').value }).then(function (j) { ownerKey = j.key; lsSet('owner', ownerKey); views.owner(); }).catch(fail); },
     duel: function () { duelSend(); },
     riddle: function () {
@@ -551,7 +602,8 @@
     delete app.dataset.key;
     if (!(m = /^table-([A-Za-z]{5})$/.exec(h))) leaveTable();
     if (!meta) return;
-    if (h === 'guide' || h === 'owner') { views[h](); window.scrollTo(0, 0); return; }
+    if (h === 'guide' || h === 'owner' || h === 'privacy') { views[h](); window.scrollTo(0, 0); return; }
+    var c = /^contact(?:-([a-z]+))?$/.exec(h); if (c) { views.contact(c[1]); window.scrollTo(0, 0); return; }
     if (!me) { views.welcome(); return; }
     if (m) { if (!table || table.code !== m[1].toUpperCase()) openTable(m[1].toUpperCase()); else renderTable(); }
     else if ((m = /^level-([1-7])$/.exec(h))) views.level(+m[1]);

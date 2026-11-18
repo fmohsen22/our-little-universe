@@ -67,6 +67,14 @@ function saveStats() {
 function countRound(ids) { const d = dayOf(); d.rounds += 1; ids.forEach(id => { if (!d.players.includes(id)) d.players.push(id); }); saveStats(); }
 function countSignup() { dayOf().signups += 1; saveStats(); }
 
+// Messages from the contact form, for the owner. Kept in messages.json in the data folder (the newest 2000).
+const MSG_FILE = path.join(DATA, 'messages.json'), TOPICS = ['account', 'password', 'bug', 'player', 'idea', 'other'];
+let messages = [];
+try { messages = JSON.parse(fs.readFileSync(MSG_FILE, 'utf8')).messages || []; } catch (e) { /* none yet */ }
+let msgTimer = null;
+function saveMessages() { clearTimeout(msgTimer); msgTimer = setTimeout(() => { messages = messages.slice(-2000); fs.writeFile(MSG_FILE + '.tmp', JSON.stringify({ messages }), err => { if (!err) fs.rename(MSG_FILE + '.tmp', MSG_FILE, () => {}); }); }, 300); }
+const msgText = (v, n) => (typeof v === 'string' ? v : '').replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '').replace(/\r\n?/g, '\n').trim().slice(0, n);
+
 // Google sign-in: the browser gets a signed token from Google; the server checks Google's signature, the audience
 // (our client ID) and the expiry, then signs the player in. Only Google's account number is kept, never the email.
 // Only something shaped like a client ID is ever used or shown: the client ID is public, a client secret must never be.
@@ -337,6 +345,18 @@ function handle(req, res) {
     }).catch(e => { console.error('google sign-in: ' + e.message); send(res, 502, { error: 'Google could not be reached. Try again in a moment.' }); });
   });
 
+  /* the contact form: open to everyone, signed in or not */
+  if (POST && what === 'contact') return readBody(req, res, b => {
+    const ip = String(req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '').slice(0, 64);
+    const text = msgText(b.message, 2000), name = me ? me.name : cleanName(b.name), reply = msgText(b.reply, 120), topic = TOPICS.includes(b.topic) ? b.topic : 'other';
+    if (text.length < 5) return send(res, 400, { error: 'Write a few words, please.' });
+    if (!me && G.key(name).length < 1 && !reply) return send(res, 400, { error: 'Tell us your name in the game, or how to reach you.' });
+    if (tooManyTries('contact:' + ip, 6) || tooManyTries('contact', 200)) return send(res, 429, { error: 'Thank you! You have sent several messages already. Try again a little later.' });
+    messages.push({ id: 'm' + rid(6), at: Date.now(), topic, text, name, reply, player: me ? me.id : null, done: false }); saveMessages();
+    console.log('a new message from ' + (name || 'someone') + ' (' + topic + ')');
+    send(res, 200, { ok: true });
+  });
+
   /* the owner's dashboard: not a player account */
   if (what === 'owner') {
     if (POST && parts[2] === 'login') return readBody(req, res, b => {
@@ -363,7 +383,7 @@ function handle(req, res) {
       const week = days.slice(-7), weekPlayers = new Set(); Object.keys(stats.days).filter(d => d >= days[7].date).forEach(d => stats.days[d].players.forEach(id => weekPlayers.add(id)));
       const chapters = Array.from({ length: G.LEVELS.count + 1 }, (_, n) => all.filter(p => p.level === n && !(n === G.LEVELS.count && p.finale)).length);
       return send(res, 200, {
-        now: { online: online.size, tables, playing },
+        now: { online: online.size, tables, playing }, messages: messages.filter(m => !m.done).length,
         players: { total: all.length, newToday: all.filter(p => p.createdAt >= startToday).length, newWeek: all.filter(p => now - p.createdAt < 7 * dayMs).length, activeToday: all.filter(p => p.lastSeen >= startToday).length, activeWeek: all.filter(p => now - p.lastSeen < 7 * dayMs).length, google: all.filter(p => p.google).length },
         rounds: { today: days[13].rounds, week: week.reduce((t, d) => t + d.rounds, 0), playersToday: days[13].players, playersWeek: weekPlayers.size, since: Object.keys(stats.days).sort()[0] || today() },
         progress: { chapters, finale: all.filter(p => p.finale).length, quizzesPassed: all.reduce((t, p) => t + (p.level || 0), 0), mohseyGames: all.reduce((t, p) => t + (p.mohseyGames || 0), 0), mohseyWins: all.reduce((t, p) => t + (p.mohseyWins || 0), 0) },
@@ -371,6 +391,15 @@ function handle(req, res) {
         top: ranked().slice(0, 10)
       });
     }
+    if (GET && parts[2] === 'messages') {
+      const list = messages.slice().reverse().slice(0, 300).map(m => Object.assign({}, m, { playerName: m.player && has(m.player) ? players[m.player].name : '', exists: !m.player || has(m.player) }));
+      return send(res, 200, { open: messages.filter(m => !m.done).length, total: messages.length, messages: list });
+    }
+    if (POST && parts[2] === 'message') return readBody(req, res, b => {
+      const i = messages.findIndex(m => m.id === b.id); if (i < 0) return send(res, 404, { error: 'That message is gone.' });
+      if (b.remove === true) messages.splice(i, 1); else messages[i].done = b.done !== false;
+      saveMessages(); send(res, 200, { ok: true, open: messages.filter(m => !m.done).length });
+    });
     if (GET && parts[2] === 'players') {
       const k = G.key(String(url.searchParams.get('q') || '').slice(0, 40)), all = ranked();
       const list = all.filter(p => !k || G.key(p.name).includes(k)).slice(0, 500).map(x => { const p = players[x.id]; return Object.assign({}, x, { refereed: p.refereed || 0, levelPoints: p.levelPoints, createdAt: p.createdAt, lastSeen: p.lastSeen, devices: sessionsOf(p).length, online: seated(p.id), google: !!p.google, hasPassword: !!p.pw }); });

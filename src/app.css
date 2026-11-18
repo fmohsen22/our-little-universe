@@ -396,3 +396,19 @@ input[type="search"], input[type="password"] { width: 100%; min-width: 0; font: 
 
 .pair { display: flex; justify-content: center; align-items: center; gap: 4px; }
 .pair .princess { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 3px solid var(--gold); box-shadow: 0 0 22px -6px var(--gold); }
+
+/* footer, contact, privacy, messages */
+.foot { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; padding: 28px 0 18px; font-size: .88rem; color: var(--soft); }
+.foot a { color: var(--soft); }
+.topics { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.topics legend { margin-bottom: 8px; }
+.topics .chip { display: inline-flex; align-items: center; gap: 6px; }
+.topics .chip:has(input:checked) { background: var(--accent, var(--gold)); color: var(--on-accent); border-color: transparent; }
+.topics input { accent-color: var(--gold); }
+textarea { width: 100%; font: inherit; color: var(--ink); background: var(--surface-2); border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 14px; resize: vertical; box-sizing: border-box; }
+.plain { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.msgs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.msg { background: var(--surface-2); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; border-left: 4px solid var(--gold); }
+.msg.done { border-left-color: var(--line); opacity: .75; }
+.msg-head { margin: 0; font-size: .85rem; color: var(--soft); }
+.msg-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
