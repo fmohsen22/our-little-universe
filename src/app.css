@@ -393,3 +393,6 @@ input[type="search"], input[type="password"] { width: 100%; min-width: 0; font: 
 .guide-points li { display: flex; align-items: center; gap: 10px; }
 .guide-points .pts { min-width: 44px; min-height: 32px; display: grid; place-items: center; cursor: default; }
 .guide-link { border-color: var(--gold); }
+
+.pair { display: flex; justify-content: center; align-items: center; gap: 4px; }
+.pair .princess { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 3px solid var(--gold); box-shadow: 0 0 22px -6px var(--gold); }

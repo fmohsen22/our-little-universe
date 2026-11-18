@@ -219,14 +219,14 @@
   /* ---------- chapter 8: the Simurgh's riddle ---------- */
   function finaleEnding(f) {
     return '<article class="card story"><p class="eyebrow">The answer</p><h2>' + esc(f.riddle) + '</h2>' + f.ending.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '</article>' +
-      '<div class="card feature center mohsey">' + window.WPM_PRINCE(96) + '<p class="big-text">Prince Mohsey is waiting at his table.</p><div class="row mid"><a class="btn big" href="#mohsey">Play Prince Mohsey</a></div></div>';
+      '<div class="card feature center mohsey"><div class="pair">' + window.WPM_PRINCE(96) + '<img class="princess" src="assets/princess-softolli.jpg" alt="Princess Softolli" width="96" height="96" onerror="this.remove()"></div><p class="note">Prince Mohsey of Iran and Princess Softolli of Rum</p><p class="big-text">Prince Mohsey is waiting at his table.</p><div class="row mid"><a class="btn big" href="#mohsey">Play Prince Mohsey</a></div></div>';
   }
   views.finale = function () {
     app.innerHTML = '<a class="back" href="#journey">← All chapters</a><div class="card"><p class="note">Opening the last chapter…</p></div>';
     api('GET', '/api/finale').then(function (f) {
       if (location.hash !== '#finale') return;
       app.innerHTML = '<a class="back" href="#journey">← All chapters</a><article class="card story"><p class="eyebrow">Chapter 8 · the last chapter</p><h1>' + esc(f.title) + '</h1>' +
-        '<img class="story-pic" src="assets/levels/level-8.jpg" alt="Prince Mohsey and Princess Softolli in the great library" width="1080" height="720" onload="var p = document.querySelector(\'.f-portrait\'); if (p) p.remove();" onerror="this.remove()">' +
+        '<img class="story-pic" src="assets/levels/level-8.jpg" alt="Princess Softolli in the great library, a copy of the Book of Kings open before her and the river city behind the windows" width="1080" height="720" onload="var p = document.querySelector(\'.f-portrait\'); if (p) p.remove();" onerror="this.remove()">' +
         '<div class="center f-portrait">' + window.WPM_PRINCE(120) + '</div>' + f.story.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '</article>' +
         (f.solved ? '<div id="f-box">' + finaleEnding(f) + '</div>' :
           '<div id="f-box"><form class="card riddle" data-form="riddle"><p class="eyebrow">🪶 The Simurgh’s riddle</p><h2>' + esc(f.riddle) + '</h2><ol class="clues">' + f.clues.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ol>' +
