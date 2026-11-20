@@ -44,8 +44,8 @@ const ACHIEVEMENTS = [
   { id: 'keeper', name: 'Keeper of the Book of Kings', art: 'planet', metal: 'gold', legendary: true, goal: 300, desc: 'Play 300 scored rounds.', value: p => p.rounds },
   { id: 'scholar', name: 'Scholar of the Shahnameh', art: 'palette', metal: 'sapphire', goal: 3, desc: 'Pass three level quizzes at the first attempt.', value: p => p.firstTries },
   { id: 'judge', name: 'Wise Judge of the Court', art: 'book', metal: 'emerald', goal: 10, desc: 'Referee 10 rounds.', value: p => p.refereed || 0 },
-  { id: 'feather', name: 'The Last Feather', art: 'feather', metal: 'gold', legendary: true, goal: 1, desc: 'Solve the Simurgh\u2019s riddle and find Prince Mohsey.', value: p => p.finale ? 1 : 0 },
-  { id: 'equal', name: 'Equal of the Prince', art: 'royalcrown', metal: 'ruby', legendary: true, goal: 1, desc: 'Beat Prince Mohsey at his own table.', value: p => p.mohseyWins || 0 },
+  { id: 'feather', name: 'The Last Feather', art: 'feather', metal: 'gold', legendary: true, goal: 1, desc: 'Solve the Simurgh\u2019s riddle and find the Prince.', value: p => p.finale ? 1 : 0 },
+  { id: 'equal', name: 'Equal of the Prince', art: 'royalcrown', metal: 'ruby', legendary: true, goal: 1, desc: 'Beat the Prince at his own table.', value: p => p.mohseyWins || 0 },
   { id: 'cup', name: 'The Cup of Kay Khosrow', art: 'cup', metal: 'gold', legendary: true, hidden: true, goal: 1, desc: 'Win a round at a table of five or more.', value: p => p.bigWins }
 ];
 

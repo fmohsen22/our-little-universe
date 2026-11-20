@@ -38,12 +38,12 @@
      until then, or if it fails to load, this drawn stand-in is shown instead. */
   window.WPM_PRINCE = function (size) {
     var src = (window.WPM_CONFIG || {}).princeImage || 'assets/prince-mohsey.jpg';
-    return '<span class="prince-wrap" style="width:' + size + 'px;height:' + size + 'px"><img class="prince" src="' + esc(src) + '" width="' + size + '" height="' + size + '" alt="Prince Mohsey" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' +
+    return '<span class="prince-wrap" style="width:' + size + 'px;height:' + size + 'px"><img class="prince" src="' + esc(src) + '" width="' + size + '" height="' + size + '" alt="The Prince" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' +
       '<span hidden>' + drawn(size) + '</span></span>';
   };
   function drawn(size) {
     var curls = [[38,40,13],[50,30,13],[64,28,13],[77,33,13],[86,44,12],[32,54,11],[89,57,10],[44,24,9],[72,22,9],[58,20,9],[30,66,8],[91,68,7]].map(function (c) { return '<circle cx="' + c[0] + '" cy="' + c[1] + '" r="' + c[2] + '"/>'; }).join('');
-    return '<svg class="prince" viewBox="0 0 120 120" width="' + size + '" height="' + size + '" role="img" aria-label="Prince Mohsey"><defs><clipPath id="prince-clip"><circle cx="60" cy="60" r="54"/></clipPath></defs>' +
+    return '<svg class="prince" viewBox="0 0 120 120" width="' + size + '" height="' + size + '" role="img" aria-label="The Prince"><defs><clipPath id="prince-clip"><circle cx="60" cy="60" r="54"/></clipPath></defs>' +
       '<circle cx="60" cy="60" r="58" fill="url(#m-gold)"/><circle cx="60" cy="60" r="54" fill="#1E2A5A"/><g clip-path="url(#prince-clip)">' +
       '<path d="M14 120c2-22 20-30 46-30s44 8 46 30z" fill="#1B2A63"/><path d="M40 92c6 8 34 8 40 0l-4 28H44z" fill="#F1E3B8"/><path d="M38 90c8 10 36 10 44 0l3 6c-10 12-40 12-50 0z" fill="url(#m-gold)"/>' +
       '<rect x="52" y="74" width="16" height="18" rx="6" fill="#B9763F"/><ellipse cx="60" cy="58" rx="22" ry="26" fill="#C98A52"/>' +
