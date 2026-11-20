@@ -1,4 +1,4 @@
-// "Where is Prince Mohsey?" game server. No dependencies, Node 18 or newer.
+// "Where is the Prince?" game server. No dependencies, Node 18 or newer.
 //
 //   node server/server.js
 //
@@ -632,4 +632,4 @@ function handle(req, res) {
   });
 }
 function answersOf(room, src) { const a = {}, o = src && typeof src === 'object' ? src : {}; room.cats.forEach(c => { a[c] = G.clean(o[c]); }); return a; }
-server.listen(PORT, HOST, () => console.log('Where is Prince Mohsey? server on ' + HOST + ':' + PORT + ', data in ' + DATA + ', ' + LEVELS.length + ' level stories, allowing ' + ORIGINS.join(', ')));
+server.listen(PORT, HOST, () => console.log('Where is the Prince? server on ' + HOST + ':' + PORT + ', data in ' + DATA + ', ' + LEVELS.length + ' level stories, allowing ' + ORIGINS.join(', ')));

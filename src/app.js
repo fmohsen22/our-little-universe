@@ -1,4 +1,4 @@
-/* Where is Prince Mohsey? — the website. Everything that matters (letters, clocks, scores, points,
+/* Where is the Prince? — the website. Everything that matters (letters, clocks, scores, points,
    levels, badges) is decided by the game server; this file shows it and sends your answers and votes. */
 (function () {
   'use strict';
@@ -82,7 +82,7 @@
 
   views.welcome = function () {
     var isNew = mode === 'new';
-    app.innerHTML = '<section class="hero">' + window.WPM_PRINCE(112) + '<p class="eyebrow">A word game from the Book of Kings</p><h1>Where is <em>Prince Mohsey?</em></h1><p class="soft">Play Esm Famil with friends, earn crowns from the Shahnameh, and unlock the life of Rostam chapter by chapter.</p><a class="btn small ghost" href="#guide">How to play</a></section>' +
+    app.innerHTML = '<section class="hero">' + window.WPM_PRINCE(112) + '<p class="eyebrow">A word game from the Book of Kings</p><h1>Where is <em>the Prince?</em></h1><p class="soft">Play Esm Famil with friends, earn crowns from the Shahnameh, and unlock the life of Rostam chapter by chapter.</p><a class="btn small ghost" href="#guide">How to play</a></section>' +
       '<div class="seg" role="group" aria-label="Account"><button class="chip" data-act="mode" data-m="new" aria-pressed="' + isNew + '">New player</button><button class="chip" data-act="mode" data-m="login" aria-pressed="' + !isNew + '">I have an account</button></div>' +
       (meta.googleClientId ? '<div class="card g-card"><div id="g-btn" class="g-btn"></div><p class="note center">' + (isNew ? 'The quickest way: no password to remember.' : 'If you joined with Google, continue with Google.') + '</p></div><div class="or" role="separator"><span>or ' + (isNew ? 'choose a name and password' : 'sign in with your name and password') + '</span></div>' : '') +
       '<form class="card" data-form="' + (isNew ? 'register' : 'login') + '"><div class="field"><label for="w-name">' + (isNew ? 'Your name in the kingdom' : 'Your name') + '</label><input id="w-name" type="text" maxlength="20" autocomplete="username" placeholder="For example: Max"></div>' +
@@ -143,8 +143,8 @@
       step('The life of Rostam', '📜', 'Seven chapters to unlock',
         '<p>Your points also open the seven chapters of Rostam’s life. The first chapter needs ' + num(first) + ' points, about 10 hours of play, and each one after needs a little more.</p>' +
         '<p>When a chapter opens, read its story and take a short quiz: <b>' + meta.quiz.size + ' questions, ' + meta.quiz.pass + ' right to pass</b>. If you fail, the points for that chapter are lost and you win them again at the table, so read carefully.</p>') +
-      step('The last chapter', '🪶', 'Where is Prince Mohsey?',
-        '<p>At the end of every chapter the Simurgh leaves you <b>one line of a riddle</b>. Remember them. After all seven chapters, the last one asks a single question: where is Prince Mohsey? Find the answer and he will be waiting for you at his own table.</p>') +
+      step('The last chapter', '🪶', 'Where is the Prince?',
+        '<p>At the end of every chapter the Simurgh leaves you <b>one line of a riddle</b>. Remember them. After all seven chapters, the last one asks a single question: where is the Prince? Find the answer and he will be waiting for you at his own table.</p>') +
       '<p class="note center">Stuck, or forgot your password? <a href="#contact">Send a message</a>.</p>' +
       (me ? '<div class="row mid"><a class="btn big" href="#home">Let’s play</a></div>' : '<div class="row mid"><a class="btn big" href="#">Create my account</a></div>');
   };
@@ -185,14 +185,14 @@
       '<p class="note"><a href="#guide">How to play</a></p><form class="inline" data-form="join"><label class="sr" for="h-code">Table code</label><input id="h-code" type="text" maxlength="5" autocapitalize="characters" autocomplete="off" placeholder="Table code"><button class="btn ghost" type="submit">Join</button></form>' +
       '<div id="h-tables"><p class="note">Looking for open tables…</p></div></section>' +
       '<section class="card"><div class="row split"><h2>Leaderboard</h2><a class="btn small ghost" href="#leaders">See everyone</a></div><div id="h-leaders"><p class="note">Loading…</p></div></section>' +
-      '<section class="card"><h2>Bring your friends</h2><p class="soft">The more players at the table, the better the game.</p>' + shareRow('Come and play Esm Famil with me in “Where is Prince Mohsey?”', SITE) + '</section>' +
+      '<section class="card"><h2>Bring your friends</h2><p class="soft">The more players at the table, the better the game.</p>' + shareRow('Come and play Esm Famil with me in “Where is the Prince?”', SITE) + '</section>' +
       '<section class="card legend-intro"><p class="eyebrow">How the three kingdoms began</p><h2>Fereydun divides the world</h2>' +
       '<p>In the Shahnameh, the old king Fereydun splits the world among his three sons. Salm, the eldest, receives Rum, the West. Tur receives Turan and China, to the north-east and east. Iraj, the youngest, receives Iran, the heart of it all.</p>' +
       '<p>Jealous of their brother’s share, Salm and Tur murder Iraj, and from that crime grows the long war between Iran and Turan that fills the age of heroes, and the life of Rostam.</p>' +
       '<p class="note">You belong to the Kingdom of ' + kingdom(me.kingdom).name + ', the realm of ' + kingdom(me.kingdom).heir + '.</p>' +
       '<details class="map-more"><summary>Show the map</summary>' + window.WPM_MAP() + '</details></section>' +
       (me.finale ? '<a class="book-link hall-link" href="#mohsey"><span><b>👑 Play Prince Mohsey</b><br><span class="note">You found him in Vienna. Now beat him at Esm Famil.</span></span><span aria-hidden="true">→</span></a>'
-        : me.level >= meta.levels.length ? '<a class="book-link hall-link" href="#finale"><span><b>🪶 The last chapter is open</b><br><span class="note">Solve the Simurgh’s riddle: where is Prince Mohsey?</span></span><span aria-hidden="true">→</span></a>' : '') +
+        : me.level >= meta.levels.length ? '<a class="book-link hall-link" href="#finale"><span><b>🪶 The last chapter is open</b><br><span class="note">Solve the Simurgh’s riddle: where is the Prince?</span></span><span aria-hidden="true">→</span></a>' : '') +
       '<a class="book-link hall-link" href="#journey"><span><b>📜 The life of Rostam</b><br><span class="note">Seven chapters to unlock, and one still to come</span></span><span aria-hidden="true">→</span></a>';
     api('GET', '/api/rooms').then(function (j) {
       var box = $('#h-tables'); if (!box) return;
@@ -228,7 +228,7 @@
         var passed = L.n <= me.level, open = L.n === me.level + 1 && me.quizReady, current = L.n === me.level + 1;
         return '<li class="chapter' + (passed ? ' passed' : open ? ' open' : current ? ' current' : ' locked') + '"><span class="ch-n">' + (passed ? '✓' : L.n) + '</span><div><b>' + esc(L.title) + '</b><small>' + esc(L.teaser) + '</small>' +
           (passed ? '<a class="btn small ghost" href="#level-' + L.n + '">Read again</a>' : open ? '<a class="btn small" href="#level-' + L.n + '">Read the story and take the quiz</a>' : current ? bar(me.levelPoints, me.need) + '<small>' + num(me.levelPoints) + ' of ' + num(L.points) + ' points</small>' : '<small>Needs ' + num(L.points) + ' points after chapter ' + (L.n - 1) + '</small>') + '</div>' + pic(L.n, true) + '</li>';
-      }).join('') + '<li class="chapter final' + (me.finale ? ' passed' : me.level >= meta.levels.length ? ' open' : ' locked') + '">' + window.WPM_PRINCE(56) + '<div><b>8. Where is Prince Mohsey?</b>' +
+      }).join('') + '<li class="chapter final' + (me.finale ? ' passed' : me.level >= meta.levels.length ? ' open' : ' locked') + '">' + window.WPM_PRINCE(56) + '<div><b>8. Where is the Prince?</b>' +
         (me.finale ? '<small>You found him. He is waiting at his table.</small><div class="row"><a class="btn small ghost" href="#finale">Read again</a><a class="btn small" href="#mohsey">Play Prince Mohsey</a></div>'
           : me.level >= meta.levels.length ? '<small>The last chapter is open. Solve the Simurgh’s riddle.</small><a class="btn small" href="#finale">Open the last chapter</a>'
           : '<small>Pass all seven chapters to open the last one. Collect the Simurgh’s riddle along the way.</small>') + '</div></li></ol>';
@@ -390,7 +390,7 @@
       return (why ? '<p class="note center">' + why + '</p>' : '') + '<button class="btn big" data-act="start"' + (why ? ' disabled' : '') + '>' + label + '</button>';
     };
     if (st.phase === 'lobby') {
-      body = notice + '<div class="card"><p><b>Invite players</b> <span class="note">' + meta.minTable + ' to ' + meta.maxPlayers + ' at a table</span></p><p class="code">' + st.code + '</p><div class="inline"><label class="sr" for="t-link">Invite link</label><input id="t-link" type="text" readonly value="' + esc(link) + '"><button class="btn small" data-act="copylink">Copy</button></div>' + shareRow(me.name + ' invites you to a round of Esm Famil in “Where is Prince Mohsey?”. Table ' + st.code + ':', link) + '</div>' +
+      body = notice + '<div class="card"><p><b>Invite players</b> <span class="note">' + meta.minTable + ' to ' + meta.maxPlayers + ' at a table</span></p><p class="code">' + st.code + '</p><div class="inline"><label class="sr" for="t-link">Invite link</label><input id="t-link" type="text" readonly value="' + esc(link) + '"><button class="btn small" data-act="copylink">Copy</button></div>' + shareRow(me.name + ' invites you to a round of Esm Famil in “Where is the Prince?”. Table ' + st.code + ':', link) + '</div>' +
         election() +
         (host ? '<div class="card"><p><b>Table rules</b></p>' +
           '<div class="checks">' + meta.categories.map(function (c) { return '<label><input type="checkbox" id="c-' + c.id + '" data-act="cat" data-id="' + c.id + '"' + (s.cats.indexOf(c.id) >= 0 ? ' checked' : '') + '> ' + c.en + '</label>'; }).join('') + '</div>' +

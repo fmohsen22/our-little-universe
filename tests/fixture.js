@@ -5,7 +5,7 @@ module.exports = function () {
     quiz: Array.from({ length: 10 }, (_, q) => ({ q: 'Question ' + (q + 1) + '?', options: ['right', 'wrong a', 'wrong b', 'wrong c'].map((o, k) => k === q % 4 ? 'right' : k === 0 ? 'wrong z' : o), answer: q % 4 })) }));
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wpm-')), file = path.join(dir, 'levels.json');
   levels.forEach(L => { L.clue = 'Clue ' + L.n + ' about the city.'; });
-  const finale = { title: 'Where is Prince Mohsey?', story: ['Test finale story.', 'Mohsey rides west.'], riddle: 'Where is Prince Mohsey?', answers: ['vienna', 'wien', 'vienne'],
+  const finale = { title: 'Where is the Prince?', story: ['Test finale story.', 'Mohsey rides west.'], riddle: 'Where is the Prince?', answers: ['vienna', 'wien', 'vienne'],
     near: { austria: 'The right land, but name the city.' }, hints: ['Hint one.', 'Hint two.', 'Hint three.'], ending: ['Vienna, of course.', 'He is waiting at his table.'] };
   fs.writeFileSync(file, JSON.stringify({ levels, finale })); return { dir, file };
 };

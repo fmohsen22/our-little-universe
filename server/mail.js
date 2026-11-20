@@ -22,7 +22,7 @@ function send(msg) {
     const c = cfg(); if (!ready()) return reject(new Error('email is not set up'));
     const domain = c.user.split('@')[1] || 'localhost', id = '<' + crypto.randomBytes(12).toString('hex') + '@' + domain + '>';
     const body = b64(msg.text).replace(/.{1,76}/g, '$&\r\n');
-    const data = ['From: ' + header('Where is Prince Mohsey?') + ' <' + c.user + '>', 'To: <' + c.to + '>', 'Subject: ' + header(oneLine(msg.subject)), 'Date: ' + new Date().toUTCString(), 'Message-ID: ' + id,
+    const data = ['From: ' + header('Where is the Prince?') + ' <' + c.user + '>', 'To: <' + c.to + '>', 'Subject: ' + header(oneLine(msg.subject)), 'Date: ' + new Date().toUTCString(), 'Message-ID: ' + id,
       isEmail(msg.replyTo) ? 'Reply-To: <' + oneLine(msg.replyTo) + '>' : '', 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: base64'].filter(Boolean).join('\r\n') + '\r\n\r\n' + body;
     const steps = [[null, 220], ['EHLO ' + domain, 250], ['AUTH LOGIN', 334], [b64(c.user), 334], [c.pass && b64(c.pass), 235], ['MAIL FROM:<' + c.user + '>', 250], ['RCPT TO:<' + c.to + '>', 250], ['DATA', 354], [data + '\r\n.', 250], ['QUIT', 221]];
     const sock = c.tls ? tls.connect({ host: c.host, port: c.port, servername: c.host }) : net.connect({ host: c.host, port: c.port });
@@ -50,7 +50,7 @@ const TOPIC = { password: 'Forgot password', account: 'My account', bug: 'Someth
 function forMessage(m) {
   const who = m.name || 'someone';
   return {
-    subject: 'Where is Prince Mohsey? · ' + (TOPIC[m.topic] || 'Message') + ' · from ' + who,
+    subject: 'Where is the Prince? · ' + (TOPIC[m.topic] || 'Message') + ' · from ' + who,
     replyTo: m.reply,
     text: (TOPIC[m.topic] || 'Message') + '\n\nFrom: ' + who + (m.player ? ' (signed in as this player)' : ' (not signed in)') + '\nAnswer them at: ' + (m.reply || 'they left no way to answer') +
       '\nSent: ' + new Date(m.at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) + '\n\n' + m.text + '\n\n' +
@@ -62,6 +62,6 @@ module.exports = { ready, send, forMessage, isEmail };
 
 // `node server/mail.js --test` sends a test email (used by set-email.sh)
 if (require.main === module && process.argv[2] === '--test') {
-  send({ subject: 'Where is Prince Mohsey? · test', text: 'It works: messages from the contact form of the game will arrive here.\n' })
+  send({ subject: 'Where is the Prince? · test', text: 'It works: messages from the contact form of the game will arrive here.\n' })
     .then(() => { console.log('sent'); }, e => { console.log('failed: ' + e.message); process.exit(1); });
 }

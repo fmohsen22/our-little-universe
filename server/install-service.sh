@@ -13,7 +13,7 @@ mkdir -p "$DATA"
 
 sudo tee "$UNIT_FILE" >/dev/null <<UNIT
 [Unit]
-Description=Where is Prince Mohsey? game server
+Description=Where is the Prince? game server
 After=network.target
 
 [Service]
@@ -40,7 +40,7 @@ fi
 # a copy of the data every night at 03:17 (or as soon as the computer is on again), keeping 30 days
 sudo tee /etc/systemd/system/our-little-universe-backup.service >/dev/null <<UNIT
 [Unit]
-Description=Where is Prince Mohsey? nightly backup
+Description=Where is the Prince? nightly backup
 
 [Service]
 Type=oneshot

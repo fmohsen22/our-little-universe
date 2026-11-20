@@ -1,4 +1,4 @@
-// "Where is Prince Mohsey?" game rules. Pure functions and configuration: no I/O, so everything here is unit-tested.
+// "Where is the Prince?" game rules. Pure functions and configuration: no I/O, so everything here is unit-tested.
 'use strict';
 
 /* ---------- configuration ---------- */

@@ -532,7 +532,7 @@
     }
   ],
   "finale": {
-    "title": "Where is Prince Mohsey?",
+    "title": "Where is the Prince?",
     "story": [
       "When Rostam died, the Simurgh flew one last time over Zabolestan. Zal, now very old, stood at his window and watched her circle the house where his son had grown up. She did not land. She let a single feather fall onto his windowsill, and he heard her voice as clearly as on the day she had carried him down from Mount Alborz.",
       "“This is my last feather for your family,” she said. “Do not burn it for war. Keep it for a child of Iran who is lost, as you were once lost. When it is burned, I will come one final time.”",
@@ -549,7 +549,7 @@
       "Her name was Softolli. She was a princess of Rum, of the line of Salm, from the green island at the far western edge of Rum, and like him she had come to the capital to study. She was clever, she laughed easily, and she never gave up an argument. Neither did he. They argued again the next day, and the day after that, until neither of them could remember the last day they had not talked.",
       "Where did the prince of Iran find the princess of Rum? The Simurgh left you a fragment of her riddle at the end of every chapter of Rostam’s life. Put the seven fragments together and name the city."
     ],
-    "riddle": "Where is Prince Mohsey?",
+    "riddle": "Where is the Prince?",
     "answers": ["vienna", "wien", "vienne", "viena", "wenen", "viden", "becs", "wieden", "وین"],
     "near": {
       "austria": "The right land, but the Simurgh asked for a city. Which city?",

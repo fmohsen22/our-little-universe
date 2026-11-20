@@ -1,4 +1,4 @@
-# Where is Prince Mohsey?
+# Where is the Prince?
 
 Esm Famil (اسم فامیل) for a table of friends, with crowns and badges from the Shahnameh and the life of Rostam to unlock, chapter by chapter.
 
@@ -38,9 +38,8 @@ If the referee leaves during a round and is not back within 20 seconds, the roun
   The hours assume about 800 points an hour (a 3-minute round worth about 40 points). Change `LEVELS` at the top of `server/game.js` to retune: `pointsPerHour`, `firstLevelHours`, `growth`.
 
 - **The quiz:** when the points are there, the chapter's story opens. Then 5 questions drawn from 10; 4 right keeps the chapter. Fail, and the points gathered for that chapter are lost (lifetime points are not) and the story closes until you earn them again.
-- **Chapter 8** is reserved for "Where is Prince Mohsey?" and is not written yet.
 
-## Chapter 8: Where is Prince Mohsey?
+## Chapter 8: Where is the Prince?
 
 After the seven chapters of Rostam's life comes the last one, about Prince Mohsey of Iran: the Simurgh's last feather, his journey west into Rum, the King of Rum who sends him to study, and Princess Softolli.
 
