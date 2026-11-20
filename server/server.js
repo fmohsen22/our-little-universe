@@ -55,7 +55,7 @@ const ownerPw = v => (typeof v === 'string' ? v : '').normalize('NFC').replace(/
 const STATS_FILE = path.join(DATA, 'stats.json');
 let stats = { days: {} };
 try { stats = JSON.parse(fs.readFileSync(STATS_FILE, 'utf8')); if (!stats.days) stats.days = {}; } catch (e) { /* a first run, or no stats yet */ }
-const today = (t) => new Date(t || Date.now()).toLocaleDateString('sv-SE');   // YYYY-MM-DD in the server's time zone
+const today = (t) => { const d = new Date(t || Date.now()), two = x => String(x).padStart(2, '0'); return d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate()); };   // YYYY-MM-DD in the server's time zone, whatever languages Node was built with
 function dayOf(t) { const d = today(t); return stats.days[d] = stats.days[d] || { rounds: 0, players: [], signups: 0 }; }
 let statsTimer = null;
 function saveStats() {
