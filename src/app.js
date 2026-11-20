@@ -131,15 +131,16 @@
         '<p>The first player to fill <b>every</b> box can press <b>Stop</b>, which ends the round for everyone. Otherwise the round ends when the clock runs out.</p>' +
         '<p><b>✨ Surprise categories.</b> Most rounds add one or two extra categories you could not prepare for: a job, a fruit, a sport, a film…</p>') +
       step('Getting together', '👥', 'Start or join a table',
-        '<p>Press <b>Start a table</b> and send the link to your friends (there is a WhatsApp button), or join a table that is already open. A table needs <b>' + meta.minTable + ' to ' + meta.maxPlayers + ' people</b>: a referee and at least two players.</p>') +
+        '<p>Press <b>Start a table</b> and send the link to your friends (there is a WhatsApp button), or join a table that is already open. A table takes <b>2 to ' + meta.maxPlayers + ' people</b>: with a referee you need at least ' + meta.minTable + ' (the referee and two players); two can play without a referee.</p>') +
       step('Judging', '⚖️', 'Who decides which answers count?',
         '<p>Before each round the table chooses one of three ways. You can choose again before every round.</p>' +
         '<ol class="guide-ways">' +
         '<li><b>Elect a referee.</b> Anyone can tap <b>Volunteer as referee</b>, and the others tap <b>Vote</b>. The one with the most votes is the referee.</li>' +
         '<li><b>Let the game pick.</b> Nobody wants to? The host taps <b>Pick a referee for us</b>. The game names someone and takes turns, so everyone referees equally often.</li>' +
-        '<li><b>No referee.</b> If <b>everyone</b> at the table taps <b>I agree: no referee</b>, all of you play (at least ' + meta.minTable + ' players) and the table judges together.</li></ol>' +
+        '<li><b>No referee.</b> If <b>everyone</b> at the table taps <b>I agree: no referee</b>, all of you play and the table judges together. This is also how <b>two people</b> play.</li></ol>' +
         '<p><b>With a referee:</b> the referee does not play that round' + (meta.refereePoints ? ', and earns <b>' + meta.refereePoints + ' points</b> for it' : '') + '. When the round ends they see every answer and tap <b>✓</b> or <b>✗</b> on each one. Is “Snake” an animal? ✓. Is “Sxyz” a city? ✗. Then they press <b>Give the verdict</b>.</p>' +
         '<p><b>Without a referee:</b> when the round ends, everyone sees every answer. Tap the <b>✓</b> next to another player’s answer to vote against it. An answer falls when <b>more than half of the other players</b> vote against it. You cannot vote on your own answers. When you have checked, press <b>Done checking</b>; the round is scored when everyone has.</p>' +
+        '<p><b>Just two of you?</b> Then there is nobody to out-vote, so it works by agreement: you can challenge the other player’s answer, and it falls only if they tap <b>OK, remove it</b>.</p>' +
         '<p class="note">Either way, the game already refuses empty boxes, wrong first letters, nonsense like “sss”, and countries that do not exist. If someone changes their mind about playing without a referee, the next round needs a referee again.</p>') +
       step('Points', '⭐', 'How a round is scored',
         '<ul class="guide-points"><li><b class="pts" data-v="10">' + P.unique + '</b> an answer nobody else wrote</li><li><b class="pts" data-v="5">' + P.shared + '</b> an answer someone else also wrote</li><li><b class="pts" data-v="0">0</b> empty, wrong or rejected</li>' + (meta.repeatRule ? '<li><b class="pts" data-v="0">0</b> a word you already scored with today</li>' : '') + '</ul>' +
@@ -188,7 +189,7 @@
       levelLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') +
       '<dl class="stats4"><div><dt>Points</dt><dd>' + num(me.total) + '</dd></div><div><dt>Victories</dt><dd>' + me.wins + '</dd></div><div><dt>Rounds</dt><dd>' + me.rounds + '</dd></div><div><dt>Best streak</dt><dd>' + me.best + '</dd></div></dl></section>' +
       (me.rounds === 0 && !me.refereed ? '<a class="book-link hall-link guide-link" href="#guide"><span><b>👋 New here? How to play</b><br><span class="note">The rules, the referee, points and chapters, in two minutes</span></span><span aria-hidden="true">→</span></a>' : '') +
-      '<section class="card"><h2>Play Esm Famil</h2><p class="soft">One letter, eight categories, and a clock. A referee chosen by the table decides which answers count. Unique answers score ' + meta.points.unique + ', shared answers ' + meta.points.shared + '. A table needs at least ' + meta.minTable + ' people.</p><button class="btn big" data-act="create">Start a table</button>' +
+      '<section class="card"><h2>Play Esm Famil</h2><p class="soft">One letter, eight categories, and a clock. A referee chosen by the table decides which answers count. Unique answers score ' + meta.points.unique + ', shared answers ' + meta.points.shared + '. Two can play; with a referee you need ' + meta.minTable + '.</p><button class="btn big" data-act="create">Start a table</button>' +
       '<p class="note"><a href="#guide">How to play</a></p><form class="inline" data-form="join"><label class="sr" for="h-code">Table code</label><input id="h-code" type="text" maxlength="5" autocapitalize="characters" autocomplete="off" placeholder="Table code"><button class="btn ghost" type="submit">Join</button></form>' +
       '<div id="h-tables"><p class="note">Looking for open tables…</p></div></section>' +
       '<section class="card"><div class="row split"><h2>Leaderboard</h2><a class="btn small ghost" href="#leaders">See everyone</a></div><div id="h-leaders"><p class="note">Loading…</p></div></section>' +
@@ -203,7 +204,8 @@
       '<a class="book-link hall-link" href="#journey"><span><b>📜 The life of Rostam</b><br><span class="note">Seven chapters to unlock, and one still to come</span></span><span aria-hidden="true">→</span></a>';
     api('GET', '/api/rooms').then(function (j) {
       var box = $('#h-tables'); if (!box) return;
-      box.innerHTML = j.tables.length ? '<p class="note">Open tables</p><ul class="tables">' + j.tables.map(function (t) { return '<li><span><b>' + esc(t.players.join(', ')) + '</b><small>' + (t.phase === 'lobby' ? 'Waiting to start' : 'Playing now') + '</small></span><a class="btn small" href="#table-' + t.code + '">Join</a></li>'; }).join('') + '</ul>' : '<p class="note">No open tables right now. Start one and share the link.</p>';
+      var live = '<p class="note live"><span class="dot" aria-hidden="true"></span> ' + j.online + (j.online === 1 ? ' player' : ' players') + ' online now' + (j.online === 1 ? ' (you)' : '') + '</p>';
+      box.innerHTML = live + (j.tables.length ? '<p class="note">Open tables</p><ul class="tables">' + j.tables.map(function (t) { return '<li><span><b>' + esc(t.players.join(', ')) + '</b><small>' + (t.phase === 'lobby' ? 'Waiting to start' : 'Playing now') + '</small></span><a class="btn small" href="#table-' + t.code + '">Join</a></li>'; }).join('') + '</ul>' : '<p class="note">No open tables right now. Start one and share the link.</p>');
     }).catch(function () { var b = $('#h-tables'); if (b) b.textContent = ''; });
     api('GET', '/api/leaderboard').then(function (j) { var box = $('#h-leaders'); if (box) box.innerHTML = board(j.players.slice(0, 5)); }).catch(function () { /* shown elsewhere */ });
   };
@@ -389,7 +391,7 @@
       '<div class="row">' + (st.auto ? '' : '<button class="btn small ghost" data-act="volunteer" data-on="' + (iVol ? '' : '1') + '">' + (iVol ? 'Step down as a volunteer' : 'Volunteer as referee') + '</button>') +
         (host ? '<button class="btn small ghost" data-act="pickref" data-on="' + (st.auto ? '' : '1') + '">' + (st.auto ? 'Choose a referee ourselves' : 'Pick a referee for us') + '</button>' : '') + '</div>' +
       (!host && !st.auto && !vols.length ? '<p class="note">Nobody wants to? The host can let the game pick, taking turns.</p>' : '') +
-      '<div class="noref"><p><b>Or play without a referee</b> <span class="note">only if everyone agrees. Then the table judges together: an answer falls when more than half of the other players reject it.</span></p>' +
+      '<div class="noref"><p><b>Or play without a referee</b> <span class="note">only if everyone agrees. ' + (onl === 2 ? 'With two players, you can challenge the other’s answer, and it falls only if they agree.' : 'Then the table judges together: an answer falls when more than half of the other players reject it.') + '</span></p>' +
         '<p class="note" id="nr-count">' + nr.agreed.length + ' of ' + onl + ' agreed' + (nr.agreed.length ? ': ' + nr.agreed.map(function (id) { return esc(nameOf(id)); }).join(', ') : '') + '</p>' +
         '<button class="btn small' + (iAgree ? '' : ' ghost') + '" data-act="noref" data-on="' + (iAgree ? '' : '1') + '" aria-pressed="' + iAgree + '">' + (iAgree ? 'I agreed. Tap to want a referee again' : 'I agree: no referee') + '</button></div></div>';
   }
@@ -403,11 +405,15 @@
     var notice = st.notice ? '<p class="referee">' + esc(st.notice) + '</p>' : '';
     var startBlock = function (label) {
       if (!host) return '<p class="center soft">Waiting for the host to start' + (st.phase === 'results' ? ' the next round' : '') + '.</p>';
-      var why = onlineN < meta.minTable ? 'A table needs at least ' + meta.minTable + ' people: a referee and two players.' : (st.noRef && st.noRef.active) ? '' : !st.referee ? 'Choose a referee first: someone volunteers and the others vote, or let the game pick one.' : '';
+      var noRefOn = !!(st.noRef && st.noRef.active);
+      var why = noRefOn ? (onlineN < 2 ? 'You need at least 2 players.' : '')
+        : onlineN < 2 ? 'Invite at least one friend. Two can play without a referee; with a referee you need ' + meta.minTable + ' people.'
+        : onlineN < meta.minTable ? 'With a referee a table needs ' + meta.minTable + ' people. With two of you, both tap “I agree: no referee” below.'
+        : !st.referee ? 'Choose a referee first: someone volunteers and the others vote, or let the game pick one.' : '';
       return (why ? '<p class="note center">' + why + '</p>' : '') + '<button class="btn big" data-act="start"' + (why ? ' disabled' : '') + '>' + label + '</button>';
     };
     if (st.phase === 'lobby') {
-      body = notice + '<div class="card"><p><b>Invite players</b> <span class="note">' + meta.minTable + ' to ' + meta.maxPlayers + ' at a table</span></p><p class="code">' + st.code + '</p><div class="inline"><label class="sr" for="t-link">Invite link</label><input id="t-link" type="text" readonly value="' + esc(link) + '"><button class="btn small" data-act="copylink">Copy</button></div>' + shareRow(me.name + ' invites you to a round of Esm Famil in “Where is the Prince?”. Table ' + st.code + ':', link) + '</div>' +
+      body = notice + '<div class="card"><p><b>Invite players</b> <span class="note">2 to ' + meta.maxPlayers + ' at a table (' + meta.minTable + ' or more with a referee)</span></p><p class="code">' + st.code + '</p><div class="inline"><label class="sr" for="t-link">Invite link</label><input id="t-link" type="text" readonly value="' + esc(link) + '"><button class="btn small" data-act="copylink">Copy</button></div>' + shareRow(me.name + ' invites you to a round of Esm Famil in “Where is the Prince?”. Table ' + st.code + ':', link) + '</div>' +
         election() +
         (host ? '<div class="card"><p><b>Table rules</b></p>' +
           '<div class="checks">' + meta.categories.map(function (c) { return '<label><input type="checkbox" id="c-' + c.id + '" data-act="cat" data-id="' + c.id + '"' + (s.cats.indexOf(c.id) >= 0 ? ' checked' : '') + '> ' + c.en + '</label>'; }).join('') + '</div>' +
@@ -426,11 +432,13 @@
     } else {
       var final = st.phase === 'results', sc = st.scores, mineSc = sc.players[me.id], refName = esc(nameOf(final ? sc.referee : st.referee));
       var tableR = final ? !!sc.tableRound : !!st.tableRound, others = sc.order.length - 1, need = Math.floor(others / 2) + 1, tv = st.tableVotes || {};
+      var duo = tableR && sc.order.length === 2, ta = st.tableAgree || {};
       var doneN = st.players.filter(function (p) { return p.inRound && p.ready; }).length, inN = st.players.filter(function (p) { return p.inRound && p.online; }).length;
       body = (final ? '<div class="card feature"><p class="big-text">' + (sc.winner ? esc(st.players.filter(function (p) { return p.id === sc.winner; }).map(royalName)[0] || 'Someone') + ' wins the round' : 'No winner this round') + '</p><p class="note">' + (tableR ? 'No referee: judged by the table' : 'Referee: ' + refName) + '</p>' +
           (mineSc ? '<p class="turn">You scored ' + mineSc.total + (!sc.scored ? '. Nothing was added to your record' : mineSc.capped ? '. You have played more rounds this hour than count: take a break' : '') + '</p>' + (sc.scored ? levelLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') : '') : sc.referee === me.id ? '<p class="turn">Thank you for refereeing.' + (sc.refereePoints ? ' You earned ' + sc.refereePoints + ' points.' : '') + '</p>' + (sc.refereePoints ? levelLine(me) : '') : '') + '</div>'
         : '<p class="letter" lang="' + s.lang + '">' + esc(st.letter) + '</p>' +
-          (tableR ? '<div class="card feature judge-help"><p class="big-text">No referee this round</p><p>The table judges together. Tap an answer’s <b class="ok-t">✓</b> to vote against it <b class="no-t">✗</b>. It falls when <b>' + need + '</b> of the other ' + others + ' players vote against it. You cannot vote on your own answers.</p><p class="note">' + doneN + ' of ' + inN + ' have finished checking.</p></div>'
+          (duo ? '<div class="card feature judge-help"><p class="big-text">No referee this round</p><p>Just the two of you. Tap the <b class="ok-t">✓</b> next to the other player’s answer to challenge it <b class="no-t">✗</b>. A challenged answer falls <b>only if its owner agrees</b>. If one of your answers is challenged, you can agree to remove it, or keep it.</p><p class="note">' + doneN + ' of ' + inN + ' have finished checking.</p></div>'
+          : tableR ? '<div class="card feature judge-help"><p class="big-text">No referee this round</p><p>The table judges together. Tap an answer’s <b class="ok-t">✓</b> to vote against it <b class="no-t">✗</b>. It falls when <b>' + need + '</b> of the other ' + others + ' players vote against it. You cannot vote on your own answers.</p><p class="note">' + doneN + ' of ' + inN + ' have finished checking.</p></div>'
           : iRef ? '<div class="card feature judge-help"><p class="big-text">⚖️ You are the referee</p><p>Every answer counts <b class="ok-t">✓</b> unless you tap it to make it <b class="no-t">✗</b>. Tap again to change your mind. Then press <b>Give the verdict</b> at the bottom.</p><p class="note" id="j-count">' + judgeCount(sc) + '</p></div>' : '<p class="center soft">⚖️ ' + refName + ' is judging the answers. Watch the decisions come in.</p>') +
           '<p class="check-time">' + (tableR ? 'The table has' : 'The referee has') + ' <b id="t-time">' + left(st.reviewEndsAt) + '</b> seconds.</p>') +
         (final ? '<h2 class="center">All the answers</h2><p class="note center">' + (tableR ? 'As the table judged them.' : 'As the referee ' + refName + ' judged them.') + '</p>' : '') +
@@ -438,11 +446,13 @@
           return '<div class="review-row"><h3>' + c.en + ((st.surprise || []).indexOf(id) >= 0 ? ' ✨' : '') + '</h3>' + sc.order.map(function (pid) {
             var a = sc.players[pid].cats[id], judged = a.status === 'referee', against = ((tv[pid] || {})[id] || []), mineV = against.indexOf(me.id) >= 0;
             var canVote = !final && tableR && me2.inRound && pid !== me.id && (a.status === 'ok' || a.status === 'rejected');
-            var why = a.status === 'empty' ? 'nothing' : a.status === 'letter' ? 'wrong letter' : a.status === 'short' ? 'not a word' : a.status === 'country' ? 'not a country' : a.status === 'repeat' ? 'already used today' : a.status === 'rejected' ? 'rejected by the table' : judged ? 'rejected by the referee' : a.shared ? 'shared' : '';
-            if (!final && tableR && against.length && (a.status === 'ok' || a.status === 'rejected')) why += (why ? ' · ' : '') + against.length + ' of ' + need + ' against';
+            var agreed = !!((ta[pid] || {})[id]), canConcede = !final && duo && me2.inRound && pid === me.id && against.length > 0 && (a.status === 'ok' || a.status === 'rejected');
+            var why = a.status === 'empty' ? 'nothing' : a.status === 'letter' ? 'wrong letter' : a.status === 'short' ? 'not a word' : a.status === 'country' ? 'not a country' : a.status === 'repeat' ? 'already used today' : a.status === 'rejected' ? (sc.order.length === 2 ? 'removed by agreement' : 'rejected by the table') : judged ? 'rejected by the referee' : a.shared ? 'shared' : '';
+            if (!final && tableR && against.length && (a.status === 'ok' || a.status === 'rejected')) why += duo ? (a.status === 'ok' ? (why ? ' · ' : '') + 'challenged' : '') : (why ? ' · ' : '') + against.length + ' of ' + need + ' against';
             return '<div class="ans' + (a.status === 'ok' ? '' : ' bad') + '"><span dir="auto"><small>' + esc(nameOf(pid)) + (why ? ' · ' + why : '') + '</small><i>' + (esc(a.text) || '—') + '</i></span>' +
               (!final && iRef && (a.status === 'ok' || judged) ? '<button class="judge-btn" data-act="judge" data-p="' + pid + '" data-cat="' + id + '" aria-pressed="' + judged + '" aria-label="' + (judged ? 'Rejected. Tap to accept ' : 'Accepted. Tap to reject ') + esc(a.text) + '">' + (judged ? '✗' : '✓') + '</button>' : '') +
-              (canVote ? '<button class="judge-btn" data-act="tvote" data-p="' + pid + '" data-cat="' + id + '" aria-pressed="' + mineV + '" aria-label="' + (mineV ? 'You voted against. Tap to take it back: ' : 'Tap to vote against ') + esc(a.text) + '">' + (mineV ? '✗' : '✓') + '</button>' : '') + '<b class="pts" data-v="' + a.pts + '">' + a.pts + '</b></div>'; }).join('') + '</div>'; }).join('') + '</div>' +
+              (canVote ? '<button class="judge-btn" data-act="tvote" data-p="' + pid + '" data-cat="' + id + '" aria-pressed="' + mineV + '" aria-label="' + (mineV ? 'You voted against. Tap to take it back: ' : 'Tap to vote against ') + esc(a.text) + '">' + (mineV ? '✗' : '✓') + '</button>' : '') +
+              (canConcede ? '<button class="chip concede" data-act="concede" data-cat="' + id + '" data-v="' + (agreed ? '' : '1') + '">' + (agreed ? 'Keep it after all' : 'OK, remove it') + '</button>' : '') + '<b class="pts" data-v="' + a.pts + '">' + a.pts + '</b></div>'; }).join('') + '</div>'; }).join('') + '</div>' +
         '<div class="card"><table class="board"><thead><tr><th scope="col">Player</th><th scope="col">Round</th><th scope="col">Table total</th></tr></thead><tbody>' + sc.order.map(function (pid) { var p = st.players.filter(function (x) { return x.id === pid; })[0] || { name: '?', session: 0 }; return '<tr' + (pid === me.id ? ' class="you"' : '') + '><th scope="row">' + esc(p.name) + (final && sc.winner === pid ? ' 👑' : '') + '</th><td>' + sc.players[pid].total + '</td><td>' + p.session + '</td></tr>'; }).join('') + '</tbody></table></div>' +
         (final ? election() + startBlock('Next round') : iRef ? '<div class="verdict-bar"><button class="btn big" data-act="verdict">Give the verdict</button></div>'
           : tableR && me2.inRound ? '<div class="verdict-bar"><button class="btn big" data-act="tready"' + (me2.ready ? ' disabled' : '') + '>' + (me2.ready ? 'Waiting for the others… (' + doneN + ' of ' + inN + ')' : 'Done checking') + '</button></div>' : '');
@@ -548,6 +558,7 @@
     pickref: function (el) { T('pickref', { on: !!el.dataset.on }).catch(fail); },
     tvote: function (el) { T('vote', { player: el.dataset.p, cat: el.dataset.cat, reject: el.getAttribute('aria-pressed') !== 'true' }).catch(fail); },
     tready: function () { T('ready').catch(fail); },
+    concede: function (el) { T('concede', { cat: el.dataset.cat, agree: !!el.dataset.v }).catch(fail); },
     ownerrefresh: function () { ownerStats(); adminLoad(); msgLoad(); },
     msgdone: function (el) { O('POST', 'message', { id: el.dataset.id, done: el.dataset.v === '1' }).then(function () { msgLoad(); ownerStats(); }).catch(fail); },
     msgdel: function (el) { O('POST', 'message', { id: el.dataset.id, remove: true }).then(function () { msgLoad(); ownerStats(); }).catch(fail); },

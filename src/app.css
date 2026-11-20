@@ -426,3 +426,8 @@ input.repeat { border-color: var(--rose); }
 .noref p { margin: 0; }
 
 .guide-ways { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; }
+
+/* players online now; agreeing to remove a challenged answer */
+.live { display: flex; align-items: center; gap: 6px; }
+.live .dot { width: 9px; height: 9px; border-radius: 50%; background: #2E8B57; display: inline-block; }
+.concede { flex: none; min-height: 36px; padding: 2px 12px; font-size: .82rem; }

@@ -174,7 +174,7 @@ function view(room) {
       filled: room.phase === 'play' || room.phase === 'collect' ? room.cats.filter(c => G.key((m.answers || {})[c])).length : 0 }))
   };
   if (live) v.scores = room.results || score(room);
-  if (room.phase === 'review' && room.tableRound) v.tableVotes = room.tableVotes;
+  if (room.phase === 'review' && room.tableRound) { v.tableVotes = room.tableVotes; v.tableAgree = room.tableAgree || {}; }
   if (room.phase === 'results') { v.stopper = room.stopper; v.unlocks = room.unlocks; }
   return v;
 }
@@ -185,7 +185,12 @@ function usedToday(p) { const d = today(); if (!p.used || p.used.day !== d || !p
 function score(room) {
   const answers = {}, used = {};
   room.members.forEach(m => { if (m.inRound) { answers[m.id] = m.answers; if (REPEAT_RULE && has(m.id)) used[m.id] = usedToday(players[m.id]); } });
-  return G.scoreRound({ letter: room.letter, cats: room.cats, answers, invalid: room.rejects, rejects: room.tableRound ? room.tableVotes : undefined, used });   // the referee's rejections, and words already used today
+  let rejects;
+  if (room.tableRound) {
+    if (Object.keys(answers).length > 2) rejects = room.tableVotes;
+    else { rejects = {}; Object.keys(room.tableVotes).forEach(id => { rejects[id] = {}; Object.keys(room.tableVotes[id]).forEach(c => { if (((room.tableAgree || {})[id] || {})[c]) rejects[id][c] = room.tableVotes[id][c]; }); }); }
+  }
+  return G.scoreRound({ letter: room.letter, cats: room.cats, answers, invalid: room.rejects, rejects, used });   // the referee's rejections, and words already used today
 }
 const repeatsOf = (room, m) => REPEAT_RULE && has(m.id) ? room.cats.filter(c => { const k = G.key(m.answers[c]); return k && (usedToday(players[m.id])[c] || []).includes(k); }) : [];
 function tell(room) {
@@ -211,6 +216,8 @@ function depart(room, id) {
 /* ---------- choosing the referee ----------
    Anyone can volunteer; everyone else votes for one volunteer. The online volunteer with the most votes (at least one)
    is the referee; a tie goes to whoever volunteered first. The choice is fixed while a round is running. */
+// Who is "online now": anyone sitting at a table, or who used the game in the last five minutes.
+function onlineNow() { const ids = new Set(), now = Date.now(); rooms.forEach(r => r.members.forEach(m => { if (m.conns.size) ids.add(m.id); })); Object.values(players).forEach(p => { if (now - (p.lastSeen || 0) < 5 * 60000) ids.add(p.id); }); return ids.size; }
 const onlineIds = room => Array.from(room.members.values()).filter(m => online(m) && !m.left).map(m => m.id);
 // No referee: only while every person at the table has agreed. Anyone can change their mind between rounds.
 function noRefAgreed(room) { const ids = onlineIds(room); return ids.length > 0 && ids.every(id => room.noRef.has(id)); }
@@ -253,10 +260,10 @@ function canDrive(room, id) { const h = room.members.get(room.host); return id =
 function startRound(room) {
   room.members.forEach((m, id) => { if (m.left || !online(m)) { room.members.delete(id); room.volunteers.delete(id); room.votes.delete(id); room.noRef.delete(id); } });   // seats of people who have gone are freed between rounds
   const table = noRefAgreed(room), ref = table ? null : electedReferee(room), playing = Array.from(room.members.values()).filter(m => online(m) && m.id !== ref);
-  if (table && playing.length < G.MIN_TABLE) return 'Without a referee you need at least ' + G.MIN_TABLE + ' players.';
+  if (table && playing.length < G.MIN_SCORED) return 'Without a referee you need at least ' + G.MIN_SCORED + ' players.';
   if (!table && !ref) return 'Choose a referee first: someone volunteers and the others vote, or let the game pick one.';
   if (!table && playing.length < G.MIN_TABLE - 1) return 'You need at least ' + (G.MIN_TABLE - 1) + ' players besides the referee.';
-  clearTimeout(room.timer); clearTimeout(room.grace); room.startedAt = Date.now(); room.referee = ref; room.notice = ''; room.tableRound = table; room.tableVotes = {};
+  clearTimeout(room.timer); clearTimeout(room.grace); room.startedAt = Date.now(); room.referee = ref; room.notice = ''; room.tableRound = table; room.tableVotes = {}; room.tableAgree = {};
   room.surprise = G.drawExtras(room.settings.surprise || 0, room.surprise, n => crypto.randomInt(n));   // one or two categories nobody could prepare for
   room.cats = room.settings.cats.concat(room.surprise);
   room.letter = G.drawLetter(room.bag, G.LETTERS[room.settings.lang], room.letter, n => crypto.randomInt(n)); room.round += 1; room.phase = 'play'; room.stopper = null; room.results = null; room.unlocks = {}; room.rejects = {};
@@ -579,7 +586,7 @@ function handle(req, res) {
 
   /* tables */
   if (what !== 'rooms') return send(res, 404, { error: 'not found' });
-  if (GET && parts.length === 2) return send(res, 200, { tables: Array.from(rooms.values()).filter(r => r.open && Array.from(r.members.values()).some(online)).slice(0, 30).map(r => ({ code: r.code, phase: r.phase, players: Array.from(r.members.values()).filter(m => online(m) && has(m.id)).map(m => players[m.id].name) })) });
+  if (GET && parts.length === 2) return send(res, 200, { online: onlineNow(), tables: Array.from(rooms.values()).filter(r => r.open && Array.from(r.members.values()).some(online)).slice(0, 30).map(r => ({ code: r.code, phase: r.phase, players: Array.from(r.members.values()).filter(m => online(m) && has(m.id)).map(m => players[m.id].name) })) });
   if (POST && parts.length === 2) return readBody(req, res, b => {
     if (rooms.size >= MAX_ROOMS) return send(res, 503, { error: 'Every table is taken. Try again in a few minutes.' });
     rooms.forEach((r, c) => { if (r.host === me.id && !Array.from(r.members.values()).some(x => x.id !== me.id && online(x))) { clearTimeout(r.timer); clearTimeout(r.early); rooms.delete(c); } });   // one table per host
@@ -649,6 +656,12 @@ function handle(req, res) {
       room.auto = b.on !== false; room.appointed = null; if (room.auto) appoint(room);
       room.notice = ''; tell(room); return send(res, 200, { ok: true });
     }
+    if (action === 'concede') {                     // two players, no referee: a challenged answer falls only if its owner agrees
+      if (room.phase !== 'review' || !room.tableRound || !m.inRound) return send(res, 409, { error: 'There is nothing to agree to right now.' });
+      if (typeof b.cat !== 'string' || !room.cats.includes(b.cat) || typeof b.agree !== 'boolean' || !((room.tableVotes[me.id] || {})[b.cat] || []).length) return send(res, 409, { error: 'That answer has not been challenged.' });
+      const mine = room.tableAgree[me.id] = room.tableAgree[me.id] || {}; if (b.agree) mine[b.cat] = true; else delete mine[b.cat];
+      room.members.forEach(x => { x.ready = false; }); tell(room); return send(res, 200, { ok: true });
+    }
     if (action === 'vote' || action === 'ready') {   // a round without a referee: the table judges together
       if (room.phase !== 'review' || !room.tableRound) return send(res, 409, { error: 'There is nothing to vote on right now.' });
       if (!m.inRound) return send(res, 403, { error: 'Only the players of this round vote.' });
@@ -657,6 +670,7 @@ function handle(req, res) {
       if (!t || !t.inRound || t.id === me.id || typeof b.cat !== 'string' || !room.cats.includes(b.cat) || typeof b.reject !== 'boolean') return send(res, 409, { error: 'You cannot vote on that.' });
       const forCat = room.tableVotes[t.id] = room.tableVotes[t.id] || {}, list = (forCat[b.cat] || []).filter(v => v !== me.id);
       if (b.reject) list.push(me.id); forCat[b.cat] = list;
+      if (!list.length && room.tableAgree && room.tableAgree[t.id]) delete room.tableAgree[t.id][b.cat];
       room.members.forEach(x => { x.ready = false; });   // a new vote reopens the check, so nobody is ambushed after pressing Done
       tell(room); return send(res, 200, { ok: true });
     }

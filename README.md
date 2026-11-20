@@ -8,7 +8,7 @@ Esm Famil (اسم فامیل) for a table of friends, with crowns and badges fro
 ## How the game works
 
 1. Create an account with a name and password, and choose a kingdom (Iran, Turan or Rum, shown on a map after Fereydun's division of the world in the Shahnameh). The same name and password sign you in on any phone or computer.
-2. Start a table and share it on WhatsApp (or copy the link or 5-letter code), or join an open table. Every table is open to everyone with an account. A table needs 3 to 12 people.
+2. Start a table and share it on WhatsApp (or copy the link or 5-letter code), or join an open table. Every table is open to everyone with an account. A table takes 2 to 12 people: at least 3 with a referee, and 2 can play without one. The home page shows how many players are online now.
 3. **Choose a referee.** Anyone can volunteer; everyone else votes for one volunteer. The online volunteer with the most votes is the referee (a tie goes to whoever volunteered first). Votes can change between rounds.
 4. The host starts a round. Everyone except the referee gets the same letter and clock and fills in the categories (Name, Surname, City, Country, Animal, Food, Object, Colour). The first to fill every box can call Stop (from 20 seconds in).
 5. **The referee judges.** The referee sees every player's answers in one list and taps an answer to reject it (tap again to accept it back); everyone watches the scores change live. Then the referee taps "Give the verdict".
@@ -17,7 +17,7 @@ Esm Famil (اسم فامیل) for a table of friends, with crowns and badges fro
 **When nobody wants to be the referee**, a table has two more ways, chosen again before every round:
 
 - **The game picks.** The host taps "Pick a referee for us": the game names whoever has refereed least at that table (a tie at random, never the same person twice in a row if that can be avoided) and keeps taking turns. Volunteering or voting switches back to choosing by hand.
-- **No referee.** If everyone at the table taps "I agree: no referee", all of them play (at least 3 players) and the table judges together: each player can vote against other players' answers, and an answer falls when more than half of the other players vote against it. The round is scored when every player has pressed "Done checking" (a new vote reopens the check). As soon as one player takes their agreement back, the next round needs a referee again.
+- **No referee.** If everyone at the table taps "I agree: no referee", all of them play (at least 3 players) and the table judges together: each player can vote against other players' answers, and an answer falls when more than half of the other players vote against it. The round is scored when every player has pressed "Done checking" (a new vote reopens the check). As soon as one player takes their agreement back, the next round needs a referee again. **Two players** can play this way too (with a referee a table needs three): since there is nobody to out-vote, a player can challenge the other's answer, and it falls only if its owner agrees.
 
 A referee earns 20 points for each round they judge (`REFEREE_POINTS`), so refereeing also moves them toward the next chapter.
 
