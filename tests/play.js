@@ -1,6 +1,7 @@
 // Four people on four different phones play against the real server: sign-up, a table, electing a referee, a round,
 // the referee's one-tap judging, a promotion, the story, the quiz, the leaderboard. Every screen is checked to fit the phone.
 // Run: node tests/play.js   (SHOTS=dir saves screenshots)
+process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0';   // the once-a-day rule and the surprise categories have their own test (challenge.test.js)
 const { chromium, devices } = require('playwright'), { spawn } = require('child_process'), path = require('path'), fs = require('fs');
 const fx = require('./fixture.js')(), root = path.resolve(__dirname, '..'), site = 'http://127.0.0.1:4174/', apiUrl = 'http://127.0.0.1:8792';
 const shots = process.env.SHOTS; if (shots) fs.mkdirSync(shots, { recursive: true });

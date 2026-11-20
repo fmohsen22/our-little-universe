@@ -7,6 +7,12 @@ const CATEGORIES = [
   { id: 'country', en: 'Country', fa: 'کشور' }, { id: 'animal', en: 'Animal', fa: 'حیوان' }, { id: 'food', en: 'Food', fa: 'غذا' },
   { id: 'thing', en: 'Object', fa: 'اشیا' }, { id: 'color', en: 'Colour', fa: 'رنگ' }
 ];
+// Surprise categories: one or two are added to each round, so a memorised list is never enough.
+const EXTRA = [
+  { id: 'job', en: 'Job' }, { id: 'fruit', en: 'Fruit or vegetable' }, { id: 'plant', en: 'Flower or tree' }, { id: 'sport', en: 'Sport or game' },
+  { id: 'film', en: 'Film or series' }, { id: 'car', en: 'Car brand' }, { id: 'body', en: 'Part of the body' }, { id: 'water', en: 'River, lake or sea' },
+  { id: 'music', en: 'Musical instrument' }, { id: 'clothes', en: 'Clothing' }, { id: 'famous', en: 'Famous person' }, { id: 'kitchen', en: 'In the kitchen' }
+];
 const LETTERS = { en: 'ABCDEFGHIJKLMNOPRSTUVW'.split(''), fa: 'ا ب پ ت ج چ خ د ر ز س ش ع ف ق ک گ ل م ن و ه ی'.split(' ') };
 const DEFAULT_SETTINGS = { lang: 'en', cats: ['name', 'surname', 'city', 'country', 'animal', 'food', 'thing', 'color'], secs: 120 };
 const POINTS = { unique: 10, shared: 5 };
@@ -74,6 +80,7 @@ function scoreRound(round) {
       let status = 'ok';
       if (!key(text)) status = 'empty'; else if (!startsWith(text, round.letter)) status = 'letter'; else if (junk(text)) status = 'short'; else if (cat === 'country' && notACountry(text)) status = 'country';
       else if (votes.filter(v => v !== id && ids.includes(v)).length * 2 > others) status = 'rejected';
+      else if ((((round.used || {})[id] || {})[cat] || []).includes(key(text))) status = 'repeat';   // already scored with this word today
       else if (((round.invalid || {})[id] || {})[cat]) status = 'referee';           // rejected by the table's referee
       out[id].cats[cat] = { text, status, pts: 0 };
       if (status === 'ok') { const k = key(text); (seen[k] = seen[k] || []).push(id); }
@@ -127,5 +134,17 @@ function applyQuiz(p, correct, now) {
 // Leaderboard order: highest level, then lifetime points, then wins, then who got there first.
 function compareBoard(a, b) { return b.level - a.level || (b.finale ? 1 : 0) - (a.finale ? 1 : 0) || b.total - a.total || b.wins - a.wins || a.createdAt - b.createdAt; }
 
-module.exports = { MIN_TABLE, notACountry, junk, KINGDOMS, CATEGORIES, LETTERS, DEFAULT_SETTINGS, POINTS, MAX_PLAYERS, MIN_SCORED, LEVELS, RANKS, ACHIEVEMENTS,
+// A table's letters come out of a bag: every letter is used once before any comes back.
+function drawLetter(bag, letters, last, rand) {
+  if (!bag.length) { const fresh = letters.slice(); for (let i = fresh.length - 1; i > 0; i--) { const j = rand(i + 1); [fresh[i], fresh[j]] = [fresh[j], fresh[i]]; } if (fresh.length > 1 && fresh[fresh.length - 1] === last) fresh.unshift(fresh.pop()); bag.push(...fresh); }
+  return bag.pop();
+}
+// The surprise categories for a round: n of them, none of the last round's if that can be avoided.
+function drawExtras(n, last, rand) {
+  const pool = EXTRA.map(c => c.id).filter(id => !(last || []).includes(id)), out = [];
+  while (out.length < n && pool.length) out.push(pool.splice(rand(pool.length), 1)[0]);
+  return out;
+}
+
+module.exports = { EXTRA, drawLetter, drawExtras, MIN_TABLE, notACountry, junk, KINGDOMS, CATEGORIES, LETTERS, DEFAULT_SETTINGS, POINTS, MAX_PLAYERS, MIN_SCORED, LEVELS, RANKS, ACHIEVEMENTS,
   levelPoints, fold, key, clean, startsWith, scoreRound, newPlayer, rankOf, rankTitle, checkUnlocks, nextLevelNeed, quizReady, applyRound, applyQuiz, compareBoard };

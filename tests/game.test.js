@@ -74,4 +74,24 @@ test('the Wise Judge badge comes after refereeing 10 rounds', () => {
   p.refereed = 9; assert.ok(!G.checkUnlocks(p, 2).some(u => u.id === 'judge'));
   p.refereed = 10; assert.ok(G.checkUnlocks(p, 3).some(u => u.id === 'judge')); assert.ok(!G.checkUnlocks(p, 4).some(u => u.id === 'judge'), 'only once');
 });
+test('a word already scored with today scores nothing; other players and other categories are not affected', () => {
+  const answers = { a: { name: 'Sara', city: 'Shiraz' }, b: { name: 'Sam', city: 'Shiraz' } };
+  const r = G.scoreRound({ letter: 'S', cats: ['name', 'city'], answers, used: { a: { name: [G.key('  SARA ')], city: [G.key('Sari')] } } });
+  assert.strictEqual(r.players.a.cats.name.status, 'repeat'); assert.strictEqual(r.players.a.cats.name.pts, 0);
+  assert.strictEqual(r.players.a.cats.city.status, 'ok'); assert.strictEqual(r.players.b.cats.name.pts, 10);
+  const shared = G.scoreRound({ letter: 'S', cats: ['city'], answers, used: { a: { city: [G.key('Shiraz')] } } });
+  assert.strictEqual(shared.players.a.cats.city.status, 'repeat'); assert.strictEqual(shared.players.b.cats.city.pts, 10, 'a repeated word no longer makes the other player share');
+});
+test('the letter bag: every letter comes once before any comes back, and never twice in a row', () => {
+  let x = 7; const rand = k => { x = (x * 1103515245 + 12345) % 2147483648; return x % k; };
+  const bag = [], seen = []; let last = '';
+  for (let i = 0; i < 66; i++) { const l = G.drawLetter(bag, G.LETTERS.en, last, rand); assert.notStrictEqual(l, last); seen.push(l); last = l; }
+  for (let k = 0; k < 3; k++) assert.strictEqual(new Set(seen.slice(k * 22, k * 22 + 22)).size, 22, 'bag ' + (k + 1) + ' has every letter once');
+});
+test('surprise categories: the asked number, all different, none from the round before', () => {
+  let x = 3; const rand = k => { x = (x * 1103515245 + 12345) % 2147483648; return x % k; };
+  let last = [];
+  for (let i = 0; i < 50; i++) { const e = G.drawExtras(2, last, rand); assert.strictEqual(e.length, 2); assert.notStrictEqual(e[0], e[1]); e.forEach(id => { assert.ok(G.EXTRA.some(c => c.id === id)); assert.ok(!last.includes(id)); }); last = e; }
+  assert.deepStrictEqual(G.drawExtras(0, [], rand), []);
+});
 console.log('rules: ' + n + ' tests passed');

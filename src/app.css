@@ -412,3 +412,11 @@ textarea { width: 100%; font: inherit; color: var(--ink); background: var(--surf
 .msg.done { border-left-color: var(--line); opacity: .75; }
 .msg-head { margin: 0; font-size: .85rem; color: var(--soft); }
 .msg-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* surprise categories and the once-a-day warning */
+.surprise-note { text-align: center; margin: 0; }
+.field.surprise label { color: var(--gold); }
+.tag-s { font-size: .72rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink); margin-left: 4px; }
+.rep { display: block; color: var(--rose); font-size: .82rem; font-weight: 600; }
+.rep:empty { display: none; }
+input.repeat { border-color: var(--rose); }

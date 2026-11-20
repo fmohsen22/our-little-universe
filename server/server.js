@@ -151,7 +151,7 @@ function priv(p) {
 }
 function meta() {
   return {
-    googleClientId: GOOGLE_CLIENT_ID,
+    googleClientId: GOOGLE_CLIENT_ID, extra: G.EXTRA, repeatRule: REPEAT_RULE,
     categories: G.CATEGORIES, defaults: G.DEFAULT_SETTINGS, points: G.POINTS, maxPlayers: G.MAX_PLAYERS, minScored: G.MIN_SCORED, minTable: G.MIN_TABLE, reviewSeconds: REVIEW_MS / 1000,
     quiz: { size: G.LEVELS.quizSize, pass: G.LEVELS.quizPass },
     ranks: G.RANKS.map(r => ({ id: r.id, wins: r.wins, title: r.title, badge: r.badge, art: r.art, metal: r.metal, legendary: !!r.legendary })),
@@ -166,7 +166,7 @@ function roomCode() { const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; let c; do { c = Ar
 const online = m => m.conns.size > 0;
 function view(room) {
   const live = room.phase === 'review' || room.phase === 'results', v = {
-    code: room.code, host: room.host, open: room.open, settings: room.settings, phase: room.phase, letter: room.letter, endsAt: room.endsAt, reviewEndsAt: room.reviewEndsAt, round: room.round, now: Date.now(),
+    code: room.code, host: room.host, open: room.open, settings: room.settings, cats: room.cats, surprise: room.surprise || [], phase: room.phase, letter: room.letter, endsAt: room.endsAt, reviewEndsAt: room.reviewEndsAt, round: room.round, now: Date.now(),
     referee: room.phase === 'lobby' || room.phase === 'results' ? electedReferee(room) : room.referee, notice: room.notice || '',
     volunteers: Array.from(room.volunteers.keys()).filter(id => room.members.has(id)), votes: Object.fromEntries(Array.from(room.votes).filter(([v, c]) => room.members.has(v) && room.volunteers.has(c))),
     players: Array.from(room.members.values()).filter(m => has(m.id)).map(m => Object.assign(pub(players[m.id]), { online: online(m), inRound: m.inRound, ready: m.ready, session: m.session,
@@ -176,11 +176,15 @@ function view(room) {
   if (room.phase === 'results') { v.stopper = room.stopper; v.unlocks = room.unlocks; }
   return v;
 }
+// The words each player has already scored with today, by category. A word scores once a day; tomorrow it is fresh again.
+const REPEAT_RULE = process.env.REPEAT_RULE !== '0', SURPRISE_DEFAULT = process.env.SURPRISE_DEFAULT === '0' ? 0 : process.env.SURPRISE_DEFAULT === '2' ? 2 : 1;
+function usedToday(p) { const d = today(); if (!p.used || p.used.day !== d || !p.used.words) p.used = { day: d, words: {} }; return p.used.words; }
 function score(room) {
-  const answers = {};
-  room.members.forEach(m => { if (m.inRound) answers[m.id] = m.answers; });
-  return G.scoreRound({ letter: room.letter, cats: room.cats, answers, invalid: room.rejects });   // the referee's rejections
+  const answers = {}, used = {};
+  room.members.forEach(m => { if (m.inRound) { answers[m.id] = m.answers; if (REPEAT_RULE && has(m.id)) used[m.id] = usedToday(players[m.id]); } });
+  return G.scoreRound({ letter: room.letter, cats: room.cats, answers, invalid: room.rejects, used });   // the referee's rejections, and words already used today
 }
+const repeatsOf = (room, m) => REPEAT_RULE && has(m.id) ? room.cats.filter(c => { const k = G.key(m.answers[c]); return k && (usedToday(players[m.id])[c] || []).includes(k); }) : [];
 function tell(room) {
   const msg = 'event: state\ndata: ' + JSON.stringify(view(room)) + '\n\n';
   room.members.forEach(m => m.conns.forEach(c => { if (c.writableLength > 262144) c.destroy(); else c.write(msg); }));   // a stream nobody reads is dropped, not buffered
@@ -231,9 +235,10 @@ function startRound(room) {
   const ref = electedReferee(room), playing = Array.from(room.members.values()).filter(m => online(m) && m.id !== ref);
   if (!ref) return 'Choose a referee first: someone volunteers, and the others vote.';
   if (playing.length < G.MIN_TABLE - 1) return 'You need at least ' + (G.MIN_TABLE - 1) + ' players besides the referee.';
-  clearTimeout(room.timer); clearTimeout(room.grace); room.cats = room.settings.cats.slice(); room.startedAt = Date.now(); room.referee = ref; room.notice = '';
-  const pool = G.LETTERS[room.settings.lang].filter(l => l !== room.letter);
-  room.letter = pool[crypto.randomInt(pool.length)]; room.round += 1; room.phase = 'play'; room.stopper = null; room.results = null; room.unlocks = {}; room.rejects = {};
+  clearTimeout(room.timer); clearTimeout(room.grace); room.startedAt = Date.now(); room.referee = ref; room.notice = '';
+  room.surprise = G.drawExtras(room.settings.surprise || 0, room.surprise, n => crypto.randomInt(n));   // one or two categories nobody could prepare for
+  room.cats = room.settings.cats.concat(room.surprise);
+  room.letter = G.drawLetter(room.bag, G.LETTERS[room.settings.lang], room.letter, n => crypto.randomInt(n)); room.round += 1; room.phase = 'play'; room.stopper = null; room.results = null; room.unlocks = {}; room.rejects = {};
   room.members.forEach(m => { m.inRound = online(m) && m.id !== ref; m.answers = {}; m.ready = false; });
   room.endsAt = Date.now() + room.settings.secs * 1000; room.reviewEndsAt = 0;
   room.timer = setTimeout(() => endPlay(room), room.settings.secs * 1000);
@@ -252,6 +257,7 @@ function finish(room) {
     const m = room.members.get(id), p = has(id) ? players[id] : null, mine = res.players[id]; if (!p) return;
     if (m) m.session += mine.total;
     if (!res.scored) return;
+    if (REPEAT_RULE) { const used = usedToday(p); room.cats.forEach(c => { const a = mine.cats[c]; if (a.status === 'ok') { const k = G.key(a.text), list = used[c] = used[c] || []; if (!list.includes(k)) list.push(k); } }); }   // these words have now been used today
     const recent = (pace.get(id) || []).filter(t => now - t < 3600000);
     if (recent.length >= ROUNDS_PER_HOUR) { mine.capped = true; return; }      // more rounds in an hour than a table can really play: not counted
     recent.push(now); pace.set(id, recent);
@@ -550,7 +556,7 @@ function handle(req, res) {
     if (rooms.size >= MAX_ROOMS) return send(res, 503, { error: 'Every table is taken. Try again in a few minutes.' });
     rooms.forEach((r, c) => { if (r.host === me.id && !Array.from(r.members.values()).some(x => x.id !== me.id && online(x))) { clearTimeout(r.timer); clearTimeout(r.early); rooms.delete(c); } });   // one table per host
     const code = roomCode();
-    rooms.set(code, { code, host: me.id, open: true, settings: JSON.parse(JSON.stringify(G.DEFAULT_SETTINGS)), members: new Map(), phase: 'lobby', letter: '', cats: G.DEFAULT_SETTINGS.cats.slice(), startedAt: 0, reviewStart: 0, grace: null, referee: null, volunteers: new Map(), votes: new Map(), notice: '', endsAt: 0, reviewEndsAt: 0, round: 0, stopper: null, rejects: {}, results: null, unlocks: {}, timer: null, active: Date.now() });
+    rooms.set(code, { code, host: me.id, open: true, settings: Object.assign(JSON.parse(JSON.stringify(G.DEFAULT_SETTINGS)), { surprise: SURPRISE_DEFAULT }), bag: [], surprise: [], members: new Map(), phase: 'lobby', letter: '', cats: G.DEFAULT_SETTINGS.cats.slice(), startedAt: 0, reviewStart: 0, grace: null, referee: null, volunteers: new Map(), votes: new Map(), notice: '', endsAt: 0, reviewEndsAt: 0, round: 0, stopper: null, rejects: {}, results: null, unlocks: {}, timer: null, active: Date.now() });
     send(res, 200, { code });
   });
   const room = rooms.get(String(parts[2] || '').toUpperCase()), action = parts[3];
@@ -581,6 +587,7 @@ function handle(req, res) {
     if (action === 'settings') {
       if (!canDrive(room, me.id) || (room.phase !== 'lobby' && room.phase !== 'results')) return send(res, 409, { error: 'Only the host can change the table between rounds.' });
       if ([60, 90, 120].includes(b.secs)) room.settings.secs = b.secs;
+      if ([0, 1, 2].includes(b.surprise)) room.settings.surprise = b.surprise;
       if (Array.isArray(b.cats)) { const cats = G.CATEGORIES.map(c => c.id).filter(id => b.cats.includes(id)); if (cats.length >= 3) room.settings.cats = cats; }
       tell(room); return send(res, 200, { ok: true });
     }
@@ -592,7 +599,7 @@ function handle(req, res) {
     if (action === 'answers') {
       if ((room.phase !== 'play' && room.phase !== 'collect') || !m.inRound) return send(res, 409, { error: 'The round is over.' });
       m.answers = answersOf(room, b.answers);
-      if (room.phase === 'play') tell(room); return send(res, 200, { ok: true });
+      if (room.phase === 'play') tell(room); return send(res, 200, { ok: true, repeats: repeatsOf(room, m) });   // which boxes hold a word already used today
     }
     if (action === 'stop') {
       if (room.phase !== 'play' || !m.inRound) return send(res, 409, { error: 'The round is over.' });

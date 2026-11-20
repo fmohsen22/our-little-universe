@@ -413,6 +413,14 @@ textarea { width: 100%; font: inherit; color: var(--ink); background: var(--surf
 .msg.done { border-left-color: var(--line); opacity: .75; }
 .msg-head { margin: 0; font-size: .85rem; color: var(--soft); }
 .msg-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* surprise categories and the once-a-day warning */
+.surprise-note { text-align: center; margin: 0; }
+.field.surprise label { color: var(--gold); }
+.tag-s { font-size: .72rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink); margin-left: 4px; }
+.rep { display: block; color: var(--rose); font-size: .82rem; font-weight: 600; }
+.rep:empty { display: none; }
+input.repeat { border-color: var(--rose); }
 </style></head><body>
 <div class="wrap">
   <header class="top">
@@ -572,7 +580,7 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
   var medal = function (p, size) { var r = p.rank && rankDef(p.rank); return r ? art(r.art, r.metal, size, r.badge) : art('lock', 'bronze', size, 'No crown yet', true); };
   var bar = function (v, goal) { return '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + goal + '" aria-valuenow="' + Math.min(v, goal) + '"><i style="width:' + (goal ? Math.min(100, Math.round(v / goal * 100)) : 100) + '%"></i></div>'; };
   var levelOf = function (n) { return meta.levels[n - 1]; };
-  var catOf = function (id) { return meta.categories.filter(function (c) { return c.id === id; })[0]; };
+  var catOf = function (id) { return meta.categories.concat(meta.extra || []).filter(function (c) { return c.id === id; })[0] || { id: id, en: id }; };
   var back = '<a class="back" href="#home">← Home</a>';
   function levelLine(p) {
     if (p.level >= meta.levels.length) return '<p class="turn">All seven chapters are open. The last one is still being written.</p>';
@@ -644,7 +652,8 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
       step('The game', '✍️', 'Esm Famil in one minute',
         '<p>Everyone gets the same <b>letter</b> and the same clock. Write one word for each category, starting with that letter.</p>' +
         '<div class="guide-sheet"><p class="letter-mini">S</p><dl>' + ex.map(function (e) { return '<div><dt>' + e[0] + '</dt><dd>' + e[1] + '</dd></div>'; }).join('') + '</dl></div>' +
-        '<p>The first player to fill <b>every</b> box can press <b>Stop</b>, which ends the round for everyone. Otherwise the round ends when the clock runs out.</p>') +
+        '<p>The first player to fill <b>every</b> box can press <b>Stop</b>, which ends the round for everyone. Otherwise the round ends when the clock runs out.</p>' +
+        '<p><b>✨ Surprise categories.</b> Most rounds add one or two extra categories you could not prepare for: a job, a fruit, a sport, a film…</p>') +
       step('Getting together', '👥', 'Start or join a table',
         '<p>Press <b>Start a table</b> and send the link to your friends (there is a WhatsApp button), or join a table that is already open. A table needs <b>' + meta.minTable + ' to ' + meta.maxPlayers + ' people</b>: a referee and at least two players.</p>') +
       step('The referee', '⚖️', 'One person judges the answers',
@@ -652,7 +661,8 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
         '<p>When the round ends, the referee sees every answer and taps <b>✓</b> or <b>✗</b> on each one. Is “Snake” an animal? ✓. Is “Sxyz” a city? ✗. Then they press <b>Give the verdict</b>.</p>' +
         '<p class="note">The game already refuses empty boxes, wrong first letters, nonsense like “sss”, and countries that do not exist. Take turns: be a fair referee and the table will vote for you again.</p>') +
       step('Points', '⭐', 'How a round is scored',
-        '<ul class="guide-points"><li><b class="pts" data-v="10">' + P.unique + '</b> an answer nobody else wrote</li><li><b class="pts" data-v="5">' + P.shared + '</b> an answer someone else also wrote</li><li><b class="pts" data-v="0">0</b> empty, wrong or rejected</li></ul>' +
+        '<ul class="guide-points"><li><b class="pts" data-v="10">' + P.unique + '</b> an answer nobody else wrote</li><li><b class="pts" data-v="5">' + P.shared + '</b> an answer someone else also wrote</li><li><b class="pts" data-v="0">0</b> empty, wrong or rejected</li>' + (meta.repeatRule ? '<li><b class="pts" data-v="0">0</b> a word you already scored with today</li>' : '') + '</ul>' +
+        (meta.repeatRule ? '<p><b>One word, once a day.</b> When a word has scored for you, it scores nothing for you again that day, so a ready-made list will not get you far. Tomorrow every word is fresh again. The game warns you while you type.</p>' : '') +
         '<p>The highest score wins the round. Your points and victories are kept in your account, on any phone.</p>') +
       step('Crowns and badges', '👑', 'Rise through the ranks',
         '<p>Every victory counts toward a royal title from the Shahnameh, from <b>' + esc(meta.ranks[0].title.replace('{royal}', 'Prince')) + '</b> after your first win to <b>' + esc(meta.ranks[meta.ranks.length - 1].title) + '</b> after ' + meta.ranks[meta.ranks.length - 1].wins + '. There are also badges for streaks, comebacks, refereeing and more. See them all in your profile.</p>') +
@@ -682,7 +692,7 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
   views.privacy = function () {
     var sec = function (title, body) { return '<section class="card"><h2>' + title + '</h2>' + body + '</section>'; };
     app.innerHTML = (me ? back : '<a class="back" href="#">← Back</a>') + '<h1>Privacy</h1><p class="soft">What this game keeps about you, and what it does not. In plain words.</p>' +
-      sec('What the game keeps', '<ul class="plain"><li><b>Your account:</b> the name you chose in the game, your kingdom and title.</li><li><b>How you sign in:</b> if you use a password, only a scrambled version of it (a hash), never the password itself. If you use Google, only Google’s account number for you.</li><li><b>Your game:</b> points, victories, rounds played and refereed, badges, chapters, quiz progress, the riddle and your games against Prince Mohsey.</li><li><b>Daily totals:</b> how many rounds were played each day and who took part, kept for 90 days, so the owner can see how the game is doing.</li><li><b>Messages you send</b> with the contact form, with the name and any way to reach you that you write in it.</li></ul>' +
+      sec('What the game keeps', '<ul class="plain"><li><b>Your account:</b> the name you chose in the game, your kingdom and title.</li><li><b>How you sign in:</b> if you use a password, only a scrambled version of it (a hash), never the password itself. If you use Google, only Google’s account number for you.</li><li><b>Your game:</b> points, victories, rounds played and refereed, badges, chapters, quiz progress, the riddle and your games against Prince Mohsey. Also the words you scored with today, so they cannot be used twice in a day; that list starts again each day.</li><li><b>Daily totals:</b> how many rounds were played each day and who took part, kept for 90 days, so the owner can see how the game is doing.</li><li><b>Messages you send</b> with the contact form, with the name and any way to reach you that you write in it.</li></ul>' +
         '<p class="note">The answers you write during a round are seen by the others at your table and kept only until the table closes.</p>') +
       sec('What the game does not keep', '<ul class="plain"><li>Your email address. When you sign in with Google, the game does not store it.</li><li>Your real name, unless you choose it as your name in the game.</li><li>Your location, contacts or anything else from your phone.</li><li>No advertising, no tracking and no selling of data. Ever.</li></ul>') +
       sec('Who can see what', '<p>Other players see your name in the game, kingdom, title, points, victories and chapter, on the leaderboard and at tables. The owner of the game can see everything listed above, to look after accounts and answer messages.</p>') +
@@ -863,6 +873,7 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
     es.onerror = function () { if (!table) { leaveTable(); app.innerHTML = back + '<div class="card feature"><p class="big-text">That table has closed or is full.</p><div class="row mid"><a class="btn" href="#home">Back home</a></div></div>'; } else sync('error'); };
   }
   var T = function (path, body) { return api('POST', '/api/rooms/' + table.code + '/' + path, body || {}); };
+  function showRepeats(list) { $$('small.rep').forEach(function (el) { var on = (list || []).indexOf(el.id.slice(2)) >= 0; el.textContent = on ? 'You already scored with this word today. It will count 0: try another.' : ''; var inp = $('#e-' + el.id.slice(2)); if (inp) inp.classList.toggle('repeat', on); }); }
   var seat = function () { return table.players.filter(function (p) { return p.id === me.id; })[0] || {}; };
   var left = function (t) { return Math.max(0, Math.ceil((t - (Date.now() + offset)) / 1000)); };
   function collect() { var a = {}; $$('input[data-cat]').forEach(function (el) { a[el.dataset.cat] = el.value; }); if (Object.keys(a).length) mine = a; return mine; }
@@ -876,7 +887,7 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
     var ref = table.referee;
     return '<ul class="people" id="t-people">' + table.players.map(function (p) {
       return '<li class="' + (p.online ? '' : 'off') + (p.id === ref ? ' ref' : '') + '">' + medal(p, 28) + '<span>' + esc(p.name) + (p.id === ref ? ' <small>⚖️ referee</small>' : '') + (p.id === table.host ? ' <small>host</small>' : '') +
-        (table.phase === 'play' && p.inRound ? ' <small>' + p.filled + '/' + table.settings.cats.length + '</small>' : '') + (p.online ? '' : ' <small>away</small>') + '</span></li>';
+        (table.phase === 'play' && p.inRound ? ' <small>' + p.filled + '/' + (table.cats || table.settings.cats).length + '</small>' : '') + (p.online ? '' : ' <small>away</small>') + '</span></li>';
     }).join('') + '</ul>';
   }
   // Volunteering and voting for the referee, between rounds.
@@ -911,14 +922,16 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
         (host ? '<div class="card"><p><b>Table rules</b></p>' +
           '<div class="checks">' + meta.categories.map(function (c) { return '<label><input type="checkbox" id="c-' + c.id + '" data-act="cat" data-id="' + c.id + '"' + (s.cats.indexOf(c.id) >= 0 ? ' checked' : '') + '> ' + c.en + '</label>'; }).join('') + '</div>' +
           '<div class="row" role="group" aria-label="Time">' + [60, 90, 120].map(function (x) { return '<button class="chip" data-act="set" data-f="secs" data-v="' + x + '" aria-pressed="' + (s.secs === x) + '">' + x + ' seconds</button>'; }).join('') + '</div>' +
+          '<p><b>Surprise categories</b> <span class="note">added to every round, different each time</span></p><div class="row" role="group" aria-label="Surprise categories">' + [[0, 'None'], [1, 'One'], [2, 'Two']].map(function (x) { return '<button class="chip" data-act="set" data-f="surprise" data-v="' + x[0] + '" aria-pressed="' + ((s.surprise || 0) === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div>' +
           startBlock('Start the round') + '</div>'
-          : '<div class="card feature"><p class="big-text">Waiting for the host to start.</p><p class="soft">' + s.secs + ' seconds · ' + s.cats.map(function (c) { return catOf(c).en; }).join(', ') + '</p></div>');
+          : '<div class="card feature"><p class="big-text">Waiting for the host to start.</p><p class="soft">' + s.secs + ' seconds · ' + s.cats.map(function (c) { return catOf(c).en; }).join(', ') + (s.surprise ? ' · plus ' + (s.surprise === 1 ? 'a surprise category' : 'two surprise categories') : '') + '</p></div>');
     } else if (st.phase === 'play' || st.phase === 'collect') {
       body = '<p class="letter" lang="' + s.lang + '">' + esc(st.letter) + '</p><p class="timer" id="t-time">' + (st.phase === 'play' ? left(st.endsAt) : 0) + '</p>' +
         (st.phase === 'collect' ? '<div class="card feature"><p class="big-text">Pens down!</p></div>'
           : iRef ? '<div class="card feature"><p class="big-text">⚖️ You are the referee.</p><p class="soft">Watch the others fill in their answers. When time is up, you decide which ones count.</p></div>'
           : !me2.inRound ? '<div class="card feature"><p class="big-text">A round is running.</p><p class="soft">You join the next one.</p></div>' :
-          '<div class="card">' + s.cats.map(function (id) { var c = catOf(id); return '<div class="field"><label for="e-' + id + '">' + c.en + '</label><input id="e-' + id + '" data-cat="' + id + '" type="text" dir="auto" maxlength="40" autocomplete="off" value="' + esc(mine[id] || '') + '"></div>'; }).join('') +
+          (st.surprise && st.surprise.length ? '<p class="surprise-note">✨ Surprise: <b>' + st.surprise.map(function (id) { return catOf(id).en; }).join('</b> and <b>') + '</b></p>' : '') +
+          '<div class="card">' + (st.cats || s.cats).map(function (id) { var c = catOf(id), extra = (st.surprise || []).indexOf(id) >= 0; return '<div class="field' + (extra ? ' surprise' : '') + '"><label for="e-' + id + '">' + c.en + (extra ? ' <span class="tag-s">✨ surprise</span>' : '') + '</label><input id="e-' + id + '" data-cat="' + id + '" type="text" dir="auto" maxlength="40" autocomplete="off" aria-describedby="r-' + id + '" value="' + esc(mine[id] || '') + '"><small class="rep" id="r-' + id + '" aria-live="polite"></small></div>'; }).join('') +
           '<button class="btn" data-act="stop">Stop! I am done</button><p class="note center">Stop ends the round for everyone. Every box must be filled.</p></div>');
     } else {
       var final = st.phase === 'results', sc = st.scores, mineSc = sc.players[me.id], refName = esc(nameOf(final ? sc.referee : st.referee));
@@ -929,9 +942,9 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
           '<p class="check-time">The referee has <b id="t-time">' + left(st.reviewEndsAt) + '</b> seconds.</p>') +
         (final ? '<h2 class="center">All the answers</h2><p class="note center">As the referee ' + refName + ' judged them.</p>' : '') +
         '<div class="review">' + (sc.cats || s.cats).map(function (id) { var c = catOf(id);
-          return '<div class="review-row"><h3>' + c.en + '</h3>' + sc.order.map(function (pid) {
+          return '<div class="review-row"><h3>' + c.en + ((st.surprise || []).indexOf(id) >= 0 ? ' ✨' : '') + '</h3>' + sc.order.map(function (pid) {
             var a = sc.players[pid].cats[id], judged = a.status === 'referee';
-            var why = a.status === 'empty' ? 'nothing' : a.status === 'letter' ? 'wrong letter' : a.status === 'short' ? 'not a word' : a.status === 'country' ? 'not a country' : judged ? 'rejected by the referee' : a.shared ? 'shared' : '';
+            var why = a.status === 'empty' ? 'nothing' : a.status === 'letter' ? 'wrong letter' : a.status === 'short' ? 'not a word' : a.status === 'country' ? 'not a country' : a.status === 'repeat' ? 'already used today' : judged ? 'rejected by the referee' : a.shared ? 'shared' : '';
             return '<div class="ans' + (a.status === 'ok' ? '' : ' bad') + '"><span dir="auto"><small>' + esc(nameOf(pid)) + (why ? ' · ' + why : '') + '</small><i>' + (esc(a.text) || '—') + '</i></span>' +
               (!final && iRef && (a.status === 'ok' || judged) ? '<button class="judge-btn" data-act="judge" data-p="' + pid + '" data-cat="' + id + '" aria-pressed="' + judged + '" aria-label="' + (judged ? 'Rejected. Tap to accept ' : 'Accepted. Tap to reject ') + esc(a.text) + '">' + (judged ? '✗' : '✓') + '</button>' : '') + '<b class="pts" data-v="' + a.pts + '">' + a.pts + '</b></div>'; }).join('') + '</div>'; }).join('') + '</div>' +
         '<div class="card"><table class="board"><thead><tr><th scope="col">Player</th><th scope="col">Round</th><th scope="col">Table total</th></tr></thead><tbody>' + sc.order.map(function (pid) { var p = st.players.filter(function (x) { return x.id === pid; })[0] || { name: '?', session: 0 }; return '<tr' + (pid === me.id ? ' class="you"' : '') + '><th scope="row">' + esc(p.name) + (final && sc.winner === pid ? ' 👑' : '') + '</th><td>' + sc.players[pid].total + '</td><td>' + p.session + '</td></tr>'; }).join('') + '</tbody></table></div>' +
@@ -1060,7 +1073,7 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
     profile: function (el) { var b = {}; b[el.dataset.f] = el.dataset.v; api('POST', '/api/profile', b).then(function (j) { setMe(j.me); route(); }).catch(fail); },
     quiz: function () { api('POST', '/api/quiz/start').then(showQuiz).catch(fail); },
     leave: function () { var t = table; leaveTable(); if (t) api('POST', '/api/rooms/' + t.code + '/leave', {}).catch(function () { /* already gone */ }); location.hash = 'home'; },
-    set: function (el) { var b = {}, f = el.dataset.f; b[f] = f === 'secs' ? +el.dataset.v : f === 'open' ? !!el.dataset.v : el.dataset.v; T('settings', b).catch(fail); },
+    set: function (el) { var b = {}, f = el.dataset.f; b[f] = f === 'secs' || f === 'surprise' ? +el.dataset.v : f === 'open' ? !!el.dataset.v : el.dataset.v; T('settings', b).catch(fail); },
     cat: function () { T('settings', { cats: $$('[data-act="cat"]').filter(function (c) { return c.checked; }).map(function (c) { return c.dataset.id; }) }).catch(fail); },
     start: function () { mine = {}; T('start').catch(fail); },
     stop: function () { T('stop', { answers: collect() }).catch(fail); },
@@ -1145,7 +1158,7 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
     app = $('#app');
     app.addEventListener('click', function (e) { var el = e.target.closest('[data-act]'); if (!el || el.disabled || el.type === 'checkbox') return; var fn = acts[el.dataset.act]; if (fn) fn(el); });
     app.addEventListener('change', function (e) { var el = e.target; if (el.type === 'checkbox' && acts[el.dataset.act]) acts[el.dataset.act](el); });
-    app.addEventListener('input', function (e) { if (!e.target.dataset.cat || !table || table.phase !== 'play') return; collect(); clearTimeout(sendTimer); sendTimer = setTimeout(function () { if (table && table.phase === 'play') T('answers', { answers: mine }).catch(function () { /* next keystroke retries */ }); }, 500); });
+    app.addEventListener('input', function (e) { if (!e.target.dataset.cat || !table || table.phase !== 'play') return; collect(); clearTimeout(sendTimer); sendTimer = setTimeout(function () { if (table && table.phase === 'play') T('answers', { answers: mine }).then(function (j) { showRepeats(j.repeats); }).catch(function () { /* next keystroke retries */ }); }, 500); });
     app.addEventListener('submit', function (e) { e.preventDefault(); var f = e.target.closest('[data-form]'), fn = f && forms[f.dataset.form]; if (fn) fn(f); });
     $('#ceremony').addEventListener('click', function (e) { if (e.target.closest('[data-cer]') || e.target.id === 'ceremony') nextCeremony(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('#ceremony').hidden) nextCeremony(); });

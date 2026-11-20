@@ -14,6 +14,12 @@ Esm Famil (اسم فامیل) for a table of friends, with crowns and badges fro
 5. **The referee judges.** The referee sees every player's answers in one list and taps an answer to reject it (tap again to accept it back); everyone watches the scores change live. Then the referee taps "Give the verdict".
 6. A unique answer scores 10, an answer someone else also gave 5. The highest score wins the round; a tie has no winner. Points, wins, crowns and chapter progress count at once.
 
+Three rules keep the game fresh for people who play a lot:
+
+- **One word, once a day.** A word that has scored for a player scores nothing for that player again the same day (per category); the next day it is fresh. The game warns while typing. Words the referee rejected were never "used". The day's list is kept with the player (`used` in `players.json`) and follows them from table to table.
+- **The letter bag.** A table goes through all 22 letters before any letter comes back.
+- **Surprise categories.** Each round adds one extra category (the host can choose none, one or two) from a pool of twelve: `EXTRA` in `server/game.js`. It is announced when the round starts and changes every round.
+
 Before the referee even looks, the server refuses empty answers, answers with the wrong letter, a single letter or one letter repeated ("jjjj"), and a Country that is not a real country (the list is `server/countries.js`).
 
 If the referee leaves during a round and is not back within 20 seconds, the round is cancelled (nobody scores) and the table chooses a new referee. Refereeing earns the "Wise Judge of the Court" badge after 10 rounds.
@@ -127,7 +133,7 @@ The Google button appears on the welcome screen as soon as the server has the ID
 
 Players are stored in `players.json` in the data folder (`~/our-little-universe-data` by default). Back it up. Tables live in memory and end when the server restarts.
 
-Settings (environment): `MAIL_TO`, `MAIL_USER`, `MAIL_PASS` (set by `set-email.sh`), `OWNER_USER` and `OWNER_HASH` (set by `set-owner.sh`), `GOOGLE_CLIENT_ID` (set by `set-google.sh`), `PORT`, `HOST` (default `127.0.0.1`), `DATA_DIR`, `ALLOWED_ORIGINS`, and the pace limits `MIN_PLAY_MS`, `REVIEW_MS` (how long the referee has, default 5 minutes), `ROUNDS_PER_HOUR`.
+Settings (environment): `MAIL_TO`, `MAIL_USER`, `MAIL_PASS` (set by `set-email.sh`), `OWNER_USER` and `OWNER_HASH` (set by `set-owner.sh`), `GOOGLE_CLIENT_ID` (set by `set-google.sh`), `PORT`, `HOST` (default `127.0.0.1`), `DATA_DIR`, `ALLOWED_ORIGINS`, `REPEAT_RULE=0` (switch off one word once a day), `SURPRISE_DEFAULT` (0, 1 or 2 surprise categories at a new table), and the pace limits `MIN_PLAY_MS`, `REVIEW_MS` (how long the referee has, default 5 minutes), `ROUNDS_PER_HOUR`.
 
 If `players.json` cannot be read at start, the server refuses to start instead of overwriting it; the previous good save is `players.json.bak`.
 
@@ -147,6 +153,7 @@ node tests/server.test.js    # the real server over HTTP with three players
 node tests/play.js           # four phone-sized browsers electing a referee, playing and judging a full round, the story, the quiz and the leaderboard (needs Playwright)
 node tests/scenario.test.js  # nine players at three tables at once, sign-ins, two server restarts, and every record cross-checked
 node tests/journey.test.js   # five accounts play the whole game with the real stories and quizzes: every chapter, a failed quiz, the riddle, Prince Mohsey, a restart
+node tests/challenge.test.js # the letter bag over 22 real rounds, surprise categories, one word once a day (and the next day), the warning on a phone
 node tests/owner.test.js     # the owner dashboard and Google sign-in (with a stand-in for Google), over the API and on a phone
 node tests/finale.test.js    # chapter 8: the riddle, hints, the ending, and games against Prince Mohsey, over the API and on a phone
 node tests/crowd.test.js     # thirty players at four tables at once, each table with an elected referee rejecting made-up answers, every score cross-checked
