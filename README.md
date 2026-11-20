@@ -14,6 +14,13 @@ Esm Famil (اسم فامیل) for a table of friends, with crowns and badges fro
 5. **The referee judges.** The referee sees every player's answers in one list and taps an answer to reject it (tap again to accept it back); everyone watches the scores change live. Then the referee taps "Give the verdict".
 6. A unique answer scores 10, an answer someone else also gave 5. The highest score wins the round; a tie has no winner. Points, wins, crowns and chapter progress count at once.
 
+**When nobody wants to be the referee**, a table has two more ways, chosen again before every round:
+
+- **The game picks.** The host taps "Pick a referee for us": the game names whoever has refereed least at that table (a tie at random, never the same person twice in a row if that can be avoided) and keeps taking turns. Volunteering or voting switches back to choosing by hand.
+- **No referee.** If everyone at the table taps "I agree: no referee", all of them play (at least 3 players) and the table judges together: each player can vote against other players' answers, and an answer falls when more than half of the other players vote against it. The round is scored when every player has pressed "Done checking" (a new vote reopens the check). As soon as one player takes their agreement back, the next round needs a referee again.
+
+A referee earns 20 points for each round they judge (`REFEREE_POINTS`), so refereeing also moves them toward the next chapter.
+
 Three rules keep the game fresh for people who play a lot:
 
 - **One word, once a day.** A word that has scored for a player scores nothing for that player again the same day (per category); the next day it is fresh. The game warns while typing. Words the referee rejected were never "used". The day's list is kept with the player (`used` in `players.json`) and follows them from table to table.
@@ -133,7 +140,7 @@ The Google button appears on the welcome screen as soon as the server has the ID
 
 Players are stored in `players.json` in the data folder (`~/our-little-universe-data` by default). Back it up. Tables live in memory and end when the server restarts.
 
-Settings (environment): `MAIL_TO`, `MAIL_USER`, `MAIL_PASS` (set by `set-email.sh`), `OWNER_USER` and `OWNER_HASH` (set by `set-owner.sh`), `GOOGLE_CLIENT_ID` (set by `set-google.sh`), `PORT`, `HOST` (default `127.0.0.1`), `DATA_DIR`, `ALLOWED_ORIGINS`, `REPEAT_RULE=0` (switch off one word once a day), `SURPRISE_DEFAULT` (0, 1 or 2 surprise categories at a new table), and the pace limits `MIN_PLAY_MS`, `REVIEW_MS` (how long the referee has, default 5 minutes), `ROUNDS_PER_HOUR`.
+Settings (environment): `MAIL_TO`, `MAIL_USER`, `MAIL_PASS` (set by `set-email.sh`), `OWNER_USER` and `OWNER_HASH` (set by `set-owner.sh`), `GOOGLE_CLIENT_ID` (set by `set-google.sh`), `PORT`, `HOST` (default `127.0.0.1`), `DATA_DIR`, `ALLOWED_ORIGINS`, `REFEREE_POINTS` (default 20), `REPEAT_RULE=0` (switch off one word once a day), `SURPRISE_DEFAULT` (0, 1 or 2 surprise categories at a new table), and the pace limits `MIN_PLAY_MS`, `REVIEW_MS` (how long the referee has, default 5 minutes), `ROUNDS_PER_HOUR`.
 
 If `players.json` cannot be read at start, the server refuses to start instead of overwriting it; the previous good save is `players.json.bak`.
 
@@ -154,6 +161,8 @@ node tests/play.js           # four phone-sized browsers electing a referee, pla
 node tests/scenario.test.js  # nine players at three tables at once, sign-ins, two server restarts, and every record cross-checked
 node tests/journey.test.js   # five accounts play the whole game with the real stories and quizzes: every chapter, a failed quiz, the riddle, Prince Mohsey, a restart
 node tests/evening.test.js   # a whole evening at the real defaults: 8 players, 2 tables, 52 rounds scored independently, then 4 phones play a round
+node tests/referee.test.js   # the game picks a referee and takes turns, the referee's 20 points, and rounds with no referee (API and three phones)
+node tests/mixed.test.js     # all seven real chapters while switching between a picked referee, an elected one and none
 node tests/challenge.test.js # the letter bag over 22 real rounds, surprise categories, one word once a day (and the next day), the warning on a phone
 node tests/owner.test.js     # the owner dashboard and Google sign-in (with a stand-in for Google), over the API and on a phone
 node tests/finale.test.js    # chapter 8: the riddle, hints, the ending, and games against Prince Mohsey, over the API and on a phone

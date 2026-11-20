@@ -1,7 +1,7 @@
 // The end of the game: the Simurgh's riddle (chapter 8) and the games against Prince Mohsey, first over the API,
 // then on a phone in the browser. A player is set up at chapter 7 by editing the saved file between two server starts.
 // Run: node tests/finale.test.js
-process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0';   // the once-a-day rule and the surprise categories have their own test (challenge.test.js)
+process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0'; process.env.REFEREE_POINTS = '0';   // these rules have their own tests (challenge.test.js, referee.test.js)
 const { spawn } = require('child_process'), path = require('path'), assert = require('assert'), fs = require('fs');
 const G = require('../server/game.js'), M = require('../server/mohsey.js'), fx = require('./fixture.js')(), root = path.resolve(__dirname, '..');
 const PORT = 8799, base = 'http://127.0.0.1:' + PORT, site = 'http://127.0.0.1:4176/';

@@ -1,7 +1,7 @@
 // The owner's dashboard and Google sign-in, against the real server, then on a phone.
 // Google is replaced by a stand-in that signs tokens with a test key, so the server's signature check is real.
 // Run: node tests/owner.test.js
-process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0';   // the once-a-day rule and the surprise categories have their own test (challenge.test.js)
+process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0'; process.env.REFEREE_POINTS = '0';   // these rules have their own tests (challenge.test.js, referee.test.js)
 const { spawn, execFileSync } = require('child_process'), path = require('path'), assert = require('assert'), fs = require('fs'), http = require('http'), crypto = require('crypto');
 const fx = require('./fixture.js')(), root = path.resolve(__dirname, '..');
 const PORT = 8803, base = 'http://127.0.0.1:' + PORT, site = 'http://127.0.0.1:4180/', CERTS = PORT + 1, CLIENT = '1234-test.apps.googleusercontent.com';

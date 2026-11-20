@@ -4,7 +4,7 @@
 // Prince Mohsey, a server restart, and a last check in a phone browser. Chapters are shrunk to a few points each.
 // Run: node tests/journey.test.js
 process.env.LEVEL_SCALE = '0.001';
-process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0';   // the once-a-day rule and the surprise categories have their own test (challenge.test.js)
+process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0'; process.env.REFEREE_POINTS = '0';   // these rules have their own tests (challenge.test.js, referee.test.js)
 const { spawn } = require('child_process'), path = require('path'), assert = require('assert'), fs = require('fs'), os = require('os');
 const G = require('../server/game.js'), BOOK = require('../server/levels.json'), root = path.resolve(__dirname, '..');
 const PORT = 8801, base = 'http://127.0.0.1:' + PORT, site = 'http://127.0.0.1:4178/', dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wpm-journey-'));

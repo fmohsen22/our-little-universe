@@ -420,3 +420,9 @@ textarea { width: 100%; font: inherit; color: var(--ink); background: var(--surf
 .rep { display: block; color: var(--rose); font-size: .82rem; font-weight: 600; }
 .rep:empty { display: none; }
 input.repeat { border-color: var(--rose); }
+
+/* playing without a referee */
+.noref { border-top: 1px dashed var(--line); margin-top: 6px; padding-top: 12px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.noref p { margin: 0; }
+
+.guide-ways { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; }

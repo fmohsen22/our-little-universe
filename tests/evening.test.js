@@ -73,7 +73,7 @@ let seed = 11; const rnd = () => { seed = (seed * 1103515245 + 12345) % 21474836
       });
       const top = Math.max(...Object.values(pts)), best = players.filter(nm => pts[nm] === top), winner = top > 0 && best.length === 1 ? best[0] : null;
       players.forEach(nm => { assert.strictEqual(res.players[P[nm].id].total, pts[nm], nm + ' total in round ' + t.round + ' at ' + t.code); E[nm].total += pts[nm]; E[nm].rounds++; if (winner === nm) E[nm].wins++; });
-      assert.strictEqual(res.winner, winner ? P[winner].id : null, 'winner'); E[ref].refereed++; stats.rounds++;
+      assert.strictEqual(res.winner, winner ? P[winner].id : null, 'winner'); E[ref].refereed++; E[ref].total += 20; assert.strictEqual(res.refereePoints, 20, 'the referee is paid'); stats.rounds++;   // the referee earns 20 points a round
     }
 
     // first half: two tables of four, six rounds each, at the same time

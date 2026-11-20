@@ -4,7 +4,7 @@
 // Every score is worked out here independently and compared with the server, player by player.
 // Run: node tests/crowd.test.js
 process.env.LEVEL_SCALE = '0.02';
-process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0';   // the once-a-day rule and the surprise categories have their own test (challenge.test.js)
+process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0'; process.env.REFEREE_POINTS = '0';   // these rules have their own tests (challenge.test.js, referee.test.js)
 const { spawn } = require('child_process'), path = require('path'), assert = require('assert'), fs = require('fs');
 const G = require('../server/game.js'), fx = require('./fixture.js')(), PORT = 8797, base = 'http://127.0.0.1:' + PORT;
 let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; console.log('  ok  ' + m); };

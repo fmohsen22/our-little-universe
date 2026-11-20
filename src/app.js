@@ -132,10 +132,15 @@
         '<p><b>✨ Surprise categories.</b> Most rounds add one or two extra categories you could not prepare for: a job, a fruit, a sport, a film…</p>') +
       step('Getting together', '👥', 'Start or join a table',
         '<p>Press <b>Start a table</b> and send the link to your friends (there is a WhatsApp button), or join a table that is already open. A table needs <b>' + meta.minTable + ' to ' + meta.maxPlayers + ' people</b>: a referee and at least two players.</p>') +
-      step('The referee', '⚖️', 'One person judges the answers',
-        '<p>Before the round, anyone can tap <b>Volunteer as referee</b>, and the others vote. The referee does not play that round.</p>' +
-        '<p>When the round ends, the referee sees every answer and taps <b>✓</b> or <b>✗</b> on each one. Is “Snake” an animal? ✓. Is “Sxyz” a city? ✗. Then they press <b>Give the verdict</b>.</p>' +
-        '<p class="note">The game already refuses empty boxes, wrong first letters, nonsense like “sss”, and countries that do not exist. Take turns: be a fair referee and the table will vote for you again.</p>') +
+      step('Judging', '⚖️', 'Who decides which answers count?',
+        '<p>Before each round the table chooses one of three ways. You can choose again before every round.</p>' +
+        '<ol class="guide-ways">' +
+        '<li><b>Elect a referee.</b> Anyone can tap <b>Volunteer as referee</b>, and the others tap <b>Vote</b>. The one with the most votes is the referee.</li>' +
+        '<li><b>Let the game pick.</b> Nobody wants to? The host taps <b>Pick a referee for us</b>. The game names someone and takes turns, so everyone referees equally often.</li>' +
+        '<li><b>No referee.</b> If <b>everyone</b> at the table taps <b>I agree: no referee</b>, all of you play (at least ' + meta.minTable + ' players) and the table judges together.</li></ol>' +
+        '<p><b>With a referee:</b> the referee does not play that round' + (meta.refereePoints ? ', and earns <b>' + meta.refereePoints + ' points</b> for it' : '') + '. When the round ends they see every answer and tap <b>✓</b> or <b>✗</b> on each one. Is “Snake” an animal? ✓. Is “Sxyz” a city? ✗. Then they press <b>Give the verdict</b>.</p>' +
+        '<p><b>Without a referee:</b> when the round ends, everyone sees every answer. Tap the <b>✓</b> next to another player’s answer to vote against it. An answer falls when <b>more than half of the other players</b> vote against it. You cannot vote on your own answers. When you have checked, press <b>Done checking</b>; the round is scored when everyone has.</p>' +
+        '<p class="note">Either way, the game already refuses empty boxes, wrong first letters, nonsense like “sss”, and countries that do not exist. If someone changes their mind about playing without a referee, the next round needs a referee again.</p>') +
       step('Points', '⭐', 'How a round is scored',
         '<ul class="guide-points"><li><b class="pts" data-v="10">' + P.unique + '</b> an answer nobody else wrote</li><li><b class="pts" data-v="5">' + P.shared + '</b> an answer someone else also wrote</li><li><b class="pts" data-v="0">0</b> empty, wrong or rejected</li>' + (meta.repeatRule ? '<li><b class="pts" data-v="0">0</b> a word you already scored with today</li>' : '') + '</ul>' +
         (meta.repeatRule ? '<p><b>One word, once a day.</b> When a word has scored for you, it scores nothing for you again that day, so a ready-made list will not get you far. Tomorrow every word is fresh again. The game warns you while you type.</p>' : '') +
@@ -363,21 +368,30 @@
     var ref = table.referee;
     return '<ul class="people" id="t-people">' + table.players.map(function (p) {
       return '<li class="' + (p.online ? '' : 'off') + (p.id === ref ? ' ref' : '') + '">' + medal(p, 28) + '<span>' + esc(p.name) + (p.id === ref ? ' <small>⚖️ referee</small>' : '') + (p.id === table.host ? ' <small>host</small>' : '') +
-        (table.phase === 'play' && p.inRound ? ' <small>' + p.filled + '/' + (table.cats || table.settings.cats).length + '</small>' : '') + (p.online ? '' : ' <small>away</small>') + '</span></li>';
+        (table.phase === 'play' && p.inRound ? ' <small>' + p.filled + '/' + (table.cats || table.settings.cats).length + '</small>' : '') + (table.phase === 'review' && table.tableRound && p.inRound && p.ready ? ' <small>✓ done</small>' : '') + (p.online ? '' : ' <small>away</small>') + '</span></li>';
     }).join('') + '</ul>';
   }
   // Volunteering and voting for the referee, between rounds.
   function election() {
     var st = table, vols = st.volunteers, mineVote = st.votes[me.id], iVol = vols.indexOf(me.id) >= 0, ref = st.referee;
+    var nr = st.noRef || { agreed: [], active: false }, iAgree = nr.agreed.indexOf(me.id) >= 0, onl = st.players.filter(function (p) { return p.online; }).length;
+    var host = st.host === me.id || !st.players.some(function (p) { return p.id === st.host && p.online; });
     var count = function (id) { return Object.keys(st.votes).filter(function (v) { return st.votes[v] === id && v !== id; }).length; };
-    return '<div class="card election"><p><b>⚖️ The referee</b> <span class="note">plays no round but decides which answers count</span></p>' +
-      (ref ? '<p class="turn">' + esc(nameOf(ref)) + (ref === me.id ? ' (you)' : '') + ' is the referee.</p>' : '<p class="note">' + (vols.length ? 'Vote for one of the volunteers.' : 'Nobody has volunteered yet.') + '</p>') +
-      (vols.length ? '<ul class="tables">' + vols.map(function (id) {
+    return '<div class="card election"><p><b>⚖️ The referee</b> <span class="note">plays no round but decides which answers count' + (meta.refereePoints ? ', and earns ' + meta.refereePoints + ' points for each round' : '') + '</span></p>' +
+      (nr.active ? '<p class="turn">No referee: the table judges together.</p>'
+        : ref ? '<p class="turn">' + esc(nameOf(ref)) + (ref === me.id ? ' (you)' : '') + ' is the referee' + (st.auto ? ' for the next round. The game is taking turns.' : '.') + '</p>'
+        : '<p class="note">' + (vols.length ? 'Vote for one of the volunteers.' : 'Nobody has volunteered yet.') + '</p>') +
+      (!st.auto && vols.length ? '<ul class="tables">' + vols.map(function (id) {
         var n = count(id), mine = mineVote === id;
         return '<li><span><b>' + esc(nameOf(id)) + (id === me.id ? ' (you)' : '') + '</b><small>' + n + (n === 1 ? ' vote' : ' votes') + (id === ref ? ' · elected' : '') + '</small></span>' +
           (id === me.id ? '' : '<button class="btn small' + (mine ? '' : ' ghost') + '" data-act="elect" data-p="' + id + '" aria-pressed="' + mine + '">' + (mine ? 'Your vote' : 'Vote') + '</button>') + '</li>';
       }).join('') + '</ul>' : '') +
-      '<div class="row"><button class="btn small ghost" data-act="volunteer" data-on="' + (iVol ? '' : '1') + '">' + (iVol ? 'Step down as a volunteer' : 'Volunteer as referee') + '</button></div></div>';
+      '<div class="row">' + (st.auto ? '' : '<button class="btn small ghost" data-act="volunteer" data-on="' + (iVol ? '' : '1') + '">' + (iVol ? 'Step down as a volunteer' : 'Volunteer as referee') + '</button>') +
+        (host ? '<button class="btn small ghost" data-act="pickref" data-on="' + (st.auto ? '' : '1') + '">' + (st.auto ? 'Choose a referee ourselves' : 'Pick a referee for us') + '</button>' : '') + '</div>' +
+      (!host && !st.auto && !vols.length ? '<p class="note">Nobody wants to? The host can let the game pick, taking turns.</p>' : '') +
+      '<div class="noref"><p><b>Or play without a referee</b> <span class="note">only if everyone agrees. Then the table judges together: an answer falls when more than half of the other players reject it.</span></p>' +
+        '<p class="note" id="nr-count">' + nr.agreed.length + ' of ' + onl + ' agreed' + (nr.agreed.length ? ': ' + nr.agreed.map(function (id) { return esc(nameOf(id)); }).join(', ') : '') + '</p>' +
+        '<button class="btn small' + (iAgree ? '' : ' ghost') + '" data-act="noref" data-on="' + (iAgree ? '' : '1') + '" aria-pressed="' + iAgree + '">' + (iAgree ? 'I agreed. Tap to want a referee again' : 'I agree: no referee') + '</button></div></div>';
   }
   function renderTable() {
     if (!table) return;
@@ -389,7 +403,7 @@
     var notice = st.notice ? '<p class="referee">' + esc(st.notice) + '</p>' : '';
     var startBlock = function (label) {
       if (!host) return '<p class="center soft">Waiting for the host to start' + (st.phase === 'results' ? ' the next round' : '') + '.</p>';
-      var why = onlineN < meta.minTable ? 'A table needs at least ' + meta.minTable + ' people: a referee and two players.' : !st.referee ? 'Choose a referee first: someone volunteers, and the others vote.' : '';
+      var why = onlineN < meta.minTable ? 'A table needs at least ' + meta.minTable + ' people: a referee and two players.' : (st.noRef && st.noRef.active) ? '' : !st.referee ? 'Choose a referee first: someone volunteers and the others vote, or let the game pick one.' : '';
       return (why ? '<p class="note center">' + why + '</p>' : '') + '<button class="btn big" data-act="start"' + (why ? ' disabled' : '') + '>' + label + '</button>';
     };
     if (st.phase === 'lobby') {
@@ -411,20 +425,27 @@
           '<button class="btn" data-act="stop">Stop! I am done</button><p class="note center">Stop ends the round for everyone. Every box must be filled.</p></div>');
     } else {
       var final = st.phase === 'results', sc = st.scores, mineSc = sc.players[me.id], refName = esc(nameOf(final ? sc.referee : st.referee));
-      body = (final ? '<div class="card feature"><p class="big-text">' + (sc.winner ? esc(st.players.filter(function (p) { return p.id === sc.winner; }).map(royalName)[0] || 'Someone') + ' wins the round' : 'No winner this round') + '</p><p class="note">Referee: ' + refName + '</p>' +
-          (mineSc ? '<p class="turn">You scored ' + mineSc.total + (!sc.scored ? '. Nothing was added to your record' : mineSc.capped ? '. You have played more rounds this hour than count: take a break' : '') + '</p>' + (sc.scored ? levelLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') : '') : sc.referee === me.id ? '<p class="turn">Thank you for refereeing.</p>' : '') + '</div>'
+      var tableR = final ? !!sc.tableRound : !!st.tableRound, others = sc.order.length - 1, need = Math.floor(others / 2) + 1, tv = st.tableVotes || {};
+      var doneN = st.players.filter(function (p) { return p.inRound && p.ready; }).length, inN = st.players.filter(function (p) { return p.inRound && p.online; }).length;
+      body = (final ? '<div class="card feature"><p class="big-text">' + (sc.winner ? esc(st.players.filter(function (p) { return p.id === sc.winner; }).map(royalName)[0] || 'Someone') + ' wins the round' : 'No winner this round') + '</p><p class="note">' + (tableR ? 'No referee: judged by the table' : 'Referee: ' + refName) + '</p>' +
+          (mineSc ? '<p class="turn">You scored ' + mineSc.total + (!sc.scored ? '. Nothing was added to your record' : mineSc.capped ? '. You have played more rounds this hour than count: take a break' : '') + '</p>' + (sc.scored ? levelLine(me) + (me.quizReady ? '<a class="btn" href="#level-' + (me.level + 1) + '">Read chapter ' + (me.level + 1) + ' and take the quiz</a>' : '') : '') : sc.referee === me.id ? '<p class="turn">Thank you for refereeing.' + (sc.refereePoints ? ' You earned ' + sc.refereePoints + ' points.' : '') + '</p>' + (sc.refereePoints ? levelLine(me) : '') : '') + '</div>'
         : '<p class="letter" lang="' + s.lang + '">' + esc(st.letter) + '</p>' +
-          (iRef ? '<div class="card feature judge-help"><p class="big-text">⚖️ You are the referee</p><p>Every answer counts <b class="ok-t">✓</b> unless you tap it to make it <b class="no-t">✗</b>. Tap again to change your mind. Then press <b>Give the verdict</b> at the bottom.</p><p class="note" id="j-count">' + judgeCount(sc) + '</p></div>' : '<p class="center soft">⚖️ ' + refName + ' is judging the answers. Watch the decisions come in.</p>') +
-          '<p class="check-time">The referee has <b id="t-time">' + left(st.reviewEndsAt) + '</b> seconds.</p>') +
-        (final ? '<h2 class="center">All the answers</h2><p class="note center">As the referee ' + refName + ' judged them.</p>' : '') +
+          (tableR ? '<div class="card feature judge-help"><p class="big-text">No referee this round</p><p>The table judges together. Tap an answer’s <b class="ok-t">✓</b> to vote against it <b class="no-t">✗</b>. It falls when <b>' + need + '</b> of the other ' + others + ' players vote against it. You cannot vote on your own answers.</p><p class="note">' + doneN + ' of ' + inN + ' have finished checking.</p></div>'
+          : iRef ? '<div class="card feature judge-help"><p class="big-text">⚖️ You are the referee</p><p>Every answer counts <b class="ok-t">✓</b> unless you tap it to make it <b class="no-t">✗</b>. Tap again to change your mind. Then press <b>Give the verdict</b> at the bottom.</p><p class="note" id="j-count">' + judgeCount(sc) + '</p></div>' : '<p class="center soft">⚖️ ' + refName + ' is judging the answers. Watch the decisions come in.</p>') +
+          '<p class="check-time">' + (tableR ? 'The table has' : 'The referee has') + ' <b id="t-time">' + left(st.reviewEndsAt) + '</b> seconds.</p>') +
+        (final ? '<h2 class="center">All the answers</h2><p class="note center">' + (tableR ? 'As the table judged them.' : 'As the referee ' + refName + ' judged them.') + '</p>' : '') +
         '<div class="review">' + (sc.cats || s.cats).map(function (id) { var c = catOf(id);
           return '<div class="review-row"><h3>' + c.en + ((st.surprise || []).indexOf(id) >= 0 ? ' ✨' : '') + '</h3>' + sc.order.map(function (pid) {
-            var a = sc.players[pid].cats[id], judged = a.status === 'referee';
-            var why = a.status === 'empty' ? 'nothing' : a.status === 'letter' ? 'wrong letter' : a.status === 'short' ? 'not a word' : a.status === 'country' ? 'not a country' : a.status === 'repeat' ? 'already used today' : judged ? 'rejected by the referee' : a.shared ? 'shared' : '';
+            var a = sc.players[pid].cats[id], judged = a.status === 'referee', against = ((tv[pid] || {})[id] || []), mineV = against.indexOf(me.id) >= 0;
+            var canVote = !final && tableR && me2.inRound && pid !== me.id && (a.status === 'ok' || a.status === 'rejected');
+            var why = a.status === 'empty' ? 'nothing' : a.status === 'letter' ? 'wrong letter' : a.status === 'short' ? 'not a word' : a.status === 'country' ? 'not a country' : a.status === 'repeat' ? 'already used today' : a.status === 'rejected' ? 'rejected by the table' : judged ? 'rejected by the referee' : a.shared ? 'shared' : '';
+            if (!final && tableR && against.length && (a.status === 'ok' || a.status === 'rejected')) why += (why ? ' · ' : '') + against.length + ' of ' + need + ' against';
             return '<div class="ans' + (a.status === 'ok' ? '' : ' bad') + '"><span dir="auto"><small>' + esc(nameOf(pid)) + (why ? ' · ' + why : '') + '</small><i>' + (esc(a.text) || '—') + '</i></span>' +
-              (!final && iRef && (a.status === 'ok' || judged) ? '<button class="judge-btn" data-act="judge" data-p="' + pid + '" data-cat="' + id + '" aria-pressed="' + judged + '" aria-label="' + (judged ? 'Rejected. Tap to accept ' : 'Accepted. Tap to reject ') + esc(a.text) + '">' + (judged ? '✗' : '✓') + '</button>' : '') + '<b class="pts" data-v="' + a.pts + '">' + a.pts + '</b></div>'; }).join('') + '</div>'; }).join('') + '</div>' +
+              (!final && iRef && (a.status === 'ok' || judged) ? '<button class="judge-btn" data-act="judge" data-p="' + pid + '" data-cat="' + id + '" aria-pressed="' + judged + '" aria-label="' + (judged ? 'Rejected. Tap to accept ' : 'Accepted. Tap to reject ') + esc(a.text) + '">' + (judged ? '✗' : '✓') + '</button>' : '') +
+              (canVote ? '<button class="judge-btn" data-act="tvote" data-p="' + pid + '" data-cat="' + id + '" aria-pressed="' + mineV + '" aria-label="' + (mineV ? 'You voted against. Tap to take it back: ' : 'Tap to vote against ') + esc(a.text) + '">' + (mineV ? '✗' : '✓') + '</button>' : '') + '<b class="pts" data-v="' + a.pts + '">' + a.pts + '</b></div>'; }).join('') + '</div>'; }).join('') + '</div>' +
         '<div class="card"><table class="board"><thead><tr><th scope="col">Player</th><th scope="col">Round</th><th scope="col">Table total</th></tr></thead><tbody>' + sc.order.map(function (pid) { var p = st.players.filter(function (x) { return x.id === pid; })[0] || { name: '?', session: 0 }; return '<tr' + (pid === me.id ? ' class="you"' : '') + '><th scope="row">' + esc(p.name) + (final && sc.winner === pid ? ' 👑' : '') + '</th><td>' + sc.players[pid].total + '</td><td>' + p.session + '</td></tr>'; }).join('') + '</tbody></table></div>' +
-        (final ? election() + startBlock('Next round') : iRef ? '<div class="verdict-bar"><button class="btn big" data-act="verdict">Give the verdict</button></div>' : '');
+        (final ? election() + startBlock('Next round') : iRef ? '<div class="verdict-bar"><button class="btn big" data-act="verdict">Give the verdict</button></div>'
+          : tableR && me2.inRound ? '<div class="verdict-bar"><button class="btn big" data-act="tready"' + (me2.ready ? ' disabled' : '') + '>' + (me2.ready ? 'Waiting for the others… (' + doneN + ' of ' + inN + ')' : 'Done checking') + '</button></div>' : '');
     }
     app.innerHTML = back + '<div class="row split"><h1>Table ' + st.code + '</h1><button class="linkbtn" data-act="leave">Leave table</button></div>' + people() + body;
   }
@@ -523,6 +544,10 @@
   document.addEventListener('focusin', function (e) { if (location.hash === '#owner') showTip(e.target); });
 
   var acts = {
+    noref: function (el) { T('noref', { on: !!el.dataset.on }).catch(fail); },
+    pickref: function (el) { T('pickref', { on: !!el.dataset.on }).catch(fail); },
+    tvote: function (el) { T('vote', { player: el.dataset.p, cat: el.dataset.cat, reject: el.getAttribute('aria-pressed') !== 'true' }).catch(fail); },
+    tready: function () { T('ready').catch(fail); },
     ownerrefresh: function () { ownerStats(); adminLoad(); msgLoad(); },
     msgdone: function (el) { O('POST', 'message', { id: el.dataset.id, done: el.dataset.v === '1' }).then(function () { msgLoad(); ownerStats(); }).catch(fail); },
     msgdel: function (el) { O('POST', 'message', { id: el.dataset.id, remove: true }).then(function () { msgLoad(); ownerStats(); }).catch(fail); },

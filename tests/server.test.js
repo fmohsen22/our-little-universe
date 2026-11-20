@@ -1,6 +1,6 @@
 // Plays the game against the real server over HTTP: accounts, electing a referee, three players and a referee at a table, judging, scoring, levels and the quiz.
 // Run: node tests/server.test.js
-process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0';   // the once-a-day rule and the surprise categories have their own test (challenge.test.js)
+process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0'; process.env.REFEREE_POINTS = '0';   // these rules have their own tests (challenge.test.js, referee.test.js)
 const { spawn } = require('child_process'), path = require('path'), assert = require('assert'), fs = require('fs');
 const fx = require('./fixture.js')(), PORT = 8791, base = 'http://127.0.0.1:' + PORT;
 let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; console.log('  ok  ' + m); };

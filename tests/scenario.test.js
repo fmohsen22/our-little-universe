@@ -2,7 +2,7 @@
 // devices, a server restart in the middle, and at the end a cross-check of every player's record:
 // points add up, wins add up, the leaderboard is in the right order, and every badge matches the numbers.
 // Run: node tests/scenario.test.js
-process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0';   // the once-a-day rule and the surprise categories have their own test (challenge.test.js)
+process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0'; process.env.REFEREE_POINTS = '0';   // these rules have their own tests (challenge.test.js, referee.test.js)
 const { spawn } = require('child_process'), path = require('path'), assert = require('assert'), fs = require('fs');
 process.env.LEVEL_SCALE = '0.02';   // the same small chapters the test server uses
 const G = require('../server/game.js'), fx = require('./fixture.js')(), PORT = 8793, base = 'http://127.0.0.1:' + PORT;
