@@ -74,7 +74,7 @@ const rightIndex = (level, q) => { const Q = BOOK.levels[level - 1].quiz.find(x 
         assert.strictEqual((await call('GET', '/api/story/' + ch, P[nm].key)).status, 200, nm + ' can read chapter ' + ch);
         if (nm === 'Bahar' && ch === 3 && !failedOnce) {
           const bad = await takeQuiz(nm, false); failedOnce = true;
-          ok(bad.passed === false && bad.me.levelPoints === 0 && bad.me.level === 2 && (await call('GET', '/api/story/3', P[nm].key)).status === 403, 'Bahar fails the real chapter 3 quiz: the chapter closes and its points are lost');
+          ok(bad.passed === false && bad.me.levelPoints === Math.floor(bad.me.need * 0.8) && bad.me.quizReady === false && bad.me.level === 2 && (await call('GET', '/api/story/3', P[nm].key)).status === 403, 'Bahar fails the real chapter 3 quiz: the chapter closes and a fifth of its points are lost');
           let g = 0; while (!(await me(nm)).quizReady && g++ < 6) await round(names.filter(x => !going.includes(x)));
           ok((await me(nm)).quizReady, 'she wins the points back at the table and the chapter opens again');
         }

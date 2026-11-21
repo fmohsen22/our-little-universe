@@ -1,3 +1,4 @@
+process.env.LEVEL_POINTS = '8000,10400,13500,17600,22800,29700,38600';   // the table these checks were written for
 // A whole evening with everything at its real defaults (surprise categories on, one word once a day on):
 // eight players at two tables in parallel, the referee changing every round, real words from word lists so that
 // answers are sometimes shared, a few made-up words for the referee to reject, players swapping tables half way so

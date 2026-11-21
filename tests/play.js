@@ -1,3 +1,4 @@
+process.env.LEVEL_POINTS = '8000,10400,13500,17600,22800,29700,38600';   // the table these checks were written for
 // Four people on four different phones play against the real server: sign-up, a table, electing a referee, a round,
 // the referee's one-tap judging, a promotion, the story, the quiz, the leaderboard. Every screen is checked to fit the phone.
 // Run: node tests/play.js   (SHOTS=dir saves screenshots)

@@ -1,3 +1,4 @@
+process.env.LEVEL_POINTS = '8000,10400,13500,17600,22800,29700,38600';   // the table these checks were written for
 // A busy evening on the real server: 9 players and 3 referees at 3 tables playing at the same time, people signing in on new
 // devices, a server restart in the middle, and at the end a cross-check of every player's record:
 // points add up, wins add up, the leaderboard is in the right order, and every badge matches the numbers.

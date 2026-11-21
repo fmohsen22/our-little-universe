@@ -1,3 +1,4 @@
+process.env.LEVEL_POINTS = '8000,10400,13500,17600,22800,29700,38600';   // the table these checks were written for
 // Plays the game against the real server over HTTP: accounts, electing a referee, three players and a referee at a table, judging, scoring, levels and the quiz.
 // Run: node tests/server.test.js
 process.env.REPEAT_RULE = '0'; process.env.SURPRISE_DEFAULT = '0'; process.env.REFEREE_POINTS = '0';   // these rules have their own tests (challenge.test.js, referee.test.js)
@@ -91,7 +92,7 @@ const meOf = async key => (await call('GET', '/api/me', key)).json.me;
     const q1 = (await call('POST', '/api/quiz/start', A.key)).json, q1b = (await call('POST', '/api/quiz/start', A.key)).json;
     ok(q1.questions.length === 5 && JSON.stringify(q1) === JSON.stringify(q1b) && !JSON.stringify(q1).includes('answer'), 'the quiz is five questions, the same five if asked again, with no answers sent');
     const bad = (await call('POST', '/api/quiz/answer', A.key, { answers: q1.questions.map(q => (q.options.indexOf('right') + 1) % 4) })).json;
-    ok(bad.passed === false && bad.me.level === 0 && bad.me.levelPoints === 0 && bad.me.total === 60 && (await call('GET', '/api/story/1', A.key)).status === 403, 'failing the quiz loses the level’s points and closes the chapter; lifetime points stay');
+    ok(bad.passed === false && bad.me.level === 0 && bad.me.levelPoints === 32 && bad.me.quizReady === false && bad.me.total === 60 && (await call('GET', '/api/story/1', A.key)).status === 403, 'failing the quiz costs a fifth of the level’s points (40 becomes 32) and closes the chapter; lifetime points stay');
     await round(false); await round(false);
     const q2 = (await call('POST', '/api/quiz/start', A.key)).json;
     const good = (await call('POST', '/api/quiz/answer', A.key, { answers: q2.questions.map((q, i) => i === 0 ? (q.options.indexOf('right') + 1) % 4 : q.options.indexOf('right')) })).json;

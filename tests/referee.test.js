@@ -1,3 +1,4 @@
+process.env.LEVEL_POINTS = '8000,10400,13500,17600,22800,29700,38600';   // the table these checks were written for
 // When nobody wants to be the referee: the game picks one (taking turns), the referee is paid, and a table where
 // everyone agrees can play with no referee at all and judge together. On the real server, then on three phones.
 // Run: node tests/referee.test.js

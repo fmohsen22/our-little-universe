@@ -3,8 +3,8 @@ const G = require('../server/game.js'), assert = require('assert');
 let n = 0; const test = (name, fn) => { fn(); n++; console.log('  ok  ' + name); };
 const cats = ['name', 'city', 'food'];
 
-test('level points: level 1 is 10 hours of play, each next level 30% more', () => {
-  assert.deepStrictEqual([1, 2, 3, 4, 5, 6, 7].map(G.levelPoints), [8000, 10400, 13500, 17600, 22800, 29700, 38600]);
+test('level points: the first chapter is short, the later ones climb', () => {
+  assert.deepStrictEqual([1, 2, 3, 4, 5, 6, 7].map(G.levelPoints), [1200, 3600, 4700, 6200, 8000, 10400, 13500]);
 });
 test('scoring: unique answers 10, shared 5, empty or wrong letter 0', () => {
   const r = G.scoreRound({ letter: 'S', cats, answers: { a: { name: 'Sara', city: 'Shiraz', food: 'Soup' }, b: { name: ' sara ', city: 'Tehran', food: '' }, c: { name: 'Sam', city: 'Sofia', food: 'salad' } } });
@@ -54,12 +54,12 @@ test('streaks and comeback: five in a row for Rostam; Simurgh needs a win after 
 });
 test('level progress is capped at what the level needs, lifetime points are not', () => {
   const p = G.newPlayer('p', 'A', 1); for (let i = 0; i < 900; i++) G.applyRound(p, { points: 10, won: false, hadWinner: false, tableSize: 2 }, 5);
-  assert.strictEqual(p.levelPoints, 8000); assert.strictEqual(p.total, 9000); assert.ok(G.quizReady(p));
+  assert.strictEqual(p.levelPoints, 1200); assert.strictEqual(p.total, 9000); assert.ok(G.quizReady(p));
 });
-test('quiz: 4 of 5 passes and opens the level; fewer loses the level points but not lifetime points', () => {
-  const p = G.newPlayer('p', 'A', 1); p.levelPoints = 8000; p.total = 8000;
-  let r = G.applyQuiz(p, 3, 9); assert.ok(!r.passed); assert.strictEqual(p.level, 0); assert.strictEqual(p.levelPoints, 0); assert.strictEqual(p.total, 8000); assert.strictEqual(p.quizFails, 1);
-  p.levelPoints = 8000; r = G.applyQuiz(p, 4, 9); assert.ok(r.passed); assert.strictEqual(p.level, 1); assert.strictEqual(p.levelPoints, 0); assert.strictEqual(p.firstTries, 0); assert.strictEqual(G.nextLevelNeed(p), 10400);
+test('quiz: 4 of 5 passes and opens the level; fewer costs a fifth of the level points but no lifetime points', () => {
+  const p = G.newPlayer('p', 'A', 1); p.levelPoints = 1200; p.total = 8000;
+  let r = G.applyQuiz(p, 3, 9); assert.ok(!r.passed); assert.strictEqual(p.level, 0); assert.strictEqual(p.levelPoints, 960); assert.ok(!G.quizReady(p)); assert.strictEqual(p.total, 8000); assert.strictEqual(p.quizFails, 1);
+  p.levelPoints = 1200; r = G.applyQuiz(p, 4, 9); assert.ok(r.passed); assert.strictEqual(p.level, 1); assert.strictEqual(p.levelPoints, 0); assert.strictEqual(p.firstTries, 0); assert.strictEqual(G.nextLevelNeed(p), 3600);
   p.levelPoints = 10400; G.applyQuiz(p, 5, 9); assert.strictEqual(p.firstTries, 1);
 });
 test('leaderboard order: level first, then lifetime points, then wins', () => {

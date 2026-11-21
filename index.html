@@ -684,8 +684,8 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
       step('Crowns and badges', '👑', 'Rise through the ranks',
         '<p>Every victory counts toward a royal title from the Shahnameh, from <b>' + esc(meta.ranks[0].title.replace('{royal}', 'Prince')) + '</b> after your first win to <b>' + esc(meta.ranks[meta.ranks.length - 1].title) + '</b> after ' + meta.ranks[meta.ranks.length - 1].wins + '. There are also badges for streaks, comebacks, refereeing and more. See them all in your profile.</p>') +
       step('The life of Rostam', '📜', 'Seven chapters to unlock',
-        '<p>Your points also open the seven chapters of Rostam’s life. The first chapter needs ' + num(first) + ' points, about 10 hours of play, and each one after needs a little more.</p>' +
-        '<p>When a chapter opens, read its story and take a short quiz: <b>' + meta.quiz.size + ' questions, ' + meta.quiz.pass + ' right to pass</b>. If you fail, the points for that chapter are lost and you win them again at the table, so read carefully.</p>') +
+        '<p>Your points also open the seven chapters of Rostam’s life. The first chapter needs ' + num(first) + ' points, an evening or two of play, and the later ones need more.</p>' +
+        '<p>When a chapter opens, read its story and take a short quiz: <b>' + meta.quiz.size + ' questions, ' + meta.quiz.pass + ' right to pass</b>. If you fail, you lose a fifth of that chapter’s points and win them back at the table, so read carefully.</p>') +
       step('The last chapter', '🪶', 'Where is the Prince?',
         '<p>At the end of every chapter the Simurgh leaves you <b>one line of a riddle</b>. Remember them. After all seven chapters, the last one asks a single question: where is the Prince? Find the answer and he will be waiting for you at his own table.</p>') +
       '<p class="note center">Stuck, or forgot your password? <a href="#contact">Send a message</a>.</p>' +
@@ -1167,7 +1167,7 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
       if (a.indexOf(-1) >= 0) { toast('Answer every question first'); return; }
       api('POST', '/api/quiz/answer', { answers: a }).then(function (r) {
         setMe(r.me); quiz = null;
-        $('#q-box').outerHTML = '<div class="card feature" id="q-box"><p class="big-text">' + (r.passed ? 'Chapter ' + r.level + ' is yours.' : r.correct + ' of ' + r.of + '. Not this time.') + '</p><p class="soft">' + (r.passed ? 'You got ' + r.correct + ' of ' + r.of + '. The next chapter needs ' + num(r.me.need) + ' points.' : 'The points for this chapter are gone. Win them back at the table and the story will open again.') + '</p><div class="row mid"><a class="btn" href="#' + (r.passed ? 'journey' : 'home') + '">' + (r.passed ? 'See the journey' : 'Back to the table') + '</a></div></div>';
+        $('#q-box').outerHTML = '<div class="card feature" id="q-box"><p class="big-text">' + (r.passed ? 'Chapter ' + r.level + ' is yours.' : r.correct + ' of ' + r.of + '. Not this time.') + '</p><p class="soft">' + (r.passed ? 'You got ' + r.correct + ' of ' + r.of + '. The next chapter needs ' + num(r.me.need) + ' points.' : 'That cost you a fifth of this chapter’s points. Win them back at the table and the story will open again.') + '</p><div class="row mid"><a class="btn" href="#' + (r.passed ? 'journey' : 'home') + '">' + (r.passed ? 'See the journey' : 'Back to the table') + '</a></div></div>';
         if (r.passed) ceremony([{ kind: 'level', n: r.level }].concat(r.unlocks || [])); else if (r.unlocks && r.unlocks.length) ceremony(r.unlocks);
       }).catch(fail);
     }

@@ -40,17 +40,17 @@ If the referee leaves during a round and is not back within 20 seconds, the roun
 
   | Chapter | Points | About |
   |---|---|---|
-  | 1 | 8,000 | 10 hours |
-  | 2 | 10,400 | 13 hours |
-  | 3 | 13,500 | 17 hours |
-  | 4 | 17,600 | 22 hours |
-  | 5 | 22,800 | 29 hours |
-  | 6 | 29,700 | 37 hours |
-  | 7 | 38,600 | 48 hours |
+  | 1 | 1,200 | 20 rounds |
+  | 2 | 3,600 | 60 rounds |
+  | 3 | 4,700 | 80 rounds |
+  | 4 | 6,200 | 105 rounds |
+  | 5 | 8,000 | 140 rounds |
+  | 6 | 10,400 | 180 rounds |
+  | 7 | 13,500 | 230 rounds |
 
-  The hours assume about 800 points an hour (a 3-minute round worth about 40 points). Change `LEVELS` at the top of `server/game.js` to retune: `pointsPerHour`, `firstLevelHours`, `growth`.
+  The rounds assume about 58 points a round. Change `LEVELS.points` at the top of `server/game.js` to retune.
 
-- **The quiz:** when the points are there, the chapter's story opens. Then 5 questions drawn from 10; 4 right keeps the chapter. Fail, and the points gathered for that chapter are lost (lifetime points are not) and the story closes until you earn them again.
+- **The quiz:** when the points are there, the chapter's story opens. Then 5 questions drawn from 10; 4 right keeps the chapter. Fail, and a fifth of the points gathered for that chapter are lost (lifetime points are not) and the story closes until you earn them again.
 
 ## Chapter 8: Where is the Prince?
 

@@ -1,3 +1,4 @@
+process.env.LEVEL_POINTS = '8000,10400,13500,17600,22800,29700,38600';   // the table these checks were written for
 // Thirty players on one evening: four tables of 12, 8, 6 and 4 playing at the same time, several rounds each,
 // with empty, shared and made-up answers. Each table elects a referee from its own people (a different one every
 // other round), and the referee rejects the made-up answers.

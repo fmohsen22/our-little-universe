@@ -18,11 +18,13 @@ const DEFAULT_SETTINGS = { lang: 'en', cats: ['name', 'surname', 'city', 'countr
 const POINTS = { unique: 10, shared: 5 };
 const MAX_PLAYERS = 12, MIN_SCORED = 2, MIN_TABLE = 3;   // a table needs a referee and at least two players
 
-// Levels. Level 1 is sized for about 10 hours of play (2 hours a day for 5 days); each next level needs 30% more.
-// Assumption: a round with checking takes about 3 minutes and a typical player scores about 40 points, so about 800 points an hour.
-const LEVELS = { count: 7, pointsPerHour: 800, firstLevelHours: 10, growth: 1.3, quizSize: 5, quizPass: 4 };
+// Levels: the points each chapter needs, gathered since the chapter before. The first is short (an evening or two),
+// so new players meet a story early; after it each chapter needs about 30% more than the one before.
+// A failed quiz costs quizPenalty of the chapter's points, never lifetime points.
+const LEVELS = { count: 7, points: [1200, 3600, 4700, 6200, 8000, 10400, 13500], quizSize: 5, quizPass: 4, quizPenalty: 0.2 };
 const SCALE = +(process.env.LEVEL_SCALE || 1);   // tests shrink the levels; leave unset in real use
-function levelPoints(n) { const raw = LEVELS.pointsPerHour * LEVELS.firstLevelHours * Math.pow(LEVELS.growth, n - 1) * SCALE, step = raw >= 1000 ? 100 : 10; return Math.max(step, Math.round(raw / step) * step); }
+const TABLE = /^\d+(,\d+)*$/.test(process.env.LEVEL_POINTS || '') ? process.env.LEVEL_POINTS.split(',').map(Number) : LEVELS.points;   // tests can bring their own table
+function levelPoints(n) { const raw = (TABLE[n - 1] || TABLE[TABLE.length - 1]) * SCALE, step = raw >= 1000 ? 100 : 10; return Math.max(step, Math.round(raw / step) * step); }
 
 const RANKS = [
   { id: 'hero', wins: 1, title: 'Young Hero', badge: 'Bronze Shield', art: 'shield', metal: 'bronze' },
@@ -124,11 +126,11 @@ function applyRound(p, r, now) {
   if (r.cleanStop) p.cleanStops += 1;
   return checkUnlocks(p, now);
 }
-/* Apply a graded quiz. Passing opens the level; failing costs the points gathered for it. */
+/* Apply a graded quiz. Passing opens the level; failing costs a fifth of the points gathered for it. */
 function applyQuiz(p, correct, now) {
   const passed = correct >= LEVELS.quizPass, level = p.level + 1;
   if (passed) { p.level = level; if (!p.quizFails) p.firstTries += 1; }
-  p.quizFails = passed ? 0 : p.quizFails + 1; p.levelPoints = 0; p.quiz = null;
+  p.quizFails = passed ? 0 : p.quizFails + 1; p.levelPoints = passed ? 0 : Math.floor(Math.min(p.levelPoints, levelPoints(level)) * (1 - LEVELS.quizPenalty)); p.quiz = null;
   return { passed, level, correct, unlocks: checkUnlocks(p, now) };
 }
 // Leaderboard order: highest level, then lifetime points, then wins, then who got there first.

@@ -1,3 +1,4 @@
+process.env.LEVEL_POINTS = '8000,10400,13500,17600,22800,29700,38600';   // the table these checks were written for
 // The owner's dashboard and Google sign-in, against the real server, then on a phone.
 // Google is replaced by a stand-in that signs tokens with a test key, so the server's signature check is real.
 // Run: node tests/owner.test.js
