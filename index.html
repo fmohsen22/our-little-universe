@@ -854,7 +854,7 @@ window.WPM_MAP_DATA = {"land":"M349 357.5L346 359L344 361L344 364L342 366L339 36
         (s.video ? '<video controls preload="metadata" src="' + esc(s.video) + '"></video>' : '') + s.story.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') +
         (s.clue ? '<aside class="clue"><p class="eyebrow">🪶 The Simurgh’s riddle · fragment ' + s.n + ' of 7</p><p>' + esc(s.clue) + '</p></aside>' : '') +
         (s.sources.length ? '<p class="note">Retold from the Shahnameh of Ferdowsi. ' + s.sources.map(esc).join(' · ') + '</p>' : '') + '</article>' +
-        (s.passed ? '<p class="turn center">You have passed this chapter.</p>' : '<div class="card center" id="q-box"><h2>Ready for the quiz?</h2><p class="soft">' + meta.quiz.size + ' questions about this story. You need ' + meta.quiz.pass + ' right. If you fall short, the points you gathered for this chapter are lost and you earn them again.</p><div class="row mid"><button class="btn" data-act="quiz">Take the quiz</button></div></div>');
+        (s.passed ? '<p class="turn center">You have passed this chapter.</p>' : '<div class="card center" id="q-box"><h2>Ready for the quiz?</h2><p class="soft">' + meta.quiz.size + ' questions about this story. You need ' + meta.quiz.pass + ' right. If you fall short, you lose a fifth of this chapter’s points and win them back at the table.</p><div class="row mid"><button class="btn" data-act="quiz">Take the quiz</button></div></div>');
     }).catch(function (e) { app.innerHTML = '<a class="back" href="#journey">← All chapters</a><div class="card feature"><p class="big-text">' + esc(e.message) + '</p></div>'; });
   };
   function showQuiz(q) {
